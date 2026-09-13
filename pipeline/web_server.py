@@ -381,6 +381,15 @@ def create_app() -> Flask:
         download_name = f"{slug}_illustrated.html"
 
         if os.path.isfile(index_file):
+            # Auto-heal: if index.html contains legacy relative image links ('src="images/'),
+            # recompile it on the fly with embedded base64 images so it is always 100% portable
+            try:
+                with open(index_file, "r", encoding="utf-8") as f:
+                    content = f.read()
+                if '<img src="images/' in content:
+                    compile_html(pdir, embed_images=True)
+            except Exception:
+                pass
             return send_file(index_file, as_attachment=as_download, download_name=download_name)
 
         # Fallback compile on the fly if manifest exists
