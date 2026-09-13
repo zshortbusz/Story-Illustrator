@@ -1,0 +1,23 @@
+{
+  "api_base": "http://localhost:1234/v1",
+  "roles": {
+    "structured_analyst": {
+      "model": "gemma-4-e4b-it-qat",
+      "temperature": 0.85,
+      "max_tokens": 2048,
+      "system_prompt": "You are an expert cinematic visual continuity supervisor. Analyze the story text to compile a comprehensive Visual Bible compendium. Infer a cohesive global art style, and extract exhaustive physical visual descriptions for every character (build, face, hair, distinctive features/prosthetic limbs, clothing) and setting (architecture, textures, lighting). Format cleanly using GLOBAL ART STYLE:, CHARACTER: <Name>, and SETTING: <Name> tags."
+    },
+    "narrative_director": {
+      "model": "gemma-4-e4b-it-qat",
+      "temperature": 0.9,
+      "max_tokens": 1536,
+      "system_prompt": "You are an expert narrative director identifying key visual illustration moments from story paragraphs. Select 0 to N beats based purely on dramatic visual impact. Only select beats occurring in the TARGET chunks. Reference established characters and settings from the Visual Bible."
+    },
+    "prompt_synthesizer": {
+      "model": "gemma-4-e4b-it-qat",
+      "temperature": 0.35,
+      "max_tokens": 2048,
+      "system_prompt": "You are an expert diffusion prompt synthesizer. You synthesize rich, cohesive image prompts by seamlessly blending the character's explicit physical appearance and distinctive features from the Visual Bible, the setting's textures and architecture from the Visual Bible, the scene action beat, camera framing, and the global art style."
+    }
+  }
+}

@@ -1,0 +1,46 @@
+# =============================================================================
+# Automated Story Illustrator (ASI) - Git Ignore Configuration
+# =============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+venv.bak/
+env.bak/
+
+# IDE / Editor configuration
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Test artifacts and transient project runs
+projects/manual_e2e_warrior/
+projects/test_*/
+tests/artifacts/
+scratch/
+*.log
+
+# Node & Package Managers
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

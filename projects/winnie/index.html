@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Winnie</title>
+  <style>
+
+:root {
+  --bg-primary: #0f1115;
+  --bg-surface: #181b21;
+  --text-primary: #e6edf3;
+  --text-secondary: #9aa5b1;
+  --text-quote: #ffdf70;
+  --accent: #58a6ff;
+  --border: #2e3440;
+  --font-serif: "Charter", "Bitstream Charter", "Sitka Text", "Cambria", "Georgia", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-serif);
+  font-size: 19px;
+  line-height: 1.85;
+  letter-spacing: 0.01em;
+  padding: 40px 20px 100px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.reader-container {
+  max-width: 750px;
+  margin: 0 auto;
+}
+
+header.story-header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 32px;
+  margin-bottom: 48px;
+  text-align: center;
+}
+
+h1.story-title {
+  font-family: var(--font-sans);
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+  line-height: 1.25;
+}
+
+.story-meta {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.story-body {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+p.story-paragraph {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+}
+
+/* Dialogue quote styling from build_site.cjs */
+strong.q {
+  color: var(--text-quote);
+  font-weight: 600;
+}
+
+figure.scene-illustration {
+  margin: 28px 0;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+figure.scene-illustration img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+figcaption {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 12px 18px;
+  line-height: 1.45;
+  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+figcaption strong {
+  color: var(--accent);
+  margin-right: 6px;
+}
+
+footer.story-footer {
+  margin-top: 60px;
+  border-top: 1px solid var(--border);
+  padding-top: 30px;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 600px) {
+  body {
+    font-size: 17px;
+    padding: 20px 14px 60px;
+  }
+  h1.story-title {
+    font-size: 1.8rem;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="reader-container">
+    <header class="story-header">
+      <h1 class="story-title">Winnie</h1>
+      <div class="story-meta">
+        <span>482 words</span>
+        <span>&bull;</span>
+        <span>2 illustrations</span>
+        <span>&bull;</span>
+        <span>4 paragraphs</span>
+      </div>
+    </header>
+
+    <main class="story-body">
+<p class="story-paragraph">If you happen to have read another book about Christopher Robin, you may remember that he once had a swan (or the swan had Christopher Robin, I don't know which) and that he used to call this swan Pooh. That was a long time ago, and when we said good-bye, we took the name with us, as we didn't think the swan would want it any more. Well, when Edward Bear said that he would like an exciting name all to himself, Christopher Robin said at once, without stopping to think, that he was Winnie-the-Pooh. And he was. So, as I have explained the Pooh part, I will now explain the rest of it.</p>
+<p class="story-paragraph">You can't be in London for long without going to the Zoo. There are some people who begin the Zoo at the beginning, called WAYIN, and walk as quickly as they can past every cage until they get to the one called WAYOUT, but the nicest people go straight to the animal they love the most, and stay there. So when Christopher Robin goes to the Zoo, he goes to where the Polar Bears are, and he whispers something to the third keeper from the left, and doors are unlocked, and we wander through dark passages and up steep stairs, until at last we come to the special cage, and the cage is opened, and out trots something brown and furry, and with a happy cry of <strong class="q">"Oh, Bear!"</strong> Christopher Robin rushes into its arms. Now this bear's name is Winnie, which shows what a good name for bears it is, but the funny thing is that we can't remember whether Winnie is called after Pooh, or Pooh after Winnie. We did know once, but we have forgotten....</p>
+
+<figure class="scene-illustration" id="chunk_001">
+  <img src="images/chunk_001.png" alt="Winnie, a large wonderfully rotund brown furry polar bear, stepping out of a dark passage into bright light; Christopher Robin, an 8-10 year old boy in a rumpled button-down shirt and knickers, rushing toward the bear with joyful discovery. Wide shot, low angle view, capturing high contrast between deep shadows and illuminated enclosure entrance. The imposing Polar Bear Enclosure (Special Cage), constructed of thick reinforced stone and cold concrete architecture. Whimsical Storybook Realism, soft hand-painted aesthetic, layered watercolor techniques combined with detailed ink linework. Nostalgic color palette: ochre, burnt sienna, moss green, gentle pastels. Cinematic depth, comforting familiarity." loading="lazy">
+  <figcaption><strong>[chunk_001]</strong> Winnie, a large wonderfully rotund brown furry polar bear, stepping out of a dark passage into bright light; Christopher Robin, an 8-10 year old boy in a rumpled button-down shirt and knickers, rushing toward the bear with joyful discovery. Wide shot, low angle view, capturing high contrast between deep shadows and illuminated enclosure entrance. The imposing Polar Bear Enclosure (Special Cage), constructed of thick reinforced stone and cold concrete architecture. Whimsical Storybook Realism, soft hand-painted aesthetic, layered watercolor techniques combined with detailed ink linework. Nostalgic color palette: ochre, burnt sienna, moss green, gentle pastels. Cinematic depth, comforting familiarity.</figcaption>
+</figure>
+<p class="story-paragraph">I had written as far as this when Piglet looked up and said in his squeaky voice, <strong class="q">"What about Me?"</strong> <strong class="q">"My dear Piglet,"</strong> I said, <strong class="q">"the whole book is about you."</strong> <strong class="q">"So it is about Pooh,"</strong> he squeaked. You see what it is. He is jealous because he thinks Pooh is having a Grand Introduction all to himself. Pooh is the favourite, of course, there's no denying it, but Piglet comes in for a good many things which Pooh misses; because you can't take Pooh to school without everybody knowing it, but Piglet is so small that he slips into a pocket, where it is very comforting to feel him when you are not quite sure whether twice seven is twelve or twenty-two. Sometimes he slips out and has a good look in the ink-pot, and in this way he has got more education than Pooh, but Pooh doesn't mind. Some have brains, and some haven't, he says, and there it is.</p>
+
+<figure class="scene-illustration" id="chunk_002">
+  <img src="images/chunk_002.png" alt="An exceptionally small Piglet, peeking nervously from a small opening near the rim of an ink-pot, gazing down into its glossy, opaque, highly reflective murky depths with an anxious expression. Close up shot, tight framing on Piglet's viewpoint looking down into the vessel, emphasizing depth and contained mystery. Concentrated low lighting, dramatic shadow play, highlighting anxiety against a dark surface. Intimate abstract environment, conceptual ink-pot setting. Whimsical Storybook Realism, soft hand-painted aesthetic, warm nostalgic color palette dominated by ochre, burnt sienna, and moss green contrasted with gentle pastels. Layered watercolor techniques combined with detailed ink linework, cinematic depth, comforting familiarity." loading="lazy">
+  <figcaption><strong>[chunk_002]</strong> An exceptionally small Piglet, peeking nervously from a small opening near the rim of an ink-pot, gazing down into its glossy, opaque, highly reflective murky depths with an anxious expression. Close up shot, tight framing on Piglet's viewpoint looking down into the vessel, emphasizing depth and contained mystery. Concentrated low lighting, dramatic shadow play, highlighting anxiety against a dark surface. Intimate abstract environment, conceptual ink-pot setting. Whimsical Storybook Realism, soft hand-painted aesthetic, warm nostalgic color palette dominated by ochre, burnt sienna, and moss green contrasted with gentle pastels. Layered watercolor techniques combined with detailed ink linework, cinematic depth, comforting familiarity.</figcaption>
+</figure>
+<p class="story-paragraph">And now all the others are saying, <strong class="q">"What about Us?"</strong> So perhaps the best thing to do is to stop writing Introductions and get on with the book.</p>
+    </main>
+
+    <footer class="story-footer">
+      <p>Automated Story Illustrator &bull; Winnie</p>
+    </footer>
+  </div>
+</body>
+</html>

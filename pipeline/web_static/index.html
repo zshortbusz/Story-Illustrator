@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automated Story Illustrator (ASI)</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="logo-group">
+        <span class="logo-icon">&#9650;</span>
+        <div>
+          <h1 class="app-title">Automated Story Illustrator</h1>
+          <p class="app-subtitle">Local Headless Pipeline &bull; LM Studio &bull; ComfyUI</p>
+        </div>
+      </div>
+
+      <div class="project-selector-group">
+        <label for="projectSelect">Story:</label>
+        <select id="projectSelect" class="select-input"></select>
+        <button id="btnNewProject" class="btn btn-secondary">+ New Story</button>
+      </div>
+
+      <!-- Live Service Status Badges -->
+      <div class="status-badges">
+        <div id="badgeLMStudio" class="badge badge-offline" title="LM Studio Status">
+          <span class="badge-dot"></span> LM Studio :1234
+        </div>
+        <div id="badgeComfyUI" class="badge badge-offline" title="ComfyUI Status">
+          <span class="badge-dot"></span> ComfyUI :8188
+        </div>
+        <button id="btnRefreshStatus" class="btn btn-icon" title="Refresh Service Status">&#8635;</button>
+      </div>
+    </header>
+
+    <!-- Phase Guidance / Hardware Instruction Banner -->
+    <div id="hardwareBanner" class="hardware-banner phase-1-active">
+      <div class="banner-icon">&#9888;</div>
+      <div class="banner-text">
+        <strong id="bannerTitle">Hardware Notice:</strong>
+        <span id="bannerDesc">Checking runtime state...</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs in Logical Pipeline Order -->
+    <nav class="tabs-nav">
+      <button class="tab-btn active" data-tab="tab-chunks">1. Chunks</button>
+      <button class="tab-btn" data-tab="tab-bible">2. Visual Bible</button>
+      <button class="tab-btn" data-tab="tab-beats">3. Visual Beats</button>
+      <button class="tab-btn" data-tab="tab-manifest">4. Manifest &amp; Prompts</button>
+      <button class="tab-btn" data-tab="tab-render">5. Render &amp; Regenerate</button>
+      <button class="tab-btn" data-tab="tab-reader">6. Reader Preview</button>
+    </nav>
+
+    <!-- Tab 1: Chunks -->
+    <section id="tab-chunks" class="tab-content active">
+      <div class="tab-header-row">
+        <div>
+          <h2>Step 1: Deterministic Text Chunks</h2>
+          <p class="section-desc">Paragraph splits and word count indexing (<code>01_chunks.json</code>).</p>
+        </div>
+        <div class="btn-group">
+          <button id="btnSaveSource" class="btn btn-secondary">Save Raw Text</button>
+          <button id="btnRunChunker" class="btn btn-primary">&#9654; Run Chunker</button>
+        </div>
+      </div>
+
+      <!-- Stage Progress Banner -->
+      <div id="chunkProgressBox" class="progress-notice-card" style="display: none;">
+        <span class="spinner"></span>
+        <span id="chunkProgressMsg">Processing chunks...</span>
+      </div>
+
+      <div class="chunks-layout">
+        <div class="card source-box">
+          <h3>Raw Story Text (<code>source/input_story.txt</code>)</h3>
+          <textarea id="sourceStoryText" class="textarea-input" rows="18"></textarea>
+        </div>
+        <div class="card chunks-box">
+          <div class="card-header">
+            <h3>Generated Chunks (<span id="chunkCount">0</span>)</h3>
+            <span id="totalWordCount" class="badge">0 words</span>
+          </div>
+          <div id="chunksList" class="scroll-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: Visual Bible -->
+    <section id="tab-bible" class="tab-content">
+      <div class="tab-header-row">
+        <div>
+          <h2>Step 2: Visual Bible &amp; Style Continuity</h2>
+          <p class="section-desc">Global art style inferred from story tone, plus persistent character and setting profiles (<code>03_visual_bible.json</code>).</p>
+        </div>
+        <div class="btn-group">
+          <button id="btnSaveBible" class="btn btn-secondary">Save Visual Bible</button>
+          <button id="btnRunBible" class="btn btn-primary">&#9654; Run Extraction</button>
+        </div>
+      </div>
+
+      <!-- In-Tab Model & Prompt Configuration -->
+      <details class="card in-tab-config" style="margin-bottom: 20px;">
+        <summary class="config-summary">
+          <strong>&#9881; Structured Analyst Model &amp; Prompt Settings</strong>
+          <span class="badge badge-accent">Role: Visual Bible</span>
+        </summary>
+        <div class="in-tab-config-body">
+          <div class="config-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Model Selection:</label>
+              <select id="modelStructuredAnalyst" class="select-input model-dropdown"></select>
+              <input type="text" id="modelStructuredAnalystCustom" class="text-input" style="margin-top: 6px;" placeholder="or custom model name">
+            </div>
+            <div class="form-group">
+              <label>Temperature: <span id="tempAnalystVal">0.1</span></label>
+              <input type="range" id="tempAnalyst" min="0" max="1" step="0.05" value="0.1">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 10px;">
+            <label>Analyst Instructions (System Prompt):</label>
+            <textarea id="promptAnalyst" class="textarea-input" rows="3"></textarea>
+          </div>
+          <div style="text-align: right; margin-top: 8px;">
+            <button id="btnSaveAnalystConfig" class="btn btn-sm btn-secondary">Save Model Settings</button>
+          </div>
+        </div>
+      </details>
+
+      <!-- Stage Progress Banner -->
+      <div id="bibleProgressBox" class="progress-notice-card" style="display: none;">
+        <span class="spinner"></span>
+        <span id="bibleProgressMsg">Extracting Visual Bible from story chunks with LM Studio...</span>
+      </div>
+
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header">
+          <h3>Global Art Style (Aesthetic Continuity)</h3>
+          <span class="badge badge-accent">Inferred from Tone &bull; Editable</span>
+        </div>
+        <input type="text" id="bibleArtStyle" class="text-input" placeholder="e.g. 1980s dark anime aesthetic, muted tones, cinematic cel shading">
+      </div>
+
+      <div class="bible-columns">
+        <div class="card">
+          <div class="card-header">
+            <h3>Characters</h3>
+            <button id="btnAddCharacter" class="btn btn-sm btn-secondary">+ Add Character</button>
+          </div>
+          <div id="charactersList" class="bible-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Settings &amp; Environments</h3>
+            <button id="btnAddSetting" class="btn btn-sm btn-secondary">+ Add Setting</button>
+          </div>
+          <div id="settingsList" class="bible-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: Visual Beats -->
+    <section id="tab-beats" class="tab-content">
+      <div class="tab-header-row">
+        <div>
+          <h2>Step 3: Visual Beat Selection</h2>
+          <p class="section-desc">Target-vs-Context sliding window moments selected by Narrative Director based on the established Visual Bible (<code>02_selected_beats.json</code>).</p>
+        </div>
+        <div class="btn-group">
+          <button id="btnAddBeat" class="btn btn-secondary">+ Add Beat</button>
+          <button id="btnSaveBeats" class="btn btn-secondary">Save Edits</button>
+          <button id="btnRunBeats" class="btn btn-primary">&#9654; Run Beat Selection</button>
+        </div>
+      </div>
+
+      <!-- In-Tab Model & Prompt Configuration -->
+      <details class="card in-tab-config" style="margin-bottom: 20px;">
+        <summary class="config-summary">
+          <strong>&#9881; Narrative Director Model &amp; Prompt Settings</strong>
+          <span class="badge badge-accent">Role: Beat Selection</span>
+        </summary>
+        <div class="in-tab-config-body">
+          <div class="config-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Model Selection:</label>
+              <select id="modelNarrativeDirector" class="select-input model-dropdown"></select>
+              <input type="text" id="modelNarrativeDirectorCustom" class="text-input" style="margin-top: 6px;" placeholder="or custom model name">
+            </div>
+            <div class="form-group">
+              <label>Temperature: <span id="tempNarrativeVal">0.3</span></label>
+              <input type="range" id="tempNarrative" min="0" max="1" step="0.05" value="0.3">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 10px;">
+            <label>Director Instructions (System Prompt):</label>
+            <textarea id="promptNarrative" class="textarea-input" rows="3"></textarea>
+          </div>
+          <div style="text-align: right; margin-top: 8px;">
+            <button id="btnSaveDirectorConfig" class="btn btn-sm btn-secondary">Save Model Settings</button>
+          </div>
+        </div>
+      </details>
+
+      <!-- Stage Progress Banner -->
+      <div id="beatsProgressBox" class="progress-notice-card" style="display: none;">
+        <span class="spinner"></span>
+        <span id="beatsProgressMsg">Selecting visual beats with LM Studio...</span>
+      </div>
+
+      <div id="beatsContainer" class="beats-grid"></div>
+    </section>
+
+    <!-- Tab 4: Manifest & Prompts -->
+    <section id="tab-manifest" class="tab-content">
+      <div class="tab-header-row">
+        <div>
+          <h2>Step 4: Master Manifest &amp; Diffusion Prompts</h2>
+          <p class="section-desc">Review and fine-tune positive/negative prompts synthesized for diffusion rendering (<code>manifest.json</code>).</p>
+        </div>
+        <div class="btn-group" style="align-items: center;">
+          <label style="display: inline-flex; align-items: center; gap: 6px; margin-right: 12px; font-size: 0.88rem; cursor: pointer; color: var(--text-dim); user-select: none;">
+            <input type="checkbox" id="chkShowIllustratedOnly" checked>
+            <span>Show Illustrated Blocks Only</span>
+          </label>
+          <button id="btnSaveManifest" class="btn btn-secondary">Save Manifest</button>
+          <button id="btnRunManifest" class="btn btn-primary">&#9654; Synthesize Prompts</button>
+        </div>
+      </div>
+
+      <!-- In-Tab Model & Prompt Configuration -->
+      <details class="card in-tab-config" style="margin-bottom: 20px;">
+        <summary class="config-summary">
+          <strong>&#9881; Prompt Synthesizer &amp; Diffusion Profile Settings</strong>
+          <span class="badge badge-accent">Role: Prompt Synthesis</span>
+        </summary>
+        <div class="in-tab-config-body">
+          <div class="config-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Model Selection:</label>
+              <select id="modelPromptSynthesizer" class="select-input model-dropdown"></select>
+              <input type="text" id="modelPromptSynthesizerCustom" class="text-input" style="margin-top: 6px;" placeholder="or custom model name">
+            </div>
+            <div class="form-group">
+              <label>Temperature: <span id="tempSynthVal">0.4</span></label>
+              <input type="range" id="tempSynth" min="0" max="1" step="0.05" value="0.4">
+            </div>
+          </div>
+          <div class="config-grid" style="grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;">
+            <div class="form-group">
+              <label>Active Diffusion Profile:</label>
+              <select id="activeProfileSelect" class="select-input"></select>
+            </div>
+            <div class="form-group">
+              <label>Default Negative Prompt:</label>
+              <input type="text" id="profileNegativePrompt" class="text-input">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 10px;">
+            <label>Synthesizer Instructions (System Prompt):</label>
+            <textarea id="promptSynth" class="textarea-input" rows="3"></textarea>
+          </div>
+          <div style="text-align: right; margin-top: 8px;">
+            <button id="btnSaveSynthConfig" class="btn btn-sm btn-secondary">Save Model &amp; Profile</button>
+          </div>
+        </div>
+      </details>
+
+      <!-- Stage Progress Banner -->
+      <div id="manifestProgressBox" class="progress-notice-card" style="display: none;">
+        <span class="spinner"></span>
+        <span id="manifestProgressMsg">Synthesizing prompts with LM Studio...</span>
+      </div>
+
+      <div id="manifestBlocksContainer" class="manifest-blocks-list"></div>
+    </section>
+
+    <!-- Tab 5: Image Render & Review -->
+    <section id="tab-render" class="tab-content">
+      <div class="tab-header-row">
+        <div>
+          <h2>Phase 2: Headless Diffusion Batch &amp; Image Review</h2>
+          <p class="section-desc">Select your ComfyUI workflow, render images, inspect outputs, and tweak &amp; regenerate individual scenes.</p>
+        </div>
+        <div class="render-controls-group">
+          <label for="selectWorkflow">Workflow:</label>
+          <select id="selectWorkflow" class="select-input" style="width: 200px;"></select>
+          <button id="btnStartBatchRender" class="btn btn-success">&#9654; Start Batch Render</button>
+        </div>
+      </div>
+
+      <!-- Live render progress banner -->
+      <div id="renderProgressBox" class="render-progress-card card" style="display: none;">
+        <div class="progress-header">
+          <span id="renderStatusText"><span class="spinner"></span> Rendering in progress...</span>
+          <span id="renderProgressPercent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="renderProgressBar" class="progress-bar-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <div id="imagesGallery" class="images-grid"></div>
+    </section>
+
+    <!-- Tab 6: Reader Preview -->
+    <section id="tab-reader" class="tab-content">
+      <div class="tab-header-row">
+        <div>
+          <h2>Phase 3: Static Reader Preview</h2>
+          <p class="section-desc">Responsive offline reader layout with dialogue quote highlighting (preserved from <code>build_site.cjs</code>) and embedded illustrations.</p>
+        </div>
+        <div class="btn-group">
+          <button id="btnCompileReader" class="btn btn-primary">&#9654; Compile index.html</button>
+          <a id="btnOpenReaderTab" href="#" target="_blank" class="btn btn-secondary">Open in New Tab &#8599;</a>
+        </div>
+      </div>
+      <div class="reader-preview-frame-wrapper">
+        <iframe id="readerIframe" src="about:blank"></iframe>
+      </div>
+    </section>
+  </div>
+
+  <!-- New Project Modal (Direct Drag & Drop + Native File Browser) -->
+  <div id="modalNewProject" class="modal-backdrop" style="display: none;">
+    <div class="modal-card modal-large">
+      <div class="card-header">
+        <h3>Create New Story Project</h3>
+        <button id="btnCloseModal" class="btn btn-icon">&times;</button>
+      </div>
+
+      <!-- Drag & Drop Zone + Native File Picker -->
+      <div id="dropZone" class="drop-zone">
+        <div class="drop-zone-icon">&#128194;</div>
+        <p class="drop-zone-text"><strong>Drag &amp; Drop your story file here</strong> (.txt, .md)</p>
+        <p class="drop-zone-sub">or click below to use the Windows file picker</p>
+        <button type="button" id="btnBrowseFile" class="btn btn-secondary" style="margin-top: 10px;">
+          &#128193; Browse Files...
+        </button>
+        <input type="file" id="fileStoryInput" accept=".txt,.md,.text" style="display: none;">
+      </div>
+
+      <!-- File details once loaded -->
+      <div id="loadedFileInfo" class="file-info-box" style="display: none;">
+        <div class="file-info-header">
+          <span id="loadedFileName" class="file-name">&#128196; story.txt</span>
+          <span id="loadedFileStats" class="badge badge-accent">0 words</span>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 14px;">
+        <label>Story Slug (Folder Name):</label>
+        <input type="text" id="newStorySlug" class="text-input" placeholder="my_new_story">
+      </div>
+
+      <div class="form-group">
+        <label>Story Text Content (loaded from file or paste directly):</label>
+        <textarea id="newStoryText" class="textarea-input" rows="7" placeholder="Story paragraphs will appear here once loaded..."></textarea>
+      </div>
+
+      <div class="btn-group" style="justify-content: flex-end; margin-top: 18px;">
+        <button id="btnCancelNewProject" class="btn btn-secondary">Cancel</button>
+        <button id="btnSubmitNewProject" class="btn btn-primary">Create Story Project</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tweak & Regenerate Modal -->
+  <div id="modalTweakRerun" class="modal-backdrop" style="display: none;">
+    <div class="modal-card modal-large">
+      <div class="card-header">
+        <h3>Tweak Prompt &amp; Regenerate Image (<span id="tweakChunkId"></span>)</h3>
+        <button id="btnCloseTweakModal" class="btn btn-icon">&times;</button>
+      </div>
+      <div class="form-group" style="margin-top: 14px;">
+        <label>Positive Prompt:</label>
+        <textarea id="tweakPrompt" class="textarea-input" rows="4"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Negative Prompt:</label>
+        <textarea id="tweakNegativePrompt" class="textarea-input" rows="2"></textarea>
+      </div>
+      <div class="dimensions-row">
+        <div class="form-group">
+          <label>Width:</label>
+          <input type="number" id="tweakWidth" class="text-input" value="1344">
+        </div>
+        <div class="form-group">
+          <label>Height:</label>
+          <input type="number" id="tweakHeight" class="text-input" value="768">
+        </div>
+        <div class="form-group">
+          <label>Seed (leave blank for random):</label>
+          <input type="number" id="tweakSeed" class="text-input" placeholder="Random">
+        </div>
+      </div>
+      <div class="btn-group" style="justify-content: flex-end; margin-top: 18px;">
+        <button id="btnCancelTweak" class="btn btn-secondary">Cancel</button>
+        <button id="btnSubmitTweakRerun" class="btn btn-success">&#9654; Regenerate Image</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
