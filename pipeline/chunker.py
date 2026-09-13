@@ -17,11 +17,12 @@ def count_words(text: str) -> int:
     return len(matches)
 
 
-def chunk_text(raw_text: str) -> Dict[str, Any]:
+def chunk_text(raw_text: str, max_chunk_words: int = 400) -> Dict[str, Any]:
     r"""
     Splits raw story text into deterministic chunks.
     Normalizes CRLF to LF, splits on paragraph breaks (\n\s*\n),
     and filters out empty strings.
+    If a paragraph exceeds max_chunk_words, it splits on sentence boundaries to keep chunks manageable.
     """
     # Normalize line breaks
     normalized = raw_text.replace("\r\n", "\n").replace("\r", "\n").strip()
@@ -39,20 +40,49 @@ def chunk_text(raw_text: str) -> Dict[str, Any]:
         if not cleaned:
             continue
 
-        chunk_id = f"chunk_{chunk_idx:03d}"
-        word_count = count_words(cleaned)
+        w_count = count_words(cleaned)
+        if max_chunk_words and w_count > max_chunk_words:
+            # Split giant paragraph on sentence boundaries
+            sentences = re.split(r"(?<=[.!?])\s+", cleaned)
+            sub_chunks: List[str] = []
+            curr_text: List[str] = []
+            curr_words = 0
+            for sent in sentences:
+                sent = sent.strip()
+                if not sent:
+                    continue
+                swords = count_words(sent)
+                if curr_text and (curr_words + swords > max_chunk_words):
+                    sub_chunks.append(" ".join(curr_text))
+                    curr_text = [sent]
+                    curr_words = swords
+                else:
+                    curr_text.append(sent)
+                    curr_words += swords
+            if curr_text:
+                sub_chunks.append(" ".join(curr_text))
 
-        chunks.append({
-            "chunk_id": chunk_id,
-            "text": cleaned,
-            "word_count": word_count
-        })
-        chunk_idx += 1
+            for sc in sub_chunks:
+                chunk_id = f"chunk_{chunk_idx:03d}"
+                chunks.append({
+                    "chunk_id": chunk_id,
+                    "text": sc,
+                    "word_count": count_words(sc)
+                })
+                chunk_idx += 1
+        else:
+            chunk_id = f"chunk_{chunk_idx:03d}"
+            chunks.append({
+                "chunk_id": chunk_id,
+                "text": cleaned,
+                "word_count": w_count
+            })
+            chunk_idx += 1
 
     return {"chunks": chunks}
 
 
-def chunk_file(input_path: str, output_path: str = None) -> Dict[str, Any]:
+def chunk_file(input_path: str, output_path: str = None, max_chunk_words: int = 400) -> Dict[str, Any]:
     """Reads input story file, executes chunking, and optionally saves to output_path."""
     if not os.path.isfile(input_path):
         raise FileNotFoundError(f"Input story file not found: {input_path}")
@@ -60,7 +90,7 @@ def chunk_file(input_path: str, output_path: str = None) -> Dict[str, Any]:
     with open(input_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    result = chunk_text(content)
+    result = chunk_text(content, max_chunk_words=max_chunk_words)
 
     if output_path:
         os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)

@@ -32,9 +32,10 @@ env.bak/
 .DS_Store
 Thumbs.db
 
-# Test artifacts and transient project runs
-projects/manual_e2e_warrior/
-projects/test_*/
+# User projects (keep reference sample project the_rust_forest)
+projects/*
+!projects/the_rust_forest/
+!projects/the_rust_forest/**
 tests/artifacts/
 scratch/
 *.log

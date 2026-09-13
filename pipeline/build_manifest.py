@@ -19,7 +19,9 @@ from pipeline.llm_client import (
     load_llm_config,
     parse_beats_response,
     parse_bible_response,
-    parse_prompt_response
+    parse_prompt_response,
+    estimate_tokens,
+    ContextWindowExceededError
 )
 
 
@@ -82,7 +84,7 @@ def run_stage_bible(
     1. Global art style inferred from story tone and genre
     2. Character visual profiles (physical traits, distinguishing marks, clothing)
     3. Setting profiles (architecture, atmosphere, lighting)
-    Can also incorporate existing characters/settings from 02_selected_beats.json if present.
+    Dynamically partitions large stories across batches to stay safely within the loaded model's context window.
     """
     chunks_file = os.path.join(project_dir, "artifacts", "01_chunks.json")
     beats_file = os.path.join(project_dir, "artifacts", "02_selected_beats.json")
@@ -115,9 +117,6 @@ def run_stage_bible(
     char_list = sorted(list(known_chars))
     setting_list = sorted(list(known_settings))
 
-    # Analyze the full story text (all chunks) to build an exhaustive visual compendium
-    story_sample = "\n\n".join([f"[{c['chunk_id']}]: {c['text']}" for c in chunks])
-
     role_cfg = llm_config.get("roles", {}).get("structured_analyst", {})
     model = role_cfg.get("model", "thedrummer_orion-26b-a4b-v1")
     temperature = role_cfg.get("temperature", 0.2)
@@ -133,7 +132,36 @@ def run_stage_bible(
     )
 
     resolved_model = llm_client.resolve_model(model)
-    msg = f"Extracting Visual Bible using model '{resolved_model}'..."
+    n_ctx = llm_client.get_model_context_size(resolved_model)
+
+    # Reserve token budget for system prompt, instructions, known hints, and output tokens
+    reserved_tokens = 2200
+    chunk_token_budget = max(2048, n_ctx - reserved_tokens)
+
+    # Calculate total tokens for all chunks
+    total_tokens = sum(estimate_tokens(c["text"]) + 8 for c in chunks)
+
+    # Check whether all chunks fit comfortably in a single pass or need batching
+    if total_tokens <= chunk_token_budget:
+        chunk_batches = [chunks]
+    else:
+        chunk_batches = []
+        curr_batch = []
+        curr_tokens = 0
+        for c in chunks:
+            c_tok = estimate_tokens(c["text"]) + 8
+            if curr_batch and (curr_tokens + c_tok > chunk_token_budget):
+                chunk_batches.append(curr_batch)
+                curr_batch = [c]
+                curr_tokens = c_tok
+            else:
+                curr_batch.append(c)
+                curr_tokens += c_tok
+        if curr_batch:
+            chunk_batches.append(curr_batch)
+
+    total_batches = len(chunk_batches)
+    msg = f"Extracting Visual Bible using model '{resolved_model}' (context size: {n_ctx} tokens, {total_batches} batch(es))..."
     print(f"[*] {msg}")
     if callback: callback(msg)
 
@@ -141,8 +169,23 @@ def run_stage_bible(
     if char_list or setting_list:
         known_hint = f"\nFocus on these known entities if present in the text:\nCharacters: {', '.join(char_list)}\nSettings: {', '.join(setting_list)}\n"
 
-    user_prompt = f"""STORY TEXT:
-{story_sample}
+    accumulated_bible: Dict[str, Any] = {
+        "global_art_style": "",
+        "characters": {},
+        "settings": {}
+    }
+
+    for b_idx, b_chunks in enumerate(chunk_batches, 1):
+        b_sample = "\n\n".join([f"[{c['chunk_id']}]: {c['text']}" for c in b_chunks])
+        first_cid = b_chunks[0]["chunk_id"]
+        last_cid = b_chunks[-1]["chunk_id"]
+        status_msg = f"Visual Bible: processing batch {b_idx}/{total_batches} ({first_cid} to {last_cid})..."
+        print(f"  -> {status_msg}")
+        if callback: callback(status_msg)
+
+        if b_idx == 1:
+            user_prompt = f"""STORY TEXT (PART {b_idx}/{total_batches}):
+{b_sample}
 {known_hint}
 Extract the visual continuity bible for this story:
 1. GLOBAL ART STYLE: A concise artistic aesthetic, color palette, and rendering medium for illustrating this story consistently (e.g. "1980s dark anime aesthetic, muted earth tones, cinematic cel shading").
@@ -154,23 +197,82 @@ GLOBAL ART STYLE: <style description>
 CHARACTER: <Name>: <exhaustive physical appearance, distinctive features, clothing>
 SETTING: <Name>: <visual environment description, materials, textures, lighting>
 """
+        else:
+            # Multi-batch continuation pass
+            existing_chars = "\n".join([f"- {k}: {v}" for k, v in accumulated_bible["characters"].items()])
+            existing_settings = "\n".join([f"- {k}: {v}" for k, v in accumulated_bible["settings"].items()])
+            existing_section = f"""[ESTABLISHED VISUAL CONTINUITY BIBLE FROM PRECEDING CHUNKS]
+Global Art Style: {accumulated_bible['global_art_style']}
 
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
-    ]
+Established Characters:
+{existing_chars if existing_chars else 'None'}
 
-    raw_resp = llm_client.chat_text(messages, model=model, temperature=temperature, max_tokens=max_tokens)
-    bible = parse_bible_response(raw_resp, char_list, setting_list)
+Established Settings:
+{existing_settings if existing_settings else 'None'}
+"""
+            user_prompt = f"""{existing_section}
+STORY TEXT (PART {b_idx}/{total_batches}, chunks {first_cid} to {last_cid}):
+{b_sample}
+
+Analyze this new story section to expand and update the Visual Continuity Bible:
+1. NEW CHARACTERS: Identify any new characters introduced with exhaustive physical appearance, face, hair, clothing, and distinctive features.
+2. EXISTING CHARACTER UPDATES: If any previously established characters have new visual details, scars, costume changes, or physical transformations revealed, describe their updated appearance.
+3. NEW SETTINGS: Identify any newly visited locations with architecture, materials, lighting, atmosphere, and textures.
+4. GLOBAL ART STYLE: Maintain the established cohesive global art style.
+
+Format cleanly as:
+GLOBAL ART STYLE: <style description>
+CHARACTER: <Name>: <exhaustive physical appearance, distinctive features, clothing>
+SETTING: <Name>: <visual environment description, materials, textures, lighting>
+"""
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+
+        raw_resp = llm_client.chat_text(messages, model=model, temperature=temperature, max_tokens=max_tokens)
+        batch_bible = parse_bible_response(raw_resp, char_list, setting_list)
+
+        # Merge batch_bible into accumulated_bible
+        if batch_bible.get("global_art_style"):
+            if not accumulated_bible["global_art_style"] or len(batch_bible["global_art_style"]) > len(accumulated_bible["global_art_style"]):
+                accumulated_bible["global_art_style"] = batch_bible["global_art_style"]
+
+        for cname, cdesc in batch_bible.get("characters", {}).items():
+            if not cdesc:
+                continue
+            matched = match_bible_entity(cname, accumulated_bible["characters"])
+            if matched:
+                existing_key, existing_val = matched
+                if existing_val and cdesc.lower() not in existing_val.lower():
+                    accumulated_bible["characters"][existing_key] = f"{existing_val}; {cdesc}"
+                elif not existing_val:
+                    accumulated_bible["characters"][existing_key] = cdesc
+            else:
+                accumulated_bible["characters"][cname] = cdesc
+
+        for sname, sdesc in batch_bible.get("settings", {}).items():
+            if not sdesc:
+                continue
+            matched = match_bible_entity(sname, accumulated_bible["settings"])
+            if matched:
+                existing_key, existing_val = matched
+                if existing_val and sdesc.lower() not in existing_val.lower():
+                    accumulated_bible["settings"][existing_key] = f"{existing_val}; {sdesc}"
+                elif not existing_val:
+                    accumulated_bible["settings"][existing_key] = sdesc
+            else:
+                accumulated_bible["settings"][sname] = sdesc
 
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(bible, f, indent=2, ensure_ascii=False)
+        json.dump(accumulated_bible, f, indent=2, ensure_ascii=False)
 
-    done_msg = f"Visual Bible completed: {len(bible.get('characters', {}))} characters, {len(bible.get('settings', {}))} settings -> 03_visual_bible.json"
+    done_msg = f"Visual Bible completed across {total_batches} batch(es): {len(accumulated_bible.get('characters', {}))} characters, {len(accumulated_bible.get('settings', {}))} settings -> 03_visual_bible.json"
     print(f"[+] {done_msg}")
     if callback: callback(done_msg)
-    return bible
+    return accumulated_bible
 
 
 def run_stage_beats(
@@ -181,7 +283,7 @@ def run_stage_beats(
 ) -> Dict[str, Any]:
     """
     Step 3: Sliding Window Beat Selection.
-    Target: 5 chunks, Context: 2 chunks, Stride: 5 chunks.
+    Target: 5 chunks (dynamically scaled for context size), Context: 2 chunks.
     Selects 0 to N visual moments based on established Visual Bible context.
     """
     chunks_file = os.path.join(project_dir, "artifacts", "01_chunks.json")
@@ -223,21 +325,41 @@ def run_stage_beats(
     )
 
     resolved_model = llm_client.resolve_model(model)
-    msg = f"Step 3: Beat Selection across {len(chunks)} chunks using model '{resolved_model}'..."
-    print(f"[*] {msg}")
-    if callback: callback(msg)
+    n_ctx = llm_client.get_model_context_size(resolved_model)
+    max_prompt_budget = max(2048, n_ctx - 1500)
 
     target_size = 5
     context_size = 2
-    stride = 5
 
     all_beats: List[Dict[str, Any]] = []
     seen_chunk_ids = set()
 
-    total_windows = (len(chunks) + stride - 1) // stride
+    msg = f"Step 3: Beat Selection across {len(chunks)} chunks using model '{resolved_model}' (context window: {n_ctx} tokens)..."
+    print(f"[*] {msg}")
+    if callback: callback(msg)
 
-    for window_idx, start_idx in enumerate(range(0, len(chunks), stride)):
-        target_chunks = chunks[start_idx:start_idx + target_size]
+    start_idx = 0
+    window_idx = 0
+
+    while start_idx < len(chunks):
+        window_idx += 1
+        # Dynamically scale target_size down if chunks in this window are dense
+        curr_target_size = min(target_size, len(chunks) - start_idx)
+        while curr_target_size > 1:
+            test_target = chunks[start_idx:start_idx + curr_target_size]
+            test_context = chunks[max(0, start_idx - context_size):start_idx]
+            est_tokens = (
+                estimate_tokens(bible_context) +
+                estimate_tokens(system_prompt) +
+                sum(estimate_tokens(c["text"]) + 10 for c in test_context) +
+                sum(estimate_tokens(c["text"]) + 10 for c in test_target) +
+                400
+            )
+            if est_tokens <= max_prompt_budget:
+                break
+            curr_target_size -= 1
+
+        target_chunks = chunks[start_idx:start_idx + curr_target_size]
         target_ids = {c["chunk_id"] for c in target_chunks}
 
         context_start = max(0, start_idx - context_size)
@@ -246,7 +368,7 @@ def run_stage_beats(
         context_text = "\n\n".join([f"[{c['chunk_id']}]: {c['text']}" for c in context_chunks])
         target_text = "\n\n".join([f"[{c['chunk_id']}]: {c['text']}" for c in target_chunks])
 
-        status_msg = f"Analyzing Window {window_idx + 1}/{total_windows} ({', '.join(sorted(target_ids))}) with model '{model}'..."
+        status_msg = f"Analyzing Window {window_idx} ({', '.join(sorted(target_ids))}) with model '{resolved_model}'..."
         print(f"  -> {status_msg}")
         if callback: callback(status_msg)
 
@@ -286,6 +408,8 @@ NONE
             if cid in target_ids and cid not in seen_chunk_ids:
                 seen_chunk_ids.add(cid)
                 all_beats.append(b)
+
+        start_idx += curr_target_size
 
     all_beats.sort(key=lambda x: x.get("chunk_id", ""))
     result = {"selected_beats": all_beats}

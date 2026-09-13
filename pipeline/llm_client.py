@@ -11,10 +11,31 @@ import requests
 from typing import Dict, Any, List, Optional, Tuple, Set
 
 
+class ContextWindowExceededError(RuntimeError):
+    """Raised when an LLM prompt exceeds the loaded model's context window (n_ctx)."""
+    def __init__(self, message: str, n_prompt_tokens: Optional[int] = None, n_ctx: Optional[int] = None):
+        super().__init__(message)
+        self.n_prompt_tokens = n_prompt_tokens
+        self.n_ctx = n_ctx
+
+
+def estimate_tokens(text: str) -> int:
+    """
+    Conservative token count estimator for text prompts across diverse tokenizer families.
+    Avoids external C-dependencies while ensuring token budgets aren't exceeded.
+    """
+    if not text:
+        return 0
+    char_est = len(text) / 3.2
+    word_est = len(text.split()) * 1.35
+    return int(max(char_est, word_est)) + 10
+
+
 class LMStudioClient:
     def __init__(self, api_base: str = "http://localhost:1234/v1", timeout: int = 120):
         self.api_base = api_base.rstrip("/")
         self.timeout = timeout
+        self._cached_context_size: Optional[int] = None
 
     def check_health(self) -> Dict[str, Any]:
         """Checks if LM Studio server is reachable."""
@@ -65,6 +86,75 @@ class LMStudioClient:
         """Public resolver returning matching model or fallback from LM Studio."""
         return self._resolve_model(model)
 
+    def get_model_context_size(self, model: Optional[str] = None) -> int:
+        """
+        Queries LM Studio for the loaded context length of the active model.
+        Falls back to cached context size or default 8192.
+        """
+        if self._cached_context_size:
+            return self._cached_context_size
+
+        host_base = re.sub(r"/v\d+/?$", "", self.api_base)
+        url = f"{host_base}/api/v0/models"
+        resolved = self._resolve_model(model) if model else None
+
+        try:
+            resp = requests.get(url, timeout=3)
+            if resp.status_code == 200:
+                data = resp.json()
+                models_data = data.get("data", [])
+                loaded_models = [m for m in models_data if m.get("state") == "loaded"]
+                target_model = None
+
+                if resolved:
+                    matching = [m for m in models_data if m.get("id") == resolved or resolved.lower() in m.get("id", "").lower()]
+                    if matching:
+                        target_model = next((m for m in matching if m.get("state") == "loaded"), matching[0])
+
+                if not target_model and loaded_models:
+                    target_model = loaded_models[0]
+
+                if target_model:
+                    ctx = target_model.get("loaded_context_length") or target_model.get("max_context_length")
+                    if ctx and isinstance(ctx, int) and ctx > 0:
+                        self._cached_context_size = ctx
+                        return ctx
+        except Exception:
+            pass
+
+        return 8192
+
+    def _handle_http_error(self, resp: requests.Response):
+        """Processes non-200 responses, parsing context errors without wasteful retries."""
+        text = resp.text or ""
+        if resp.status_code == 400 and ("exceed_context_size_error" in text or "exceeds the available context size" in text):
+            n_tokens = None
+            n_ctx = None
+            try:
+                err_data = resp.json()
+                if isinstance(err_data, dict):
+                    if "n_prompt_tokens" in err_data:
+                        n_tokens = err_data.get("n_prompt_tokens")
+                        n_ctx = err_data.get("n_ctx")
+                    elif "error" in err_data:
+                        err_val = err_data["error"]
+                        if isinstance(err_val, dict):
+                            n_tokens = err_val.get("n_prompt_tokens")
+                            n_ctx = err_val.get("n_ctx")
+                        elif isinstance(err_val, str):
+                            m = re.search(r"request \((\d+) tokens\) exceeds the available context size \((\d+) tokens\)", err_val)
+                            if m:
+                                n_tokens = int(m.group(1))
+                                n_ctx = int(m.group(2))
+            except Exception:
+                pass
+            if n_ctx:
+                self._cached_context_size = n_ctx
+            msg = f"Prompt of ~{n_tokens or 'many'} tokens exceeded LM Studio's loaded context window ({n_ctx or 'limit'} tokens)."
+            raise ContextWindowExceededError(msg, n_prompt_tokens=n_tokens, n_ctx=n_ctx)
+
+        raise RuntimeError(f"HTTP {resp.status_code}: {text}")
+
     def chat_text(
         self,
         messages: List[Dict[str, str]],
@@ -96,7 +186,7 @@ class LMStudioClient:
             try:
                 resp = requests.post(url, json=payload, timeout=self.timeout)
                 if resp.status_code != 200:
-                    raise RuntimeError(f"HTTP {resp.status_code}: {resp.text}")
+                    self._handle_http_error(resp)
 
                 data = resp.json()
                 msg = data["choices"][0]["message"]
@@ -106,6 +196,8 @@ class LMStudioClient:
                     content = msg.get("reasoning_content", "")
                 return content.strip()
 
+            except ContextWindowExceededError:
+                raise
             except Exception as e:
                 last_error = e
                 if attempt < retries:
@@ -144,11 +236,13 @@ class LMStudioClient:
                     payload["max_tokens"] = -1
                 resp = requests.post(url, json=payload, timeout=self.timeout)
                 if resp.status_code != 200:
-                    raise RuntimeError(f"HTTP {resp.status_code}: {resp.text}")
+                    self._handle_http_error(resp)
 
                 data = resp.json()
                 raw_text = data["choices"][0]["message"]["content"]
                 break
+            except ContextWindowExceededError:
+                raise
             except Exception as e:
                 if attempt == retries:
                     raise RuntimeError(f"LM Studio chat error: {e}")
