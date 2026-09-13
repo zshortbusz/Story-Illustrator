@@ -134,8 +134,8 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/zshortbusz/story-illustrator.git
-   cd story-illustrator
+   git clone https://github.com/zshortbusz/Story-Illustrator.git
+   cd Story-Illustrator
    ```
 
 2. **Create and activate a virtual environment**:
