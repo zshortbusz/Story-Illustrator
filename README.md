@@ -128,6 +128,7 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
 3. **ComfyUI**: [github.com/comfyanonymous/ComfyUI](https://github.com/comfyanonymous/ComfyUI)
    - Running at `http://127.0.0.1:8188`.
    - Ensure the required checkpoints for your chosen workflow are installed in `ComfyUI/models/`.
+4. ADDED SUPPORT FOR OTHER PROVIDERS.
 
 ---
 
