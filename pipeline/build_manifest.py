@@ -162,7 +162,7 @@ def run_stage_bible(
 
     total_batches = len(chunk_batches)
     msg = f"Extracting Visual Bible using model '{resolved_model}' (context size: {n_ctx} tokens, {total_batches} batch(es))..."
-    print(f"[*] {msg}")
+    print(f"[*] {msg}", flush=True)
     if callback: callback(msg)
 
     known_hint = ""
@@ -180,7 +180,7 @@ def run_stage_bible(
         first_cid = b_chunks[0]["chunk_id"]
         last_cid = b_chunks[-1]["chunk_id"]
         status_msg = f"Visual Bible: processing batch {b_idx}/{total_batches} ({first_cid} to {last_cid})..."
-        print(f"  -> {status_msg}")
+        print(f"  -> {status_msg}", flush=True)
         if callback: callback(status_msg)
 
         if b_idx == 1:
@@ -270,7 +270,7 @@ SETTING: <Name>: <visual environment description, materials, textures, lighting>
         json.dump(accumulated_bible, f, indent=2, ensure_ascii=False)
 
     done_msg = f"Visual Bible completed across {total_batches} batch(es): {len(accumulated_bible.get('characters', {}))} characters, {len(accumulated_bible.get('settings', {}))} settings -> 03_visual_bible.json"
-    print(f"[+] {done_msg}")
+    print(f"[+] {done_msg}", flush=True)
     if callback: callback(done_msg)
     return accumulated_bible
 
@@ -335,7 +335,7 @@ def run_stage_beats(
     seen_chunk_ids = set()
 
     msg = f"Step 3: Beat Selection across {len(chunks)} chunks using model '{resolved_model}' (context window: {n_ctx} tokens)..."
-    print(f"[*] {msg}")
+    print(f"[*] {msg}", flush=True)
     if callback: callback(msg)
 
     start_idx = 0
@@ -369,7 +369,7 @@ def run_stage_beats(
         target_text = "\n\n".join([f"[{c['chunk_id']}]: {c['text']}" for c in target_chunks])
 
         status_msg = f"Analyzing Window {window_idx} ({', '.join(sorted(target_ids))}) with model '{resolved_model}'..."
-        print(f"  -> {status_msg}")
+        print(f"  -> {status_msg}", flush=True)
         if callback: callback(status_msg)
 
         user_prompt = f"""{bible_context}
@@ -419,7 +419,7 @@ NONE
         json.dump(result, f, indent=2, ensure_ascii=False)
 
     done_msg = f"Beat selection completed: {len(all_beats)} beats selected -> 02_selected_beats.json"
-    print(f"[+] {done_msg}")
+    print(f"[+] {done_msg}", flush=True)
     if callback: callback(done_msg)
     return result
 

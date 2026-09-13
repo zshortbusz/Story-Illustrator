@@ -32,7 +32,7 @@ def estimate_tokens(text: str) -> int:
 
 
 class LMStudioClient:
-    def __init__(self, api_base: str = "http://localhost:1234/v1", timeout: int = 120):
+    def __init__(self, api_base: str = "http://localhost:1234/v1", timeout: int = 300):
         self.api_base = api_base.rstrip("/")
         self.timeout = timeout
         self._cached_context_size: Optional[int] = None
