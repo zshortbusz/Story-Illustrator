@@ -27,11 +27,12 @@
       <!-- Live Service Status Badges -->
       <div class="status-badges">
         <div id="badgeLMStudio" class="badge badge-offline" title="LM Studio Status">
-          <span class="badge-dot"></span> LM Studio :1234
+          <span class="badge-dot"></span> <span id="labelLMStudio">LM Studio :1234</span>
         </div>
         <div id="badgeComfyUI" class="badge badge-offline" title="ComfyUI Status">
-          <span class="badge-dot"></span> ComfyUI :8188
+          <span class="badge-dot"></span> <span id="labelComfyUI">ComfyUI :8188</span>
         </div>
+        <button id="btnOpenProvidersModal" class="btn btn-secondary" title="Configure LLM & Image Providers" style="padding: 4px 10px; font-size: 0.82rem;">&#9881; Providers</button>
         <button id="btnRefreshStatus" class="btn btn-icon" title="Refresh Service Status">&#8635;</button>
       </div>
     </header>
@@ -365,6 +366,80 @@
       <div class="btn-group" style="justify-content: flex-end; margin-top: 18px;">
         <button id="btnCancelNewProject" class="btn btn-secondary">Cancel</button>
         <button id="btnSubmitNewProject" class="btn btn-primary">Create Story Project</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Providers & API Settings Modal -->
+  <div id="modalProviders" class="modal-backdrop" style="display: none;">
+    <div class="modal-card modal-large" style="max-width: 650px;">
+      <div class="card-header">
+        <h3>&#9881; Configure LLM &amp; Image Providers</h3>
+        <button id="btnCloseProvidersModal" class="btn btn-icon">&times;</button>
+      </div>
+      <p class="section-desc" style="margin-top: 6px; margin-bottom: 16px;">
+        Use default local instances (LM Studio &amp; ComfyUI) or bring your own API endpoints and keys.
+      </p>
+
+      <!-- LLM Provider Section -->
+      <div class="card" style="margin-bottom: 16px; border: 1px solid var(--border); padding: 14px;">
+        <h4 style="color: var(--text-gold); margin-bottom: 10px;">Phase 1: LLM Provider</h4>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label for="providerLLMBackend">Backend Type:</label>
+          <select id="providerLLMBackend" class="select-input">
+            <option value="lm_studio">LM Studio (Local Default :1234)</option>
+            <option value="openai_compatible">OpenAI / Compatible / Custom API</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label for="providerLLMBase">API Base URL:</label>
+          <input type="text" id="providerLLMBase" class="text-input" placeholder="http://localhost:1234/v1">
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label for="providerLLMKey">API Key (optional / checked in env vars):</label>
+          <input type="password" id="providerLLMKey" class="text-input" placeholder="sk-...">
+        </div>
+        <div class="form-group">
+          <label for="providerLLMContext">Context Window Size (tokens):</label>
+          <input type="number" id="providerLLMContext" class="text-input" placeholder="8192">
+        </div>
+      </div>
+
+      <!-- Image Provider Section -->
+      <div class="card" style="margin-bottom: 16px; border: 1px solid var(--border); padding: 14px;">
+        <h4 style="color: var(--text-gold); margin-bottom: 10px;">Phase 2: Image Generation Provider</h4>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label for="providerImageBackend">Backend Type:</label>
+          <select id="providerImageBackend" class="select-input">
+            <option value="comfyui">ComfyUI (Local Default Headless :8188)</option>
+            <option value="openai_compatible">OpenAI / Compatible Images API (DALL-E / Flux / Together)</option>
+          </select>
+        </div>
+        <div id="comfySettingsGroup">
+          <div class="form-group">
+            <label for="providerComfyHost">ComfyUI Host:</label>
+            <input type="text" id="providerComfyHost" class="text-input" placeholder="127.0.0.1:8188">
+          </div>
+        </div>
+        <div id="openaiImageSettingsGroup" style="display: none;">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="providerImageBase">Image API Base URL:</label>
+            <input type="text" id="providerImageBase" class="text-input" placeholder="https://api.openai.com/v1">
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="providerImageKey">API Key (optional / checked in env vars):</label>
+            <input type="password" id="providerImageKey" class="text-input" placeholder="sk-...">
+          </div>
+          <div class="form-group">
+            <label for="providerImageModel">Image Model:</label>
+            <input type="text" id="providerImageModel" class="text-input" placeholder="dall-e-3">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-group" style="justify-content: flex-end; margin-top: 14px;">
+        <button id="btnCancelProviders" class="btn btn-secondary">Cancel</button>
+        <button id="btnSaveProviders" class="btn btn-primary">&#10004; Save Settings</button>
       </div>
     </div>
   </div>

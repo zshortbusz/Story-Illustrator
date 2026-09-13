@@ -38,23 +38,25 @@ PHASE 1: Story Analysis & Prompt Synthesis
 
 
 def check_runtime_readiness(llm_client: LMStudioClient):
-    """Verifies LM Studio is accessible and warns if ComfyUI is also running."""
+    """Verifies LLM server is accessible and warns if ComfyUI is also running (for local models)."""
     import requests
     health = llm_client.check_health()
     if not health.get("online"):
+        label = "LM Studio" if getattr(llm_client, "backend", "lm_studio") == "lm_studio" else "LLM Provider"
         raise RuntimeError(
-            f"LM Studio is NOT reachable at {llm_client.api_base}!\n"
-            "Please launch LM Studio, start the local server, and load your chosen model before running Phase 1."
+            f"{label} is NOT reachable at {llm_client.api_base}!\n"
+            f"Details: {health.get('message', 'Server offline')}"
         )
 
-    # Check if ComfyUI is running on default port 8188
-    try:
-        resp = requests.get("http://127.0.0.1:8188/system_stats", timeout=1)
-        if resp.status_code == 200:
-            print("\n[WARNING] ComfyUI server is currently running at http://127.0.0.1:8188.")
-            print("[WARNING] It is strongly recommended to CLOSE ComfyUI during Phase 1 to prevent GPU VRAM Out-of-Memory failures.\n")
-    except Exception:
-        pass
+    # Only warn about ComfyUI if running local LM Studio backend
+    if getattr(llm_client, "backend", "lm_studio") == "lm_studio":
+        try:
+            resp = requests.get("http://127.0.0.1:8188/system_stats", timeout=1)
+            if resp.status_code == 200:
+                print("\n[WARNING] ComfyUI server is currently running at http://127.0.0.1:8188.")
+                print("[WARNING] It is strongly recommended to CLOSE ComfyUI during local Phase 1 to prevent GPU VRAM Out-of-Memory failures.\n")
+        except Exception:
+            pass
 
 
 def run_stage_chunk(project_dir: str, callback: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
@@ -645,7 +647,15 @@ NEGATIVE: <negative prompt string>
     return manifest
 
 
-def run_phase_1(project_dir: str, stage: str = "all", callback: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
+def run_phase_1(
+    project_dir: str,
+    stage: str = "all",
+    callback: Optional[Callable[[str], None]] = None,
+    backend: Optional[str] = None,
+    llm_api_base: Optional[str] = None,
+    llm_api_key: Optional[str] = None,
+    context_window: Optional[int] = None
+) -> Dict[str, Any]:
     """Runs Phase 1 stages in logical sequence: chunk -> bible -> beats -> manifest."""
     print_banner(stage)
     config_file = os.path.join(project_dir, "config", "llm_models.json")
@@ -653,8 +663,17 @@ def run_phase_1(project_dir: str, stage: str = "all", callback: Optional[Callabl
         raise FileNotFoundError(f"Missing config: {config_file}")
 
     llm_config = load_llm_config(config_file)
-    api_base = llm_config.get("api_base", "http://localhost:1234/v1")
-    client = LMStudioClient(api_base=api_base)
+    api_base = llm_api_base or llm_config.get("api_base", "http://localhost:1234/v1")
+    api_key = llm_api_key or llm_config.get("api_key")
+    resolved_backend = backend or llm_config.get("backend", "lm_studio")
+    ctx_win = context_window or llm_config.get("context_window")
+
+    client = LMStudioClient(
+        api_base=api_base,
+        api_key=api_key,
+        backend=resolved_backend,
+        context_window=ctx_win
+    )
 
     if stage in ["bible", "beats", "manifest", "all"]:
         check_runtime_readiness(client)
@@ -677,9 +696,20 @@ def main():
     parser.add_argument("--project", "-p", required=True, help="Path to project directory (e.g. ./projects/my_story)")
     parser.add_argument("--stage", "-s", choices=["chunk", "bible", "beats", "manifest", "all"], default="all",
                         help="Pipeline stage to execute (default: all)")
+    parser.add_argument("--backend", choices=["lm_studio", "openai_compatible"], help="LLM backend (default: from config or lm_studio)")
+    parser.add_argument("--llm-api-base", help="Custom OpenAI-compatible LLM endpoint URL")
+    parser.add_argument("--llm-api-key", help="API key for custom LLM endpoint")
+    parser.add_argument("--context-window", type=int, help="Override context window size in tokens")
     args = parser.parse_args()
 
-    run_phase_1(args.project, args.stage)
+    run_phase_1(
+        args.project,
+        stage=args.stage,
+        backend=args.backend,
+        llm_api_base=args.llm_api_base,
+        llm_api_key=args.llm_api_key,
+        context_window=args.context_window
+    )
 
 
 if __name__ == "__main__":

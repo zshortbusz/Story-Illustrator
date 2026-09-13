@@ -19,6 +19,7 @@ from pipeline.project_manager import (
 )
 from pipeline.llm_client import LMStudioClient, load_llm_config
 from pipeline.comfy_client import ComfyUIClient
+from pipeline.image_client import create_image_client
 from pipeline.chunker import chunk_file
 from pipeline.build_manifest import (
     run_stage_chunk,
@@ -58,19 +59,42 @@ def create_app() -> Flask:
     # -------------------------------------------------------------------------
     @app.route("/api/status", methods=["GET"])
     def get_status():
-        llm_client = LMStudioClient()
+        slug = request.args.get("slug")
+        llm_cfg = dict(DEFAULT_LLM_CONFIG)
+        diff_cfg = dict(DEFAULT_DIFFUSION_PROFILES)
+        if slug:
+            try:
+                pdir = get_project_dir(slug)
+                l_path = os.path.join(pdir, "config", "llm_models.json")
+                if os.path.isfile(l_path):
+                    llm_cfg = load_llm_config(l_path)
+                d_path = os.path.join(pdir, "config", "diffusion_profiles.json")
+                if os.path.isfile(d_path):
+                    with open(d_path, "r", encoding="utf-8") as f:
+                        diff_cfg = json.load(f)
+            except Exception:
+                pass
+
+        llm_client = LMStudioClient(
+            api_base=llm_cfg.get("api_base", "http://localhost:1234/v1"),
+            api_key=llm_cfg.get("api_key"),
+            backend=llm_cfg.get("backend", "lm_studio"),
+            context_window=llm_cfg.get("context_window")
+        )
         llm_health = llm_client.check_health()
 
-        comfy_client = ComfyUIClient()
-        comfy_health = comfy_client.check_health()
+        image_client = create_image_client(diff_cfg)
+        image_health = image_client.check_health()
 
         return jsonify({
+            "llm": llm_health,
+            "image": image_health,
             "lm_studio": llm_health,
-            "comfyui": comfy_health,
+            "comfyui": image_health,
             "instructions": {
-                "phase_1": "Phase 1 requires LM Studio running at :1234 with a model loaded. ComfyUI should be CLOSED to prevent VRAM competition.",
-                "phase_2": "Phase 2 requires ComfyUI running at :8188. LM Studio should be UNLOADED / CLOSED to free VRAM for diffusion.",
-                "phase_3": "Phase 3 is pure Python compilation. No GPU, LM Studio, or ComfyUI required."
+                "phase_1": "Phase 1 performs story analysis and prompt synthesis with your configured LLM.",
+                "phase_2": "Phase 2 renders illustrations using your configured image backend.",
+                "phase_3": "Phase 3 compiles self-contained, portable HTML stories with embedded images."
             }
         })
 
@@ -160,6 +184,101 @@ def create_app() -> Flask:
             json.dump(data, f, indent=2, ensure_ascii=False)
         return jsonify({"success": True})
 
+    @app.route("/api/project/<slug>/config/providers", methods=["GET"])
+    def get_providers_config(slug):
+        pdir = get_project_dir(slug)
+        llm_path = os.path.join(pdir, "config", "llm_models.json")
+        diff_path = os.path.join(pdir, "config", "diffusion_profiles.json")
+        llm_cfg = load_llm_config(llm_path) if os.path.isfile(llm_path) else dict(DEFAULT_LLM_CONFIG)
+        diff_cfg = dict(DEFAULT_DIFFUSION_PROFILES)
+        if os.path.isfile(diff_path):
+            try:
+                with open(diff_path, "r", encoding="utf-8") as f:
+                    diff_cfg = json.load(f)
+            except Exception:
+                pass
+
+        comfy_cfg = diff_cfg.get("comfyui", {})
+        openai_img_cfg = diff_cfg.get("openai_compatible", {})
+
+        return jsonify({
+            "llm": {
+                "backend": llm_cfg.get("backend", "lm_studio"),
+                "api_base": llm_cfg.get("api_base", "http://localhost:1234/v1"),
+                "has_api_key": bool(llm_cfg.get("api_key")),
+                "api_key": llm_cfg.get("api_key", ""),
+                "context_window": llm_cfg.get("context_window", 8192)
+            },
+            "image": {
+                "backend": diff_cfg.get("backend", "comfyui"),
+                "comfyui_host": comfy_cfg.get("host", "127.0.0.1:8188"),
+                "openai_api_base": openai_img_cfg.get("api_base", "https://api.openai.com/v1"),
+                "has_api_key": bool(openai_img_cfg.get("api_key")),
+                "api_key": openai_img_cfg.get("api_key", ""),
+                "model": openai_img_cfg.get("model", "dall-e-3"),
+                "quality": openai_img_cfg.get("quality", "standard"),
+                "style": openai_img_cfg.get("style", "vivid")
+            }
+        })
+
+    @app.route("/api/project/<slug>/config/providers", methods=["POST"])
+    def update_providers_config(slug):
+        pdir = get_project_dir(slug)
+        data = request.json or {}
+
+        # Update LLM config
+        llm_data = data.get("llm", {})
+        if llm_data:
+            llm_path = os.path.join(pdir, "config", "llm_models.json")
+            current_llm = load_llm_config(llm_path) if os.path.isfile(llm_path) else dict(DEFAULT_LLM_CONFIG)
+            if "backend" in llm_data:
+                current_llm["backend"] = llm_data["backend"]
+            if "api_base" in llm_data:
+                current_llm["api_base"] = llm_data["api_base"]
+            if "api_key" in llm_data:
+                current_llm["api_key"] = llm_data["api_key"]
+            if "context_window" in llm_data and llm_data["context_window"]:
+                try:
+                    current_llm["context_window"] = int(llm_data["context_window"])
+                except (ValueError, TypeError):
+                    pass
+            with open(llm_path, "w", encoding="utf-8") as f:
+                json.dump(current_llm, f, indent=2, ensure_ascii=False)
+
+        # Update Image config
+        img_data = data.get("image", {})
+        if img_data:
+            diff_path = os.path.join(pdir, "config", "diffusion_profiles.json")
+            current_diff = dict(DEFAULT_DIFFUSION_PROFILES)
+            if os.path.isfile(diff_path):
+                try:
+                    with open(diff_path, "r", encoding="utf-8") as f:
+                        current_diff = json.load(f)
+                except Exception:
+                    pass
+
+            if "backend" in img_data:
+                current_diff["backend"] = img_data["backend"]
+            if "comfyui_host" in img_data:
+                current_diff.setdefault("comfyui", {})["host"] = img_data["comfyui_host"]
+
+            openai_cfg = current_diff.setdefault("openai_compatible", {})
+            if "openai_api_base" in img_data:
+                openai_cfg["api_base"] = img_data["openai_api_base"]
+            if "api_key" in img_data:
+                openai_cfg["api_key"] = img_data["api_key"]
+            if "model" in img_data:
+                openai_cfg["model"] = img_data["model"]
+            if "quality" in img_data:
+                openai_cfg["quality"] = img_data["quality"]
+            if "style" in img_data:
+                openai_cfg["style"] = img_data["style"]
+
+            with open(diff_path, "w", encoding="utf-8") as f:
+                json.dump(current_diff, f, indent=2, ensure_ascii=False)
+
+        return jsonify({"success": True})
+
     # -------------------------------------------------------------------------
     # Artifacts & Source text
     # -------------------------------------------------------------------------
@@ -232,7 +351,12 @@ def create_app() -> Flask:
 
         llm_cfg_path = os.path.join(pdir, "config", "llm_models.json")
         llm_cfg = load_llm_config(llm_cfg_path)
-        client = LMStudioClient(api_base=llm_cfg.get("api_base", "http://localhost:1234/v1"))
+        client = LMStudioClient(
+            api_base=llm_cfg.get("api_base", "http://localhost:1234/v1"),
+            api_key=llm_cfg.get("api_key"),
+            backend=llm_cfg.get("backend", "lm_studio"),
+            context_window=llm_cfg.get("context_window")
+        )
 
         # Role mapping for stage model overrides
         role_map = {

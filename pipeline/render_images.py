@@ -11,39 +11,52 @@ import random
 import argparse
 from typing import Dict, Any, Optional, List
 from pipeline.comfy_client import ComfyUIClient
+from pipeline.image_client import BaseImageClient, create_image_client
 
 
 def print_banner():
     print("""
 ================================================================================
 PHASE 2: Headless Diffusion Rendering
-  Runtime: ComfyUI (API Mode @ http://127.0.0.1:8188)
-  State: LM Studio CLOSED / UNLOADED (To free GPU VRAM for diffusion)
-  Workflow: WebSocket queue runner reads manifest.json -> renders images
+  Runtime: Agnostic (Default: ComfyUI @ http://127.0.0.1:8188 | Remote API)
+  State: Free local GPU VRAM if running local diffusion models
+  Workflow: Reads manifest.json -> renders illustrations -> updates manifest.json
   Output: ./images/*.png + manifest.json updated with "status": "completed"
 ================================================================================
 """)
 
 
-def check_runtime_readiness(comfy_client: ComfyUIClient):
-    """Verifies ComfyUI connectivity and issues reminder about LM Studio."""
+def load_image_config(project_dir: str) -> Dict[str, Any]:
+    """Loads diffusion_profiles.json to retrieve image backend and settings."""
+    cfg_path = os.path.join(project_dir, "config", "diffusion_profiles.json")
+    if os.path.isfile(cfg_path):
+        try:
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def check_runtime_readiness(image_client: BaseImageClient):
+    """Verifies image client connectivity and issues reminder about LM Studio if running locally."""
     import requests
-    health = comfy_client.check_health()
+    health = image_client.check_health()
     if not health.get("online"):
         raise RuntimeError(
-            f"ComfyUI is NOT reachable at {comfy_client.http_base}!\n"
-            "Please launch ComfyUI (API Mode @ http://127.0.0.1:8188) before starting Phase 2."
+            f"Image Generation Backend ({health.get('backend', 'unknown')}) is NOT reachable!\n"
+            f"Details: {health.get('message', 'Server offline')}"
         )
 
-    # Check if LM Studio is still holding memory
-    try:
-        resp = requests.get("http://localhost:1234/v1/models", timeout=1)
-        if resp.status_code == 200:
-            print("\n[WARNING] LM Studio was detected active at http://localhost:1234.")
-            print("[WARNING] To prevent GPU Out-of-Memory (OOM) errors during diffusion, please UNLOAD your LLM or CLOSE LM Studio.\n")
-    except Exception:
-        # LM Studio is closed as desired
-        pass
+    # If ComfyUI is the active backend, check if LM Studio is still holding memory
+    if health.get("backend") == "comfyui":
+        try:
+            resp = requests.get("http://localhost:1234/v1/models", timeout=1)
+            if resp.status_code == 200:
+                print("\n[WARNING] LM Studio was detected active at http://localhost:1234.")
+                print("[WARNING] To prevent GPU Out-of-Memory (OOM) errors during local diffusion, please UNLOAD your LLM or CLOSE LM Studio.\n")
+        except Exception:
+            pass
 
 
 def save_manifest_atomic(manifest_path: str, manifest_data: Dict[str, Any]):
@@ -74,8 +87,7 @@ def resolve_workflow(project_dir: str, explicit_workflow: Optional[str] = None) 
 
 
 def render_block(
-    client: ComfyUIClient,
-    workflow: Dict[str, Any],
+    image_client: BaseImageClient,
     project_dir: str,
     block: Dict[str, Any]
 ) -> None:
@@ -96,8 +108,7 @@ def render_block(
     print(f"\n[*] Rendering {cid} ({width}x{height}, seed={seed}) ...")
     print(f"    Prompt: {prompt[:80]}...")
 
-    res = client.render(
-        workflow=workflow,
+    res = image_client.render(
         prompt=prompt,
         negative_prompt=neg_prompt,
         width=width,
@@ -115,9 +126,13 @@ def run_phase_2(
     project_dir: str,
     workflow_path: Optional[str] = None,
     rerun_chunk_id: Optional[str] = None,
-    host: str = "127.0.0.1:8188"
+    host: Optional[str] = None,
+    backend: Optional[str] = None,
+    image_api_base: Optional[str] = None,
+    image_api_key: Optional[str] = None,
+    image_model: Optional[str] = None
 ) -> Dict[str, Any]:
-    """Executes Phase 2 diffusion batch or single-chunk rerun."""
+    """Executes Phase 2 diffusion batch or single-chunk rerun with backend-agnostic support."""
     print_banner()
 
     manifest_path = os.path.join(project_dir, "artifacts", "manifest.json")
@@ -127,9 +142,30 @@ def run_phase_2(
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
-    client = ComfyUIClient(host=host)
-    check_runtime_readiness(client)
-    workflow = resolve_workflow(project_dir, workflow_path)
+    img_config = load_image_config(project_dir)
+    if backend:
+        img_config["backend"] = backend
+    if host:
+        img_config.setdefault("comfyui", {})["host"] = host
+    if image_api_base:
+        img_config.setdefault("openai_compatible", {})["api_base"] = image_api_base
+    if image_api_key:
+        img_config.setdefault("openai_compatible", {})["api_key"] = image_api_key
+    if image_model:
+        img_config.setdefault("openai_compatible", {})["model"] = image_model
+
+    active_backend = img_config.get("backend", "comfyui").lower()
+    workflow = None
+    if active_backend == "comfyui":
+        workflow = resolve_workflow(project_dir, workflow_path)
+
+    image_client = create_image_client(
+        config=img_config,
+        workflow=workflow,
+        workflow_path=workflow_path,
+        host=host
+    )
+    check_runtime_readiness(image_client)
 
     blocks = manifest.get("blocks", [])
 
@@ -160,7 +196,7 @@ def run_phase_2(
         target_block["illustration"]["status"] = "pending"
         target_block["illustration"]["seed"] = random.randint(1, 1125899906842624)
 
-        render_block(client, workflow, project_dir, target_block)
+        render_block(image_client, project_dir, target_block)
         save_manifest_atomic(manifest_path, manifest)
         print(f"[+] Successfully rerendered {rerun_chunk_id} and updated manifest.")
         return manifest
@@ -184,7 +220,7 @@ def run_phase_2(
         cid = block["chunk_id"]
         print(f"\n--- Processing {idx}/{len(pending_blocks)}: {cid} ---")
         try:
-            render_block(client, workflow, project_dir, block)
+            render_block(image_client, project_dir, block)
             # Atomic save after every single render
             save_manifest_atomic(manifest_path, manifest)
         except Exception as err:
@@ -197,18 +233,26 @@ def run_phase_2(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Phase 2: Headless Diffusion Batch via ComfyUI")
+    parser = argparse.ArgumentParser(description="Phase 2: Backend-Agnostic Headless Illustration Rendering")
     parser.add_argument("--project", "-p", required=True, help="Path to project directory (e.g. ./projects/my_story)")
-    parser.add_argument("--workflow", "-w", help="Optional path to workflow_api.json to use")
+    parser.add_argument("--workflow", "-w", help="Optional path to workflow_api.json (for ComfyUI)")
     parser.add_argument("--rerun", "-r", help="Chunk ID to rerun (e.g. chunk_004)")
-    parser.add_argument("--host", default="127.0.0.1:8188", help="ComfyUI host (default: 127.0.0.1:8188)")
+    parser.add_argument("--host", default=None, help="ComfyUI host (default: 127.0.0.1:8188)")
+    parser.add_argument("--backend", choices=["comfyui", "openai_compatible"], help="Image backend (default: from config or comfyui)")
+    parser.add_argument("--image-api-base", help="OpenAI-compatible image API base URL")
+    parser.add_argument("--image-api-key", help="API key for image generation endpoint")
+    parser.add_argument("--image-model", help="Image model name (e.g. dall-e-3, FLUX.1-schnell)")
     args = parser.parse_args()
 
     run_phase_2(
         project_dir=args.project,
         workflow_path=args.workflow,
         rerun_chunk_id=args.rerun,
-        host=args.host
+        host=args.host,
+        backend=args.backend,
+        image_api_base=args.image_api_base,
+        image_api_key=args.image_api_key,
+        image_model=args.image_model
     )
 
 

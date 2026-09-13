@@ -27,28 +27,40 @@ async function init() {
 
 async function refreshStatus() {
   try {
-    const res = await fetch("/api/status");
+    const url = currentSlug ? `/api/status?slug=${encodeURIComponent(currentSlug)}` : "/api/status";
+    const res = await fetch(url);
     systemStatus = await res.json();
 
     const lmBadge = document.getElementById("badgeLMStudio");
     const comfyBadge = document.getElementById("badgeComfyUI");
+    const lmLabel = document.getElementById("labelLMStudio");
+    const comfyLabel = document.getElementById("labelComfyUI");
 
-    if (systemStatus.lm_studio.online) {
+    const llmInfo = systemStatus.llm || systemStatus.lm_studio || {};
+    const imgInfo = systemStatus.image || systemStatus.comfyui || {};
+
+    if (llmInfo.online) {
       lmBadge.className = "badge badge-online";
-      lmBadge.title = `LM Studio Online (${systemStatus.lm_studio.models.length} models)`;
-      availableModels = systemStatus.lm_studio.models || [];
+      lmBadge.title = llmInfo.message || "LLM Provider Online";
+      availableModels = llmInfo.models || [];
       populateModelDropdowns(availableModels);
     } else {
       lmBadge.className = "badge badge-offline";
-      lmBadge.title = "LM Studio Offline";
+      lmBadge.title = llmInfo.message || "LLM Provider Offline";
+    }
+    if (lmLabel) {
+      lmLabel.textContent = llmInfo.backend === "lm_studio" ? "LM Studio :1234" : "LLM API";
     }
 
-    if (systemStatus.comfyui.online) {
+    if (imgInfo.online) {
       comfyBadge.className = "badge badge-online";
-      comfyBadge.title = "ComfyUI Server Online";
+      comfyBadge.title = imgInfo.message || "Image Generator Online";
     } else {
       comfyBadge.className = "badge badge-offline";
-      comfyBadge.title = "ComfyUI Server Offline";
+      comfyBadge.title = imgInfo.message || "Image Generator Offline";
+    }
+    if (comfyLabel) {
+      comfyLabel.textContent = imgInfo.backend === "comfyui" ? "ComfyUI :8188" : "Image API";
     }
 
     updateHardwareBanner();
@@ -63,18 +75,29 @@ function updateHardwareBanner() {
   const title = document.getElementById("bannerTitle");
   const desc = document.getElementById("bannerDesc");
 
+  const llmBackend = systemStatus?.llm?.backend || "lm_studio";
+  const imgBackend = systemStatus?.image?.backend || "comfyui";
+
   if (activeTab === "tab-render") {
     banner.className = "hardware-banner phase-2-active";
-    title.textContent = "Phase 2 Active (Diffusion):";
-    desc.textContent = "ComfyUI server must be running at http://127.0.0.1:8188. LM Studio should be UNLOADED / CLOSED to free GPU VRAM.";
+    title.textContent = "Phase 2 Active (Illustration Rendering):";
+    if (imgBackend === "comfyui") {
+      desc.textContent = "ComfyUI server must be running at http://127.0.0.1:8188. LM Studio should be UNLOADED / CLOSED to free GPU VRAM.";
+    } else {
+      desc.textContent = "Remote Images API active. Rendering proceeds headlessly via your configured image endpoint.";
+    }
   } else if (activeTab === "tab-reader") {
     banner.className = "hardware-banner phase-3-active";
     title.textContent = "Phase 3 Active (Reader Assembly):";
-    desc.textContent = "Pure Python execution with zero GPU footprint. Neither LM Studio nor ComfyUI needs to be running.";
+    desc.textContent = "Pure Python compilation with embedded base64 images. 100% portable HTML reader with zero runtime dependencies.";
   } else {
     banner.className = "hardware-banner phase-1-active";
     title.textContent = "Phase 1 Active (Analysis & Prompts):";
-    desc.textContent = "LM Studio must be running at http://localhost:1234 with your selected model loaded. ComfyUI should be CLOSED to prevent VRAM competition.";
+    if (llmBackend === "lm_studio") {
+      desc.textContent = "LM Studio must be running at http://localhost:1234 with your selected model loaded. ComfyUI should be CLOSED to prevent VRAM competition.";
+    } else {
+      desc.textContent = "Remote LLM API active. Prompts and story analysis synthesize via your configured endpoint.";
+    }
   }
 }
 
@@ -1203,6 +1226,132 @@ function setupEventListeners() {
     document.getElementById("modalTweakRerun").style.display = "none";
   });
   document.getElementById("btnSubmitTweakRerun").addEventListener("click", submitTweakRerun);
+
+  // Providers & API Settings modal
+  const btnOpenProviders = document.getElementById("btnOpenProvidersModal");
+  if (btnOpenProviders) {
+    btnOpenProviders.addEventListener("click", openProvidersModal);
+  }
+  const btnCloseProviders = document.getElementById("btnCloseProvidersModal");
+  if (btnCloseProviders) {
+    btnCloseProviders.addEventListener("click", () => {
+      document.getElementById("modalProviders").style.display = "none";
+    });
+  }
+  const btnCancelProviders = document.getElementById("btnCancelProviders");
+  if (btnCancelProviders) {
+    btnCancelProviders.addEventListener("click", () => {
+      document.getElementById("modalProviders").style.display = "none";
+    });
+  }
+  const btnSaveProviders = document.getElementById("btnSaveProviders");
+  if (btnSaveProviders) {
+    btnSaveProviders.addEventListener("click", saveProvidersConfig);
+  }
+  const selImageBackend = document.getElementById("providerImageBackend");
+  if (selImageBackend) {
+    selImageBackend.addEventListener("change", e => toggleImageBackendSettings(e.target.value));
+  }
+}
+
+async function openProvidersModal() {
+  if (!currentSlug) return;
+  try {
+    const res = await fetch(`/api/project/${currentSlug}/config/providers`);
+    const data = await res.json();
+
+    const llm = data.llm || {};
+    const img = data.image || {};
+
+    const selLLMBackend = document.getElementById("providerLLMBackend");
+    const inpLLMBase = document.getElementById("providerLLMBase");
+    const inpLLMKey = document.getElementById("providerLLMKey");
+    const inpLLMContext = document.getElementById("providerLLMContext");
+
+    if (selLLMBackend) selLLMBackend.value = llm.backend || "lm_studio";
+    if (inpLLMBase) inpLLMBase.value = llm.api_base || "http://localhost:1234/v1";
+    if (inpLLMKey) inpLLMKey.value = llm.api_key || "";
+    if (inpLLMContext) inpLLMContext.value = llm.context_window || 8192;
+
+    const selImgBackend = document.getElementById("providerImageBackend");
+    const inpComfyHost = document.getElementById("providerComfyHost");
+    const inpImgBase = document.getElementById("providerImageBase");
+    const inpImgKey = document.getElementById("providerImageKey");
+    const inpImgModel = document.getElementById("providerImageModel");
+
+    if (selImgBackend) {
+      selImgBackend.value = img.backend || "comfyui";
+      toggleImageBackendSettings(selImgBackend.value);
+    }
+    if (inpComfyHost) inpComfyHost.value = img.comfyui_host || "127.0.0.1:8188";
+    if (inpImgBase) inpImgBase.value = img.openai_api_base || "https://api.openai.com/v1";
+    if (inpImgKey) inpImgKey.value = img.api_key || "";
+    if (inpImgModel) inpImgModel.value = img.model || "dall-e-3";
+
+    document.getElementById("modalProviders").style.display = "flex";
+  } catch (err) {
+    showToast("Error loading provider settings: " + err, "error");
+  }
+}
+
+function toggleImageBackendSettings(backend) {
+  const comfyGroup = document.getElementById("comfySettingsGroup");
+  const openaiGroup = document.getElementById("openaiImageSettingsGroup");
+  if (backend === "openai_compatible") {
+    if (comfyGroup) comfyGroup.style.display = "none";
+    if (openaiGroup) openaiGroup.style.display = "block";
+  } else {
+    if (comfyGroup) comfyGroup.style.display = "block";
+    if (openaiGroup) openaiGroup.style.display = "none";
+  }
+}
+
+async function saveProvidersConfig() {
+  if (!currentSlug) return;
+  const llmBackend = document.getElementById("providerLLMBackend")?.value;
+  const llmBase = document.getElementById("providerLLMBase")?.value?.trim();
+  const llmKey = document.getElementById("providerLLMKey")?.value?.trim();
+  const llmContext = parseInt(document.getElementById("providerLLMContext")?.value) || 8192;
+
+  const imgBackend = document.getElementById("providerImageBackend")?.value;
+  const comfyHost = document.getElementById("providerComfyHost")?.value?.trim();
+  const imgBase = document.getElementById("providerImageBase")?.value?.trim();
+  const imgKey = document.getElementById("providerImageKey")?.value?.trim();
+  const imgModel = document.getElementById("providerImageModel")?.value?.trim();
+
+  const payload = {
+    llm: {
+      backend: llmBackend,
+      api_base: llmBase,
+      api_key: llmKey,
+      context_window: llmContext
+    },
+    image: {
+      backend: imgBackend,
+      comfyui_host: comfyHost,
+      openai_api_base: imgBase,
+      api_key: imgKey,
+      model: imgModel
+    }
+  };
+
+  try {
+    const res = await fetch(`/api/project/${currentSlug}/config/providers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      document.getElementById("modalProviders").style.display = "none";
+      showToast("Provider settings saved successfully!");
+      await refreshStatus();
+    } else {
+      const err = await res.json();
+      showToast("Failed to save providers: " + (err.error || "Unknown"), "error");
+    }
+  } catch (e) {
+    showToast("Error saving provider settings: " + e, "error");
+  }
 }
 
 // Start on DOM ready

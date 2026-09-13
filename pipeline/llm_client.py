@@ -4,6 +4,7 @@ Supports free-form text completions, structured parsing without strict JSON enfo
 dynamic model listing, health checks, and fallback extraction.
 """
 
+import os
 import re
 import json
 import time
@@ -32,46 +33,75 @@ def estimate_tokens(text: str) -> int:
 
 
 class LMStudioClient:
-    def __init__(self, api_base: str = "http://localhost:1234/v1", timeout: int = 300):
+    def __init__(
+        self,
+        api_base: str = "http://localhost:1234/v1",
+        api_key: Optional[str] = None,
+        backend: str = "lm_studio",
+        context_window: Optional[int] = None,
+        timeout: int = 300
+    ):
         self.api_base = api_base.rstrip("/")
+        # API key resolution: argument > LLM_API_KEY > OPENAI_API_KEY
+        self.api_key = api_key or os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY") or ""
+        self.backend = backend or ("openai_compatible" if self.api_key or "openai.com" in self.api_base or "openrouter" in self.api_base or "groq.com" in self.api_base else "lm_studio")
         self.timeout = timeout
-        self._cached_context_size: Optional[int] = None
+        self._explicit_context_window = context_window
+        self._cached_context_size: Optional[int] = context_window
+
+    def _get_headers(self) -> Dict[str, str]:
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
 
     def check_health(self) -> Dict[str, Any]:
-        """Checks if LM Studio server is reachable."""
+        """Checks if LLM server/endpoint is reachable."""
         url = f"{self.api_base}/models"
+        headers = self._get_headers()
         try:
-            resp = requests.get(url, timeout=3)
+            resp = requests.get(url, headers=headers, timeout=5)
             if resp.status_code == 200:
                 data = resp.json()
                 models = [m.get("id") for m in data.get("data", []) if "id" in m]
+                label = "LM Studio" if self.backend == "lm_studio" else "LLM Provider"
                 return {
                     "online": True,
                     "url": self.api_base,
+                    "backend": self.backend,
                     "models": models,
-                    "message": f"LM Studio is online with {len(models)} model(s) available."
+                    "message": f"{label} is online with {len(models)} model(s) available."
                 }
+            # For cloud endpoints that don't allow listing models or return 401/403
             return {
                 "online": False,
                 "url": self.api_base,
+                "backend": self.backend,
                 "models": [],
-                "message": f"LM Studio returned status code {resp.status_code}."
+                "message": f"Endpoint returned status code {resp.status_code}."
             }
         except Exception as e:
             return {
                 "online": False,
                 "url": self.api_base,
+                "backend": self.backend,
                 "models": [],
-                "message": f"LM Studio connection error at {self.api_base}: {str(e)}"
+                "message": f"Connection error at {self.api_base}: {str(e)}"
             }
 
     def list_available_models(self) -> List[str]:
-        """Returns list of model IDs reported by LM Studio."""
+        """Returns list of model IDs reported by the provider endpoint."""
         health = self.check_health()
         return health.get("models", [])
 
     def _resolve_model(self, model: str) -> str:
-        """Finds matching model or falls back to first loaded model."""
+        """Finds matching model or falls back to first loaded model for LM Studio."""
+        if not model:
+            model = "gpt-4o"
+        # If cloud or non-lm_studio, preserve explicit user-chosen model
+        if self.backend != "lm_studio":
+            return model
+
         available = self.list_available_models()
         if not available:
             return model
@@ -83,23 +113,26 @@ class LMStudioClient:
         return available[0]
 
     def resolve_model(self, model: str) -> str:
-        """Public resolver returning matching model or fallback from LM Studio."""
+        """Public resolver returning matching model or fallback from LLM provider."""
         return self._resolve_model(model)
 
     def get_model_context_size(self, model: Optional[str] = None) -> int:
         """
-        Queries LM Studio for the loaded context length of the active model.
-        Falls back to cached context size or default 8192.
+        Queries LM Studio for the loaded context length of the active model,
+        or returns explicitly configured context_window, or default 128k for cloud models.
         """
         if self._cached_context_size:
             return self._cached_context_size
+
+        if self.backend != "lm_studio":
+            return self._explicit_context_window or 128000
 
         host_base = re.sub(r"/v\d+/?$", "", self.api_base)
         url = f"{host_base}/api/v0/models"
         resolved = self._resolve_model(model) if model else None
 
         try:
-            resp = requests.get(url, timeout=3)
+            resp = requests.get(url, headers=self._get_headers(), timeout=3)
             if resp.status_code == 200:
                 data = resp.json()
                 models_data = data.get("data", [])
@@ -178,13 +211,13 @@ class LMStudioClient:
         }
         if max_tokens is not None and max_tokens > 0:
             payload["max_tokens"] = max_tokens
-        else:
+        elif self.backend == "lm_studio":
             payload["max_tokens"] = -1
 
         last_error = None
         for attempt in range(1, retries + 1):
             try:
-                resp = requests.post(url, json=payload, timeout=self.timeout)
+                resp = requests.post(url, json=payload, headers=self._get_headers(), timeout=self.timeout)
                 if resp.status_code != 200:
                     self._handle_http_error(resp)
 
@@ -203,7 +236,7 @@ class LMStudioClient:
                 if attempt < retries:
                     time.sleep(backoff ** attempt)
 
-        raise RuntimeError(f"Failed to communicate with LM Studio after {retries} attempts: {last_error}")
+        raise RuntimeError(f"Failed to communicate with LLM provider ({self.backend}) after {retries} attempts: {last_error}")
 
     def chat_json(
         self,
@@ -215,7 +248,7 @@ class LMStudioClient:
         backoff: float = 2.0
     ) -> Dict[str, Any]:
         """
-        Calls LM Studio chat completions and robustly parses JSON.
+        Calls LLM chat completions and robustly parses JSON.
         If strict json_object is rejected by the model/backend, automatically retries in free text mode.
         """
         raw_text = ""
@@ -232,9 +265,9 @@ class LMStudioClient:
                 }
                 if max_tokens is not None and max_tokens > 0:
                     payload["max_tokens"] = max_tokens
-                else:
+                elif self.backend == "lm_studio":
                     payload["max_tokens"] = -1
-                resp = requests.post(url, json=payload, timeout=self.timeout)
+                resp = requests.post(url, json=payload, headers=self._get_headers(), timeout=self.timeout)
                 if resp.status_code != 200:
                     self._handle_http_error(resp)
 
@@ -245,7 +278,7 @@ class LMStudioClient:
                 raise
             except Exception as e:
                 if attempt == retries:
-                    raise RuntimeError(f"LM Studio chat error: {e}")
+                    raise RuntimeError(f"LLM chat error ({self.backend}): {e}")
                 time.sleep(backoff ** attempt)
 
         # Attempt JSON extraction
@@ -583,6 +616,15 @@ def parse_prompt_response(raw_text: str, default_negative: str = "") -> Tuple[st
 
 
 def load_llm_config(config_path: str) -> Dict[str, Any]:
-    """Loads config/llm_models.json."""
+    """Loads config/llm_models.json and populates defaults/environment keys."""
     with open(config_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    if not data.get("api_key"):
+        data["api_key"] = os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY") or ""
+    if not data.get("backend"):
+        data["backend"] = "lm_studio"
+    return data
+
+
+# Generalized alias for backend-agnostic usage
+LLMClient = LMStudioClient

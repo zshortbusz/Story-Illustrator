@@ -10,7 +10,10 @@ from typing import Dict, Any, List, Optional
 
 
 DEFAULT_LLM_CONFIG = {
+    "backend": "lm_studio",  # "lm_studio" | "openai_compatible"
     "api_base": "http://localhost:1234/v1",
+    "api_key": "",
+    "context_window": 8192,
     "roles": {
         "structured_analyst": {
             "model": "thedrummer_orion-26b-a4b-v1",
@@ -34,6 +37,18 @@ DEFAULT_LLM_CONFIG = {
 }
 
 DEFAULT_DIFFUSION_PROFILES = {
+    "backend": "comfyui",  # "comfyui" | "openai_compatible"
+    "comfyui": {
+        "host": "127.0.0.1:8188",
+        "workflow": "sdxl_base.json"
+    },
+    "openai_compatible": {
+        "api_base": "https://api.openai.com/v1",
+        "api_key": "",
+        "model": "dall-e-3",
+        "quality": "standard",
+        "style": "vivid"
+    },
     "active_profile": "sdxl_base",
     "profiles": {
         "flux_natural": {
