@@ -96,22 +96,23 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
 │   ├── build_manifest.py            # Phase 1 orchestrator (Chunks -> Bible -> Beats -> Manifest)
 │   ├── comfy_client.py              # ComfyUI WebSocket & REST client
 │   ├── render_images.py             # Phase 2 batch orchestrator & rerun handler
-│   ├── compile_html.py              # Phase 3 reader compiler & dialogue quote parser
+│   ├── compile_html.py              # Phase 3 reader compiler (portable embedded base64 HTML)
 │   ├── project_manager.py           # Project scaffolding & default configuration
 │   ├── web_server.py                # Flask backend REST API
 │   └── web_static/                  # WebUI SPA frontend
-│       ├── index.html               # Responsive multi-tab dashboard
+│       ├── index.html               # Responsive multi-tab dashboard with portable download
 │       ├── style.css                # Dark mode styling & responsive layout
 │       └── app.js                   # Frontend controller
 ├── projects/                        # Story project workspaces
 │   ├── the_rust_forest/             # Sample dark sci-fi story project
 │   └── winnie/                      # Sample children's classic story project
-└── tests/                           # Complete automated test suite (35 tests)
+└── tests/                           # Complete automated test suite (44 tests)
     ├── test_chunker.py              # Paragraph chunking & word counting tests
+    ├── test_context_detection.py    # LM Studio context size auto-detection & batching tests
     ├── test_llm_client.py           # Free-text & markdown parser tests
     ├── test_manifest_continuity.py  # Fuzzy entity resolution & continuity tests
     ├── test_comfy_client.py         # Workflow parameter injection tests
-    ├── test_compile_html.py         # Dialogue quote & HTML compilation tests
+    ├── test_compile_html.py         # Dialogue quote & base64 embedded HTML tests
     ├── test_web_api.py              # REST API endpoint tests
     └── test_ui_elements.py          # UI DOM, JS contracts, & visible Chrome E2E tests
 ```
@@ -190,15 +191,18 @@ python -m pipeline.render_images --project ./projects/the_rust_forest --workflow
 # Rerun a single image with adjustments:
 python -m pipeline.render_images --project ./projects/the_rust_forest --rerun chunk_003
 
-# Phase 3: Compile Static Offline Reader
+# Phase 3: Compile Portable Standalone Reader (Embeds base64 images into a single self-contained HTML file)
 python -m pipeline.compile_html --project ./projects/the_rust_forest
+
+# Or compile with relative image paths:
+python -m pipeline.compile_html --project ./projects/the_rust_forest --no-embed
 ```
 
 ---
 
 ## Running Tests
 
-Run the full automated test suite (all 35 unit, contract, API, and visible browser E2E tests):
+Run the full automated test suite (all 44 unit, contract, API, context detection, and visible browser E2E tests):
 
 ```bash
 python -m unittest discover -s tests -v

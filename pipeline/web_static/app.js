@@ -824,7 +824,13 @@ function loadReaderPreview() {
   const iframe = document.getElementById("readerIframe");
   const url = `/api/project/${currentSlug}/reader?t=${Date.now()}`;
   iframe.src = url;
-  document.getElementById("btnOpenReaderTab").href = url;
+  const btnOpen = document.getElementById("btnOpenReaderTab");
+  if (btnOpen) btnOpen.href = url;
+  const btnDownload = document.getElementById("btnDownloadReader");
+  if (btnDownload) {
+    btnDownload.href = `/api/project/${currentSlug}/reader?download=1`;
+    btnDownload.download = `${currentSlug}_illustrated.html`;
+  }
 }
 
 async function compileReader() {

@@ -10,8 +10,32 @@ import os
 import re
 import json
 import html
+import base64
+import mimetypes
 import argparse
 from typing import Dict, Any, List, Optional
+
+
+def file_to_data_uri(filepath: str) -> Optional[str]:
+    """Encodes a local image file as a self-contained base64 data URI for portable offline viewing."""
+    if not os.path.isfile(filepath):
+        return None
+    mime_type, _ = mimetypes.guess_type(filepath)
+    if not mime_type:
+        ext = os.path.splitext(filepath)[1].lower()
+        if ext in [".jpg", ".jpeg"]:
+            mime_type = "image/jpeg"
+        elif ext == ".png":
+            mime_type = "image/png"
+        elif ext == ".webp":
+            mime_type = "image/webp"
+        else:
+            mime_type = "image/png"
+
+    with open(filepath, "rb") as f:
+        data = f.read()
+    b64 = base64.b64encode(data).decode("utf-8")
+    return f"data:{mime_type};base64,{b64}"
 
 
 def escape_html(text: str) -> str:
@@ -211,8 +235,12 @@ footer.story-footer {
 """
 
 
-def compile_manifest_to_html(manifest: Dict[str, Any], project_dir: str) -> str:
-    """Compiles manifest blocks into offline HTML document."""
+def compile_manifest_to_html(manifest: Dict[str, Any], project_dir: str, embed_images: bool = True) -> str:
+    """
+    Compiles manifest blocks into offline HTML document.
+    When embed_images is True (default), encodes images as base64 data URIs
+    producing a fully portable, self-contained single-file illustrated story.
+    """
     title = manifest.get("story_title", "Illustrated Story")
     blocks = manifest.get("blocks", [])
 
@@ -231,17 +259,24 @@ def compile_manifest_to_html(manifest: Dict[str, Any], project_dir: str) -> str:
         body_html_parts.append(f'<p class="story-paragraph">{rendered_p}</p>')
 
         illus = block.get("illustration")
-        if illus and illus.get("status") == "completed":
+        if illus:
             img_rel_path = illus.get("image_file", f"images/{block['chunk_id']}.png")
-            # Verify if image actually exists on disk
             full_img_path = os.path.join(project_dir, img_rel_path)
+            # Render illustration if status is completed or image file exists on disk
             if os.path.isfile(full_img_path):
                 illustrations_count += 1
                 prompt_caption = escape_html(illus.get("prompt", ""))
                 cid = block.get("chunk_id", "")
+                filename = os.path.basename(img_rel_path)
+
+                if embed_images:
+                    img_src = file_to_data_uri(full_img_path) or img_rel_path
+                else:
+                    img_src = img_rel_path
+
                 body_html_parts.append(f"""
 <figure class="scene-illustration" id="{cid}">
-  <img src="{img_rel_path}" alt="{prompt_caption}" loading="lazy">
+  <img src="{img_src}" data-filename="{filename}" alt="{prompt_caption}" loading="lazy">
   <figcaption><strong>[{cid}]</strong> {prompt_caption}</figcaption>
 </figure>""")
 
@@ -285,7 +320,7 @@ def compile_manifest_to_html(manifest: Dict[str, Any], project_dir: str) -> str:
     return html_doc
 
 
-def compile_html(project_dir: str, output_filepath: Optional[str] = None) -> str:
+def compile_html(project_dir: str, output_filepath: Optional[str] = None, embed_images: bool = True) -> str:
     """Reads manifest.json from project, verifies rendered images, and compiles index.html."""
     manifest_path = os.path.join(project_dir, "artifacts", "manifest.json")
     if not os.path.isfile(manifest_path):
@@ -294,13 +329,14 @@ def compile_html(project_dir: str, output_filepath: Optional[str] = None) -> str
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
-    html_content = compile_manifest_to_html(manifest, project_dir)
+    html_content = compile_manifest_to_html(manifest, project_dir, embed_images=embed_images)
 
     target = output_filepath or os.path.join(project_dir, "index.html")
     with open(target, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    print(f"[+] Static reader compiled successfully -> {target}")
+    embed_status = "embedded base64" if embed_images else "linked"
+    print(f"[+] Static reader compiled successfully ({embed_status}) -> {target}", flush=True)
     return target
 
 
@@ -308,9 +344,10 @@ def main():
     parser = argparse.ArgumentParser(description="Phase 3: Static Reader Assembly for ASI")
     parser.add_argument("--project", "-p", required=True, help="Path to project directory (e.g. ./projects/my_story)")
     parser.add_argument("--output", "-o", help="Optional custom output HTML path (default: {project}/index.html)")
+    parser.add_argument("--no-embed", action="store_true", help="Keep relative image paths instead of embedding base64 data URIs")
     args = parser.parse_args()
 
-    compile_html(args.project, args.output)
+    compile_html(args.project, args.output, embed_images=not args.no_embed)
 
 
 if __name__ == "__main__":

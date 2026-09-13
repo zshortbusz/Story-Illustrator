@@ -357,8 +357,10 @@ def create_app() -> Flask:
     def compile_reader_endpoint(slug):
         pdir = get_project_dir(slug)
         try:
-            target = compile_html(pdir)
-            return jsonify({"success": True, "path": target})
+            data = request.json or {}
+            embed = data.get("embed_images", True)
+            target = compile_html(pdir, embed_images=embed)
+            return jsonify({"success": True, "path": target, "embedded": embed})
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
 
@@ -375,15 +377,27 @@ def create_app() -> Flask:
     def serve_project_reader(slug):
         pdir = get_project_dir(slug)
         index_file = os.path.join(pdir, "index.html")
+        as_download = request.args.get("download") == "1"
+        download_name = f"{slug}_illustrated.html"
+
         if os.path.isfile(index_file):
-            return send_file(index_file)
+            return send_file(index_file, as_attachment=as_download, download_name=download_name)
 
         # Fallback compile on the fly if manifest exists
         manifest_path = os.path.join(pdir, "artifacts", "manifest.json")
         if os.path.isfile(manifest_path):
             with open(manifest_path, "r", encoding="utf-8") as f:
                 manifest = json.load(f)
-            return compile_manifest_to_html(manifest, pdir)
+            html_content = compile_manifest_to_html(manifest, pdir, embed_images=True)
+            if as_download:
+                import io
+                return send_file(
+                    io.BytesIO(html_content.encode("utf-8")),
+                    mimetype="text/html",
+                    as_attachment=True,
+                    download_name=download_name
+                )
+            return html_content
 
         return "<h1>Manifest not yet generated for this story.</h1>", 404
 
