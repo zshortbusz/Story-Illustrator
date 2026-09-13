@@ -18,11 +18,11 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
   - **Phase 2 (Diffusion Rendering)**: Batch rendered headless via ComfyUI WebSocket & REST API (`http://127.0.0.1:8188`).
   - **Phase 3 (Reader Assembly)**: Pure Python compilation into standalone, offline, responsive HTML readers.
 - **Visual Bible Compendium & Continuity**:
-  - Automatically extracts exhaustive character profiles (build, face, hair, clothing, and distinctive features such as prosthetic limbs/implants) and setting environments.
+  - Automatically extracts exhaustive character profiles (configurable prompts and models)
   - Multi-strategy entity resolution (exact, case-insensitive, substring, and token overlap) connects characters and locations across beats for prompt consistency.
 - **5-Element Diffusion Prompt Synthesis**:
   - Synthesizes rich diffusion prompts combining: (1) Character visual appearance, (2) Action beat, (3) Setting architecture & texture, (4) Camera angle & lighting, and (5) Global art style.
-  - Ready-to-use profiles for **SDXL Base**, **Flux Natural Language**, and **Anime Danbooru**.
+  - Use your own Comfy UI workflows
 - **Failure Visibility & Uncapped Thinking**:
   - Zero synthetic fallbacks: errors and empty model responses fail loudly with clear diagnostics.
   - Uncapped thinking token budget (`max_tokens: -1`) to empower modern reasoning models (e.g., DeepSeek-R1, Orion, Gemma 4, Qwen).
