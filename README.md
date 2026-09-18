@@ -102,8 +102,7 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
 │       ├── style.css                # Dark mode styling & responsive layout
 │       └── app.js                   # Frontend controller
 ├── projects/                        # Story project workspaces
-│   ├── the_rust_forest/             # Sample dark sci-fi story project
-│   └── winnie/                      # Sample children's classic story project
+│   └── the_raven/                   # Sample illustrated classic story project
 └── tests/                           # Complete automated test suite (44 tests)
     ├── test_chunker.py              # Paragraph chunking & word counting tests
     ├── test_context_detection.py    # LM Studio context size auto-detection & batching tests
@@ -182,19 +181,19 @@ For automated batch scripting, the pipeline can be run completely headless:
 
 ```bash
 # Phase 1: Full Story Analysis & Prompt Synthesis
-python -m pipeline.build_manifest --project ./projects/the_rust_forest --stage all
+python -m pipeline.build_manifest --project ./projects/the_raven --stage all
 
 # Phase 2: Batch Diffusion Rendering via ComfyUI
-python -m pipeline.render_images --project ./projects/the_rust_forest --workflow ./workflows/sdxl_base.json
+python -m pipeline.render_images --project ./projects/the_raven --workflow ./workflows/sdxl_base.json
 
 # Rerun a single image with adjustments:
-python -m pipeline.render_images --project ./projects/the_rust_forest --rerun chunk_003
+python -m pipeline.render_images --project ./projects/the_raven --rerun chunk_000
 
 # Phase 3: Compile Portable Standalone Reader (Embeds base64 images into a single self-contained HTML file)
-python -m pipeline.compile_html --project ./projects/the_rust_forest
+python -m pipeline.compile_html --project ./projects/the_raven
 
 # Or compile with relative image paths:
-python -m pipeline.compile_html --project ./projects/the_rust_forest --no-embed
+python -m pipeline.compile_html --project ./projects/the_raven --no-embed
 ```
 
 ---

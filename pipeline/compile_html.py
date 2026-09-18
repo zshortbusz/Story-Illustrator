@@ -77,7 +77,8 @@ def render_dialogue_content(content: str) -> str:
     Renders text with quotes wrapped in <strong class="q"> and internal
     linebreaks preserved via <br>.
     """
-    escaped = escape_html(content)
+    normalized = content.replace("“", '"').replace("”", '"')
+    escaped = escape_html(normalized)
     segments = split_quotes(escaped)
 
     # Merge consecutive segments with identical bold state

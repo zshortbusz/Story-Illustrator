@@ -1,4 +1,16 @@
 {
+  "backend": "comfyui",
+  "comfyui": {
+    "host": "127.0.0.1:8188",
+    "workflow": "sdxl_base.json"
+  },
+  "openai_compatible": {
+    "api_base": "https://api.openai.com/v1",
+    "api_key": "",
+    "model": "dall-e-3",
+    "quality": "standard",
+    "style": "vivid"
+  },
   "active_profile": "sdxl_base",
   "profiles": {
     "flux_natural": {

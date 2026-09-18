@@ -32,10 +32,10 @@ env.bak/
 .DS_Store
 Thumbs.db
 
-# User projects (keep reference sample project the_rust_forest)
+# User projects (keep reference sample project the_raven)
 projects/*
-!projects/the_rust_forest/
-!projects/the_rust_forest/**
+!projects/the_raven/
+!projects/the_raven/**
 tests/artifacts/
 scratch/
 *.log

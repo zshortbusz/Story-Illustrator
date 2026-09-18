@@ -152,7 +152,7 @@ class TestReaderUIContract(unittest.TestCase):
         self.client = app.test_client()
 
     def test_reader_html_generation_and_styling(self):
-        resp = self.client.get('/api/project/the_rust_forest/reader')
+        resp = self.client.get('/api/project/the_raven/reader')
         self.assertEqual(resp.status_code, 200)
         html = resp.get_data(as_text=True)
 
@@ -165,7 +165,7 @@ class TestReaderUIContract(unittest.TestCase):
         self.assertIn('<strong class="q">', html, 'Dialogue quotes must be styled with <strong class="q">')
 
         # Check story title
-        self.assertIn('The Rust Forest', html)
+        self.assertIn('The Raven', html)
 
 
 class TestVisibleChromeDevToolsE2E(unittest.TestCase):

@@ -21,7 +21,7 @@ class TestWebAPI(unittest.TestCase):
         data = resp.get_json()
         self.assertIsInstance(data, list)
         slugs = [p["slug"] for p in data]
-        self.assertIn("the_rust_forest", slugs)
+        self.assertIn("the_raven", slugs)
 
     def test_workflows_list(self):
         resp = self.client.get("/api/workflows")
@@ -31,7 +31,7 @@ class TestWebAPI(unittest.TestCase):
         self.assertIn("sdxl_base.json", data["workflows"])
 
     def test_get_and_update_llm_config(self):
-        slug = "the_rust_forest"
+        slug = "the_raven"
         resp = self.client.get(f"/api/project/{slug}/config/llm")
         self.assertEqual(resp.status_code, 200)
         cfg = resp.get_json()

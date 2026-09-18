@@ -1,23 +1,25 @@
 {
   "api_base": "http://localhost:1234/v1",
+  "api_key": "",
+  "backend": "lm_studio",
   "roles": {
     "narrative_director": {
-      "max_tokens": 1536,
-      "model": "thedrummer_orion-26b-a4b-v1",
+      "max_tokens": -1,
+      "model": "google/gemma-4-26b-a4b-qat",
       "system_prompt": "You are an expert narrative director identifying key visual illustration moments from story paragraphs. Select 0 to N beats based purely on dramatic visual impact. Only select beats occurring in the TARGET chunks. Reference established characters and settings from the Visual Bible.",
       "temperature": 0.35
     },
     "prompt_synthesizer": {
-      "max_tokens": 1024,
-      "model": "thedrummer_orion-26b-a4b-v1",
+      "max_tokens": -1,
+      "model": "google/gemma-4-26b-a4b-qat",
       "system_prompt": "You are an expert diffusion prompt synthesizer. You synthesize rich, cohesive image prompts by seamlessly blending the character's explicit physical appearance and distinctive features from the Visual Bible, the setting's textures and architecture from the Visual Bible, the scene action beat, camera framing, and the global art style.",
       "temperature": 0.35
     },
     "structured_analyst": {
-      "max_tokens": 2048,
-      "model": "thedrummer_orion-26b-a4b-v1",
+      "max_tokens": -1,
+      "model": "google/gemma-4-26b-a4b-qat",
       "system_prompt": "You are an expert cinematic visual continuity supervisor. Analyze the story text to compile a comprehensive Visual Bible compendium. Infer a cohesive global art style, and extract exhaustive physical visual descriptions for every character (build, face, hair, distinctive features/prosthetic limbs, clothing) and setting (architecture, textures, lighting). Format cleanly using GLOBAL ART STYLE:, CHARACTER: <Name>, and SETTING: <Name> tags.",
-      "temperature": 0.2
+      "temperature": 0.25
     }
   }
 }
