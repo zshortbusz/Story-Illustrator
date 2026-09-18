@@ -30,6 +30,7 @@ from pipeline.build_manifest import (
 )
 from pipeline.render_images import run_phase_2, save_manifest_atomic, resolve_workflow
 from pipeline.compile_html import compile_html, compile_manifest_to_html
+from pipeline.book_exporter import export_high_res_pdf, export_fxl_epub, export_reflowable_epub, get_book_metadata
 
 
 def create_app() -> Flask:
@@ -553,6 +554,78 @@ def create_app() -> Flask:
             return html_content
 
         return "<h1>Manifest not yet generated for this story.</h1>", 404
+
+    @app.route("/api/project/<slug>/metadata", methods=["GET", "POST"])
+    def project_metadata_endpoint(slug):
+        pdir = get_project_dir(slug)
+        manifest_path = os.path.join(pdir, "artifacts", "manifest.json")
+        if not os.path.isfile(manifest_path):
+            return jsonify({"error": "Manifest not found. Run Phase 1 first."}), 404
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        if request.method == "POST":
+            data = request.json or {}
+            meta = manifest.setdefault("metadata", {})
+            for k in ["title", "author", "publisher", "language", "description", "isbn"]:
+                if k in data:
+                    meta[k] = str(data[k]).strip()
+            if "title" in data and data["title"]:
+                manifest["story_title"] = str(data["title"]).strip()
+
+            save_manifest_atomic(manifest_path, manifest)
+            return jsonify({"success": True, "metadata": get_book_metadata(manifest)})
+
+        return jsonify({"success": True, "metadata": get_book_metadata(manifest)})
+
+    @app.route("/api/project/<slug>/export/<format_type>", methods=["GET"])
+    def export_project_book(slug, format_type):
+        pdir = get_project_dir(slug)
+        manifest_path = os.path.join(pdir, "artifacts", "manifest.json")
+        if not os.path.isfile(manifest_path):
+            return jsonify({"error": "Manifest not found for this story."}), 404
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        workflow = request.args.get("workflow") or manifest.get("active_workflow")
+        wf_suffix = f"_{workflow.replace('.json', '')}" if workflow else ""
+
+        # Check for query parameter metadata overrides
+        overrides = {}
+        for field in ["title", "author", "publisher", "language", "description", "isbn"]:
+            val = request.args.get(field)
+            if val:
+                overrides[field] = val
+
+        export_dir = os.path.join(pdir, "exports")
+        os.makedirs(export_dir, exist_ok=True)
+
+        fmt = format_type.lower().strip()
+        try:
+            if fmt == "pdf":
+                filename = f"{slug}{wf_suffix}_print.pdf"
+                out_path = os.path.join(export_dir, filename)
+                export_high_res_pdf(manifest, pdir, out_path, workflow=workflow, overrides=overrides)
+                return send_file(out_path, mimetype="application/pdf", as_attachment=True, download_name=filename)
+
+            elif fmt in ["fxl", "fxl_epub", "epub_fxl"]:
+                filename = f"{slug}{wf_suffix}_fxl.epub"
+                out_path = os.path.join(export_dir, filename)
+                export_fxl_epub(manifest, pdir, out_path, workflow=workflow, overrides=overrides)
+                return send_file(out_path, mimetype="application/epub+zip", as_attachment=True, download_name=filename)
+
+            elif fmt in ["reflowable", "reflowable_epub", "epub_reflowable", "epub"]:
+                filename = f"{slug}{wf_suffix}_reflowable.epub"
+                out_path = os.path.join(export_dir, filename)
+                export_reflowable_epub(manifest, pdir, out_path, workflow=workflow, overrides=overrides)
+                return send_file(out_path, mimetype="application/epub+zip", as_attachment=True, download_name=filename)
+
+            else:
+                return jsonify({"error": f"Unsupported export format '{format_type}'. Supported: 'pdf', 'fxl_epub', 'reflowable_epub'"}), 400
+        except Exception as e:
+            return jsonify({"error": f"Failed to export book: {str(e)}"}), 500
 
     return app
 

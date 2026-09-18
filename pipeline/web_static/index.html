@@ -320,10 +320,13 @@
           <h2>Phase 3: Static Reader Preview</h2>
           <p class="section-desc">Responsive offline reader layout with dialogue quote highlighting (preserved from <code>build_site.cjs</code>) and embedded illustrations.</p>
         </div>
-        <div class="btn-group" style="display: flex; gap: 10px; align-items: center;">
+        <div class="btn-group" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <label for="readerWorkflowSelect" style="font-size: 0.88rem; color: var(--text-dim);">Image Set:</label>
-          <select id="readerWorkflowSelect" class="select-input" style="width: auto; min-width: 160px; font-size: 0.88rem;"></select>
-          <a id="btnDownloadReader" href="#" download="" class="btn btn-secondary">&#128190; Download Portable HTML</a>
+          <select id="readerWorkflowSelect" class="select-input" style="width: auto; min-width: 140px; font-size: 0.88rem;"></select>
+          <button id="btnExportPdf" class="btn btn-secondary" title="Export print-ready high-resolution PDF for Amazon KDP Print & physical books">&#128196; High-Res PDF</button>
+          <button id="btnExportFxl" class="btn btn-secondary" title="Export Fixed-Layout EPUB 3.0 with Kindle pre-paginated metadata for illustrated books">&#128214; FXL EPUB3</button>
+          <button id="btnExportReflowable" class="btn btn-secondary" title="Export Reflowable EPUB for Kindle Paperwhite, Apple Books, and Kobo">&#128241; Reflowable EPUB</button>
+          <button id="btnEditEbookMetadata" class="btn btn-secondary" title="Edit Ebook Retailer Metadata (Title, Author, Publisher, ISBN)">&#9881; Book Metadata</button>
         </div>
       </div>
       <div class="reader-preview-frame-wrapper">
@@ -482,6 +485,48 @@
       <div class="btn-group" style="justify-content: flex-end; margin-top: 18px;">
         <button id="btnCancelTweak" class="btn btn-secondary">Cancel</button>
         <button id="btnSubmitTweakRerun" class="btn btn-success">&#9654; Regenerate Image</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ebook Publication Metadata Modal (For Retailers: Amazon KDP, Apple Books, etc.) -->
+  <div id="modalEbookMetadata" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="card-header">
+        <h3>&#128218; Ebook Retailer Metadata</h3>
+        <button id="btnCloseMetadataModal" class="btn btn-icon">&times;</button>
+      </div>
+      <p style="font-size: 0.88rem; color: var(--text-dim); margin-top: 4px; margin-bottom: 16px;">
+        Provide the publication metadata required by Amazon KDP, Apple Books, and ebook distributors.
+      </p>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="metaBookTitle">Book Title <span style="color: #ef4444;">*</span></label>
+        <input type="text" id="metaBookTitle" class="text-input" placeholder="e.g. The Raven: Illustrated Edition" required>
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="metaBookAuthor">Author / Creator <span style="color: #ef4444;">*</span></label>
+        <input type="text" id="metaBookAuthor" class="text-input" placeholder="e.g. Edgar Allan Poe" required>
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="metaBookPublisher">Publisher</label>
+        <input type="text" id="metaBookPublisher" class="text-input" placeholder="e.g. Self-Published or Imprint Name">
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="metaBookLanguage">Language Code</label>
+        <input type="text" id="metaBookLanguage" class="text-input" placeholder="en" value="en">
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="metaBookIsbn">ISBN / Identifier (Optional)</label>
+        <input type="text" id="metaBookIsbn" class="text-input" placeholder="e.g. 978-0-123456-78-9 or leave blank for UUID">
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="metaBookDescription">Book Description / Back Cover Blurb</label>
+        <textarea id="metaBookDescription" class="textarea-input" rows="3" placeholder="Summary or blurb for ebook catalog..."></textarea>
+      </div>
+      <div class="btn-group" style="justify-content: flex-end; margin-top: 18px; gap: 10px;">
+        <button type="button" id="btnCancelMetadata" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="btnSaveMetadata" class="btn btn-primary">&#128190; Save Metadata</button>
+        <button type="button" id="btnSaveAndExport" class="btn btn-success" style="display: none;">&#11015; Save &amp; Download</button>
       </div>
     </div>
   </div>

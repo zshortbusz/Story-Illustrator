@@ -86,32 +86,38 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
 ├── requirements.txt                 # Project Python dependencies
 ├── LICENSE                          # MIT License
 ├── README.md                        # Documentation
-├── workflows/                       # ComfyUI API workflow templates
-│   └── sdxl_base.json               # SDXL base diffusion workflow
+├── workflows/                       # ComfyUI API workflow templates with wildcard tags
+│   ├── sdxl_base.json               # SDXL base diffusion workflow
+│   ├── flux_dev.json                # Flux.1 Dev diffusion workflow
+│   ├── animap.json                  # Anime model workflow
+│   └── !Draw.json                   # Efficiency Loader SDXL workflow
 ├── pipeline/                        # Core Python pipeline modules
 │   ├── chunker.py                   # Deterministic regex story chunker
 │   ├── llm_client.py                # LM Studio client & robust text parsers
 │   ├── build_manifest.py            # Phase 1 orchestrator (Chunks -> Bible -> Beats -> Manifest)
-│   ├── comfy_client.py              # ComfyUI WebSocket & REST client
+│   ├── comfy_client.py              # ComfyUI client with strict wildcard tag injection
 │   ├── render_images.py             # Phase 2 batch orchestrator & rerun handler
-│   ├── compile_html.py              # Phase 3 reader compiler (portable embedded base64 HTML)
+│   ├── compile_html.py              # Phase 3 reader compiler (dialogue quote parsing)
+│   ├── book_exporter.py             # Retailer-ready High-Res PDF, FXL EPUB3, and Reflowable EPUB
 │   ├── project_manager.py           # Project scaffolding & default configuration
-│   ├── web_server.py                # Flask backend REST API
+│   ├── web_server.py                # Flask backend REST API & export streaming
 │   └── web_static/                  # WebUI SPA frontend
-│       ├── index.html               # Responsive multi-tab dashboard with portable download
+│       ├── index.html               # Responsive multi-tab dashboard with ebook exports & metadata
 │       ├── style.css                # Dark mode styling & responsive layout
 │       └── app.js                   # Frontend controller
 ├── projects/                        # Story project workspaces
 │   └── the_raven/                   # Sample illustrated classic story project
-└── tests/                           # Complete automated test suite (44 tests)
+└── tests/                           # Complete automated test suite
     ├── test_chunker.py              # Paragraph chunking & word counting tests
     ├── test_context_detection.py    # LM Studio context size auto-detection & batching tests
     ├── test_llm_client.py           # Free-text & markdown parser tests
     ├── test_manifest_continuity.py  # Fuzzy entity resolution & continuity tests
     ├── test_comfy_client.py         # Workflow parameter injection tests
-    ├── test_compile_html.py         # Dialogue quote & base64 embedded HTML tests
-    ├── test_web_api.py              # REST API endpoint tests
-    └── test_ui_elements.py          # UI DOM, JS contracts, & visible Chrome E2E tests
+    ├── test_workflow_tags.py        # Wildcard tag validation and encoding robustness
+    ├── test_book_exporter.py        # PDF, FXL EPUB3, and Reflowable EPUB export tests
+    ├── test_compile_html.py         # Dialogue quote & HTML styling tests
+    ├── test_web_api.py              # REST API endpoint tests & export streaming
+    └── test_ui_elements.py          # UI DOM, JS contracts, & E2E tests
 ```
 
 ---
@@ -170,8 +176,110 @@ http://127.0.0.1:5000
 3. **Tab 2 (Visual Bible)**: Select your loaded LM Studio model and click **Run Extraction** to extract character and setting profiles.
 4. **Tab 3 (Visual Beats)**: Click **Run Beat Selection** to select dramatic visual moments.
 5. **Tab 4 (Manifest & Prompts)**: Click **Synthesize Prompts** to generate diffusion prompts. Review or fine-tune prompts, and optionally configure positive prompt prefixes per profile/workflow.
-6. **Tab 5 (Render & Regenerate)**: Select your ComfyUI workflow (`sdxl_base.json`) and click **Start Batch Render**. Inspect generated illustrations, mass-select scenes with checkboxes for batch regeneration, or switch workflows to generate alternate model image sets without losing previous generations.
-7. **Tab 6 (Reader Preview)**: Switch between your generated workflow image sets to compare illustrations, then click **Download Portable HTML** to export the self-contained offline reader.
+6. **Tab 5 (Render & Regenerate)**: Select any ComfyUI workflow (`sdxl_base.json`, `flux_dev.json`, `animap.json`, or your own custom workflow) and click **Start Batch Render**. Inspect generated illustrations, mass-select scenes with checkboxes for batch regeneration, or switch workflows to generate alternate model image sets without losing previous generations.
+7. **Tab 6 (Reader Preview & Ebook Exports)**: Switch between your generated workflow image sets to compare illustrations. Export retailer-ready ebooks directly:
+   - **📄 High-Resolution Print PDF**: Print-ready PDF generated with vector typography, running headers, page numbers, dialogue quote highlighting, uncompressed full-res image plates, and document catalog metadata (`Title`, `Author`, `Subject`, `Creator`).
+   - **📖 Fixed-Layout FXL EPUB 3.0**: Pre-paginated EPUB 3.0 package with Kindle-specific metadata (`rendition:layout="pre-paginated"`, `fixed-layout="true"`, `original-resolution`, `cover-image`, `nav.xhtml`, `toc.ncx`), ideal for illustrated fiction, graphic novels, and children's books.
+   - **📱 Reflowable EPUB**: Responsive EPUB 3.0 / EPUB 2 compatible reflowable book with scalable typography, responsive `<figure>` illustrations, and full retailer metadata for Kindle Paperwhite, Apple Books, and Kobo.
+   - **⚙️ Ebook Retailer Metadata**: Click **Book Metadata** to configure book title, author, publisher, language code, ISBN, and catalog blurb compliant with Amazon KDP and ebook retailers.
+
+
+---
+
+## Visual Tour & Tab-by-Tab Guide (The Raven Example)
+
+Below is a complete visual walkthrough of the 6-stage pipeline using Edgar Allan Poe's *The Raven* as an example project. Each tab in the WebUI allows you to inspect, curate, and control every phase of the creative and rendering process.
+
+### Tab 1: Chunk Your Story into Digestible Bites
+Divide your manuscript or raw story text into scene-length paragraphs with smart word count limits and boundary preservation.
+- **Inspect & Adjust**: Review each chunk (`chunk_000`, `chunk_001`, etc.), check word counts, and verify clean scene division.
+- **Customizable**: Tweak the target word count per chunk or customize the scene-breaker regex at any time.
+
+![Tab 1: Chunk Your Story into Digestible Bites](docs/images/tab1_chunks.png)
+
+---
+
+### Tab 2: Create a Visual Bible (Curate Before the Next Step)
+Extract comprehensive character descriptions, key settings, and global art motifs using your local LLM via LM Studio.
+- **Canonical Profiles**: Automatically captures character facial features, hair, clothing, age, and setting architectural details.
+- **Curate Before Proceeding**: Directly edit or expand character descriptions and location palettes before moving to beat selection, ensuring strict visual continuity across the entire story.
+
+![Tab 2: Create a Visual Bible](docs/images/tab2_visual_bible.png)
+
+---
+
+### Tab 3: Identify Visual Beats (Dramatic Narrative Moments)
+Scan through each chunk to pinpoint the single most cinematic, illustrative moment.
+- **Dramatic Selection**: The LLM analyzes each story segment to select the strongest visual beat—identifying active characters, primary location, mood, and focal action.
+- **Curate & Refine**: Review each beat's narrative summary, characters present, and mood tags. Refine any beat description to focus on your preferred dramatic angle.
+
+![Tab 3: Identify Visual Beats](docs/images/tab3_visual_beats.png)
+
+---
+
+### Tab 4: Synthesize Prompts & Build the Master Manifest
+Blend entity profiles from your Visual Bible with the dynamic action of your Visual Beats into rich 5-element diffusion prompts.
+- **5-Element Synthesis**: Prompts combine Character Appearance + Scene Action + Setting Architecture + Camera/Lighting + Art Style.
+- **Prefixes & Customization**: Configure global or per-profile positive/negative prompt prefixes (e.g. style LoRA triggers or artist styles) and review the final prompts before rendering.
+
+![Tab 4: Synthesize Prompts & Build Master Manifest](docs/images/tab4_manifest_prompts.png)
+
+---
+
+### Tab 5: Batch Render & Review with ComfyUI
+Dispatch prompts directly to ComfyUI headless via WebSocket and monitor real-time generation progress.
+- **Multi-Workflow Support**: Render using any ComfyUI workflow (`sdxl_base.json`, `flux_dev.json`, `animap.json`, or your own custom BYOW workflow). Images are saved into isolated workflow directories.
+- **Review & Batch Regenerate**: Inspect generated illustrations alongside chunk text, use checkboxes for one-click batch regeneration with fresh random seeds, or re-render individual scenes with tweaked prompts.
+
+![Tab 5: Batch Render & Review with ComfyUI](docs/images/tab5_render_review.png)
+
+---
+
+### Tab 6: Reader Preview, Image Set Comparison & Retailer Ebook Exports
+Enjoy your fully illustrated book in an interactive dual-page or scroll reader, compare workflow renders side-by-side, and export commercial-grade ebooks.
+- **Interactive Reader**: Read your illustrated story with typography-curated dialogue quote highlighting (`<strong class="q">`) and inline high-resolution illustrations.
+- **Workflow Comparison**: Switch between different workflow image sets on the fly to compare art styles across the entire book.
+- **Retailer-Ready Exports**:
+  - **📄 High-Resolution Print PDF**: Vector typography, running headers, page numbers, dialogue highlighting, uncompressed full-res image plates, and document catalog metadata.
+  - **📖 Fixed-Layout FXL EPUB 3.0**: Pre-paginated EPUB 3.0 package with Kindle-specific metadata (`rendition:layout="pre-paginated"`, `fixed-layout="true"`, `original-resolution`, `cover-image`), ideal for illustrated fiction and graphic novels.
+  - **📱 Reflowable EPUB**: Responsive EPUB 3.0 / EPUB 2 compatible reflowable book with scalable typography and responsive figures for standard e-readers.
+  - **⚙️ Ebook Retailer Metadata**: Click **Book Metadata** to configure book title, author, publisher, language code, ISBN, and catalog blurb compliant with Amazon KDP requirements.
+
+![Tab 6: Reader Preview & Retailer Ebook Exports](docs/images/tab6_reader_preview.png)
+
+---
+
+## Bring Your Own ComfyUI Workflow (BYOW)
+
+You can bring **any** ComfyUI compatible workflow into the pipeline. As long as you insert our 4 wildcard tags, Automated Story Illustrator will seamlessly inject prompts and dimensions at render time.
+
+### Step-by-Step Instructions:
+
+1. **Export API Format from ComfyUI**:
+   - In ComfyUI, click the gear icon (Settings) and check **"Enable Dev mode Options"**.
+   - Click the newly visible **Save (API Format)** button to export your workflow as a `.json` file.
+
+2. **Replace Prompts and Dimensions with Wildcard Tags**:
+   Open the exported `.json` file in any text editor and replace the values with our wildcard tags:
+   - **Positive Prompt**: Replace your positive prompt string with `"%PositivePrompt%"`
+     *(e.g., `"text": "%PositivePrompt%"` or in Efficiency Loader `"positive": "%PositivePrompt%"`)*
+   - **Negative Prompt**: Replace your negative prompt string with `"%NegativePrompt%"`
+     *(e.g., `"text": "%NegativePrompt%"` or in Efficiency Loader `"negative": "%NegativePrompt%"`)*
+   - **Latent Width**: Replace width with `"%Width%"`
+     *(e.g., `"width": "%Width%"` or `"empty_latent_width": "%Width%"`)*
+   - **Latent Height**: Replace height with `"%Height%"`
+     *(e.g., `"height": "%Height%"` or `"empty_latent_height": "%Height%"`)*
+
+3. **Drop into `workflows/`**:
+   Save your file into the `workflows/` directory (e.g. `workflows/my_anime_model.json`).
+
+4. **Ready to Use**:
+   Refresh or re-open the WebUI. Your workflow will instantly appear in the **ComfyUI Workflow** dropdown in Tab 5 (Render & Regenerate) and in the CLI.
+
+> [!NOTE]
+> **Strict Validation**: All 4 tags (`%PositivePrompt%`, `%NegativePrompt%`, `"%Width%"`, `"%Height%"`) are required. If any tag is missing, the system will prevent rendering and notify you with an actionable warning detailing which tags need to be added.
+>
+> **Random Seeds & File Tracking**: Sampler noise seeds continue to be automatically randomized across render cycles, and images are organized into dedicated directories (`images/<workflow_slug>/<chunk_id>.png`) so your image sets remain cleanly isolated and regenerable.
 
 ---
 

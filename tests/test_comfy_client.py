@@ -17,21 +17,21 @@ class TestComfyClient(unittest.TestCase):
             "5": {
                 "class_type": "EmptyLatentImage",
                 "inputs": {
-                    "width": 1024,
-                    "height": 1024
+                    "width": "%Width%",
+                    "height": "%Height%"
                 }
             },
             "6": {
                 "class_type": "CLIPTextEncode",
                 "inputs": {
-                    "text": "old prompt"
+                    "text": "%PositivePrompt%"
                 },
                 "_meta": {"title": "CLIP Text Encode (Prompt)"}
             },
             "7": {
                 "class_type": "CLIPTextEncode",
                 "inputs": {
-                    "text": "old neg"
+                    "text": "%NegativePrompt%"
                 },
                 "_meta": {"title": "CLIP Text Encode (Negative Prompt)"}
             },
@@ -69,15 +69,32 @@ class TestComfyClient(unittest.TestCase):
         self.assertEqual(injected["3"]["inputs"]["seed"], 999999)
         self.assertEqual(injected["9"]["inputs"]["filename_prefix"], "test_render")
 
+    def test_missing_tags_raise_error(self):
+        bad_wf = {
+            "1": {
+                "inputs": {"text": "just some fixed prompt"},
+                "class_type": "CLIPTextEncode"
+            }
+        }
+        with self.assertRaises(ValueError) as ctx:
+            self.client.inject_parameters(
+                workflow=bad_wf,
+                prompt="hello",
+                negative_prompt="bad",
+                width=1024,
+                height=1024
+            )
+        self.assertIn("missing required wildcard tag", str(ctx.exception).lower())
+
     def test_efficiency_loader_workflow(self):
         eff_wf = {
             "1": {
                 "inputs": {
                     "base_ckpt_name": "ilustmix_v10.safetensors",
-                    "positive": "Positive Prompt",
-                    "negative": "Negative Prompt",
-                    "empty_latent_width": 1536,
-                    "empty_latent_height": 1536,
+                    "positive": "%PositivePrompt%",
+                    "negative": "%NegativePrompt%",
+                    "empty_latent_width": "%Width%",
+                    "empty_latent_height": "%Height%",
                     "batch_size": 1
                 },
                 "class_type": "Eff. Loader SDXL",
@@ -129,10 +146,10 @@ class TestComfyClient(unittest.TestCase):
 
     def test_actual_draw_workflow_file(self):
         import os, json
+        from pipeline.comfy_client import load_workflow_file
         draw_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "workflows", "!Draw.json")
         if os.path.exists(draw_path):
-            with open(draw_path, "r", encoding="utf-8") as f:
-                draw_wf = json.load(f)
+            draw_wf = load_workflow_file(draw_path)
 
             bindings = self.client.detect_node_bindings(draw_wf)
             self.assertEqual(bindings.get("positive_prompt_node"), "1")

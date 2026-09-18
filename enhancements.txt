@@ -1,17 +1,5 @@
-the ability to choose a new image workflow and batch generate images again after you already batch generated images for a particular project using a different workflow, 
+rework how we use the workflows,  a user should be able to bring there own workflow and just replace their own positive prompt with %PositivePrompt% and negative prompt with %NegativePrompt% in their workflow Similiar for the resolution, use similar tags that way we can just look for those tags to replace when it comes to sending the job to comfyui. Once this change is made update the exisiting workflows in the workflow directory to be utilize the new tags
 
+the user should be able to drop any comfyui compatible workflow with the tags inserted into the workflow folder and it should work 
 
-the ability to specifiy positive prompt pre-fix per workflow, similar to the default negatives.
-
-the ability to mass select generated images for regeneration.
-
-
-
-bug, click new story, paste text into text field, save raw text, run chunker, get error story has been deselected in top drop down.
-
-
-remove all the options from the render preview except for the download portable option.
-
-.
-
-update github documentation. For github only, remove all the example workflows except for sdxl_base
+update the reader preview section: remove portable html download. instead we will offer 3 download options. High resolution PDF or FXL EPUB3 as well as Reflowable EPUB. The files should include all the meta data needed to immediatly upload to Ebook Retailers example, Amazon

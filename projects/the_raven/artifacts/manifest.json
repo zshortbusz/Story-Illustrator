@@ -6,40 +6,256 @@
       "chunk_id": "chunk_000",
       "illustration": {
         "height": 768,
-        "image_file": "images/chunk_000.png",
+        "image_file": "images/ZIT/chunk_000.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "A gaunt, pale man with disheveled hair and dark shadowed eyes, expression of profound melancholy, wearing a heavy dark velvet scholarly dressing gown, sitting hunched and weary at a heavy desk, surrounded by a chaotic pile of ancient leather-bound volumes, a large stately ebony-feathered bird with a shorn crest and fiery burning eyes, regal and grim posture, medium shot, side profile, claustrophobic Gothic chamber, heavy purple silk curtains, velvet-violet cushioned seat, a pallid white marble bust of Pallas, tufted floor, dying embers, single flickering candle, heavy chiaroscuro, tenebrism, long trembling dancing shadows, dense air, swirling incense smoke, impenetrable Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, cinematic.",
         "status": "completed",
         "width": 1344,
-        "seed": 942850401118874
+        "seed": 865597869441497,
+        "workflow": "ZIT.json"
       },
-      "text": "Once upon a midnight dreary, while I pondered, weak and weary,\nOver many a quaint and curious volume of forgotten lore—\n    While I nodded, nearly napping, suddenly there came a tapping,\nAs of some one gently rapping, rapping at my chamber door.\n“’Tis some visitor,” I muttered, “tapping at my chamber door—\n            Only this and nothing more.”"
+      "text": "Once upon a midnight dreary, while I pondered, weak and weary,\nOver many a quaint and curious volume of forgotten lore—\n    While I nodded, nearly napping, suddenly there came a tapping,\nAs of some one gently rapping, rapping at my chamber door.\n“’Tis some visitor,” I muttered, “tapping at my chamber door—\n            Only this and nothing more.”",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 768,
+          "image_file": "images/chunk_000.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale man with disheveled hair and dark shadowed eyes, expression of profound melancholy, wearing a heavy dark velvet scholarly dressing gown, sitting hunched and weary at a heavy desk, surrounded by a chaotic pile of ancient leather-bound volumes, a large stately ebony-feathered bird with a shorn crest and fiery burning eyes, regal and grim posture, medium shot, side profile, claustrophobic Gothic chamber, heavy purple silk curtains, velvet-violet cushioned seat, a pallid white marble bust of Pallas, tufted floor, dying embers, single flickering candle, heavy chiaroscuro, tenebrism, long trembling dancing shadows, dense air, swirling incense smoke, impenetrable Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, cinematic.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 942850401118874
+        },
+        "!Draw.json": {
+          "height": 768,
+          "image_file": "images/!Draw/chunk_000.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale man with disheveled hair and dark shadowed eyes, expression of profound melancholy, wearing a heavy dark velvet scholarly dressing gown, sitting hunched and weary at a heavy desk, surrounded by a chaotic pile of ancient leather-bound volumes, a large stately ebony-feathered bird with a shorn crest and fiery burning eyes, regal and grim posture, medium shot, side profile, claustrophobic Gothic chamber, heavy purple silk curtains, velvet-violet cushioned seat, a pallid white marble bust of Pallas, tufted floor, dying embers, single flickering candle, heavy chiaroscuro, tenebrism, long trembling dancing shadows, dense air, swirling incense smoke, impenetrable Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, cinematic.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 1104700363080181,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 768,
+          "image_file": "images/!Draw/chunk_000.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale man with disheveled hair and dark shadowed eyes, expression of profound melancholy, wearing a heavy dark velvet scholarly dressing gown, sitting hunched and weary at a heavy desk, surrounded by a chaotic pile of ancient leather-bound volumes, a large stately ebony-feathered bird with a shorn crest and fiery burning eyes, regal and grim posture, medium shot, side profile, claustrophobic Gothic chamber, heavy purple silk curtains, velvet-violet cushioned seat, a pallid white marble bust of Pallas, tufted floor, dying embers, single flickering candle, heavy chiaroscuro, tenebrism, long trembling dancing shadows, dense air, swirling incense smoke, impenetrable Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, cinematic.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 1104700363080181,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 768,
+          "image_file": "images/animab/chunk_000.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale man with disheveled hair and dark shadowed eyes, expression of profound melancholy, wearing a heavy dark velvet scholarly dressing gown, sitting hunched and weary at a heavy desk, surrounded by a chaotic pile of ancient leather-bound volumes, a large stately ebony-feathered bird with a shorn crest and fiery burning eyes, regal and grim posture, medium shot, side profile, claustrophobic Gothic chamber, heavy purple silk curtains, velvet-violet cushioned seat, a pallid white marble bust of Pallas, tufted floor, dying embers, single flickering candle, heavy chiaroscuro, tenebrism, long trembling dancing shadows, dense air, swirling incense smoke, impenetrable Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, cinematic.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 907406030984782,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 768,
+          "image_file": "images/animab/chunk_000.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale man with disheveled hair and dark shadowed eyes, expression of profound melancholy, wearing a heavy dark velvet scholarly dressing gown, sitting hunched and weary at a heavy desk, surrounded by a chaotic pile of ancient leather-bound volumes, a large stately ebony-feathered bird with a shorn crest and fiery burning eyes, regal and grim posture, medium shot, side profile, claustrophobic Gothic chamber, heavy purple silk curtains, velvet-violet cushioned seat, a pallid white marble bust of Pallas, tufted floor, dying embers, single flickering candle, heavy chiaroscuro, tenebrism, long trembling dancing shadows, dense air, swirling incense smoke, impenetrable Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, cinematic.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 907406030984782,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 768,
+          "image_file": "images/ZIT/chunk_000.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale man with disheveled hair and dark shadowed eyes, expression of profound melancholy, wearing a heavy dark velvet scholarly dressing gown, sitting hunched and weary at a heavy desk, surrounded by a chaotic pile of ancient leather-bound volumes, a large stately ebony-feathered bird with a shorn crest and fiery burning eyes, regal and grim posture, medium shot, side profile, claustrophobic Gothic chamber, heavy purple silk curtains, velvet-violet cushioned seat, a pallid white marble bust of Pallas, tufted floor, dying embers, single flickering candle, heavy chiaroscuro, tenebrism, long trembling dancing shadows, dense air, swirling incense smoke, impenetrable Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, cinematic.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 865597869441497,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 768,
+          "image_file": "images/ZIT/chunk_000.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale man with disheveled hair and dark shadowed eyes, expression of profound melancholy, wearing a heavy dark velvet scholarly dressing gown, sitting hunched and weary at a heavy desk, surrounded by a chaotic pile of ancient leather-bound volumes, a large stately ebony-feathered bird with a shorn crest and fiery burning eyes, regal and grim posture, medium shot, side profile, claustrophobic Gothic chamber, heavy purple silk curtains, velvet-violet cushioned seat, a pallid white marble bust of Pallas, tufted floor, dying embers, single flickering candle, heavy chiaroscuro, tenebrism, long trembling dancing shadows, dense air, swirling incense smoke, impenetrable Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, cinematic.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 865597869441497,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_001",
       "illustration": {
         "height": 768,
-        "image_file": "images/chunk_001.png",
+        "image_file": "images/ZIT/chunk_001.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "Close-up of dying fire in a hearth, pulsing deep amber embers, glowing coals, ghostly dancing shadows on dark floorboards, low angle, macro shot, high contrast, chiaroscuro, tenebrism, flickering lamp light, long distorted shadows, Gothic Scholar's Chamber, heavy purple silk curtains, velvet-violet cushioned seat, old leather-bound books, white marble bust of Pallas, Plutonian darkness, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism",
         "status": "completed",
         "width": 1344,
-        "seed": 794454734453423
+        "seed": 255454468874755,
+        "workflow": "ZIT.json"
       },
-      "text": "Ah, distinctly I remember it was in the bleak December;\nAnd each separate dying ember wrought its ghost upon the floor.\n    Eagerly I wished the morrow;—vainly I had sought to borrow\n    From my books surcease of sorrow—sorrow for the lost Lenore—\nFor the rare and radiant maiden whom the angels name Lenore—\n            Nameless here for evermore."
+      "text": "Ah, distinctly I remember it was in the bleak December;\nAnd each separate dying ember wrought its ghost upon the floor.\n    Eagerly I wished the morrow;—vainly I had sought to borrow\n    From my books surcease of sorrow—sorrow for the lost Lenore—\nFor the rare and radiant maiden whom the angels name Lenore—\n            Nameless here for evermore.",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 768,
+          "image_file": "images/chunk_001.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of dying fire in a hearth, pulsing deep amber embers, glowing coals, ghostly dancing shadows on dark floorboards, low angle, macro shot, high contrast, chiaroscuro, tenebrism, flickering lamp light, long distorted shadows, Gothic Scholar's Chamber, heavy purple silk curtains, velvet-violet cushioned seat, old leather-bound books, white marble bust of Pallas, Plutonian darkness, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 794454734453423
+        },
+        "!Draw.json": {
+          "height": 768,
+          "image_file": "images/!Draw/chunk_001.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of dying fire in a hearth, pulsing deep amber embers, glowing coals, ghostly dancing shadows on dark floorboards, low angle, macro shot, high contrast, chiaroscuro, tenebrism, flickering lamp light, long distorted shadows, Gothic Scholar's Chamber, heavy purple silk curtains, velvet-violet cushioned seat, old leather-bound books, white marble bust of Pallas, Plutonian darkness, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 1068824491291780,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 768,
+          "image_file": "images/!Draw/chunk_001.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of dying fire in a hearth, pulsing deep amber embers, glowing coals, ghostly dancing shadows on dark floorboards, low angle, macro shot, high contrast, chiaroscuro, tenebrism, flickering lamp light, long distorted shadows, Gothic Scholar's Chamber, heavy purple silk curtains, velvet-violet cushioned seat, old leather-bound books, white marble bust of Pallas, Plutonian darkness, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 1068824491291780,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 768,
+          "image_file": "images/animab/chunk_001.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of dying fire in a hearth, pulsing deep amber embers, glowing coals, ghostly dancing shadows on dark floorboards, low angle, macro shot, high contrast, chiaroscuro, tenebrism, flickering lamp light, long distorted shadows, Gothic Scholar's Chamber, heavy purple silk curtains, velvet-violet cushioned seat, old leather-bound books, white marble bust of Pallas, Plutonian darkness, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 431732255227382,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 768,
+          "image_file": "images/animab/chunk_001.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of dying fire in a hearth, pulsing deep amber embers, glowing coals, ghostly dancing shadows on dark floorboards, low angle, macro shot, high contrast, chiaroscuro, tenebrism, flickering lamp light, long distorted shadows, Gothic Scholar's Chamber, heavy purple silk curtains, velvet-violet cushioned seat, old leather-bound books, white marble bust of Pallas, Plutonian darkness, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 431732255227382,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 768,
+          "image_file": "images/ZIT/chunk_001.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of dying fire in a hearth, pulsing deep amber embers, glowing coals, ghostly dancing shadows on dark floorboards, low angle, macro shot, high contrast, chiaroscuro, tenebrism, flickering lamp light, long distorted shadows, Gothic Scholar's Chamber, heavy purple silk curtains, velvet-violet cushioned seat, old leather-bound books, white marble bust of Pallas, Plutonian darkness, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 255454468874755,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 768,
+          "image_file": "images/ZIT/chunk_001.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of dying fire in a hearth, pulsing deep amber embers, glowing coals, ghostly dancing shadows on dark floorboards, low angle, macro shot, high contrast, chiaroscuro, tenebrism, flickering lamp light, long distorted shadows, Gothic Scholar's Chamber, heavy purple silk curtains, velvet-violet cushioned seat, old leather-bound books, white marble bust of Pallas, Plutonian darkness, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 255454468874755,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_002",
       "illustration": {
         "height": 1216,
-        "image_file": "images/chunk_002.png",
+        "image_file": "images/ZIT/chunk_002.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "A gaunt pale man with disheveled hair and dark shadowed eyes, expression of frantic terror and wide-eyed fear, wearing a heavy dark velvet dressing gown, a large stately ebony-feathered bird with a shorn crest, iridescent black plumage, fiery burning eyes, grim and stern mien, medium close-up, dramatic side-lighting, flickering lamp light, long distorted dancing shadows, tenebrism, chiaroscuro, heavy purple silk curtains rustling in the gloom, claustrophobic Gothic chamber, leather-bound books, pallid white marble bust of Pallas, velvet-violet cushioned seat, tufted floor with dying embers, Plutonian darkness, Gothic Romanticism, highly tactile textures, sheen of silk, weight of velvet, midnight blue, deep violet, ebony, flickering amber",
         "status": "completed",
         "width": 832,
-        "seed": 982505010249844
+        "seed": 688309255047190,
+        "workflow": "ZIT.json"
       },
-      "text": "And the silken, sad, uncertain rustling of each purple curtain\nThrilled me—filled me with fantastic terrors never felt before;\n    So that now, to still the beating of my heart, I stood repeating\n    “’Tis some visitor entreating entrance at my chamber door—\nSome late visitor entreating entrance at my chamber door;—\n            This it is and nothing more.”"
+      "text": "And the silken, sad, uncertain rustling of each purple curtain\nThrilled me—filled me with fantastic terrors never felt before;\n    So that now, to still the beating of my heart, I stood repeating\n    “’Tis some visitor entreating entrance at my chamber door—\nSome late visitor entreating entrance at my chamber door;—\n            This it is and nothing more.”",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 1216,
+          "image_file": "images/chunk_002.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt pale man with disheveled hair and dark shadowed eyes, expression of frantic terror and wide-eyed fear, wearing a heavy dark velvet dressing gown, a large stately ebony-feathered bird with a shorn crest, iridescent black plumage, fiery burning eyes, grim and stern mien, medium close-up, dramatic side-lighting, flickering lamp light, long distorted dancing shadows, tenebrism, chiaroscuro, heavy purple silk curtains rustling in the gloom, claustrophobic Gothic chamber, leather-bound books, pallid white marble bust of Pallas, velvet-violet cushioned seat, tufted floor with dying embers, Plutonian darkness, Gothic Romanticism, highly tactile textures, sheen of silk, weight of velvet, midnight blue, deep violet, ebony, flickering amber",
+          "status": "completed",
+          "width": 832,
+          "seed": 982505010249844
+        },
+        "!Draw.json": {
+          "height": 1216,
+          "image_file": "images/!Draw/chunk_002.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt pale man with disheveled hair and dark shadowed eyes, expression of frantic terror and wide-eyed fear, wearing a heavy dark velvet dressing gown, a large stately ebony-feathered bird with a shorn crest, iridescent black plumage, fiery burning eyes, grim and stern mien, medium close-up, dramatic side-lighting, flickering lamp light, long distorted dancing shadows, tenebrism, chiaroscuro, heavy purple silk curtains rustling in the gloom, claustrophobic Gothic chamber, leather-bound books, pallid white marble bust of Pallas, velvet-violet cushioned seat, tufted floor with dying embers, Plutonian darkness, Gothic Romanticism, highly tactile textures, sheen of silk, weight of velvet, midnight blue, deep violet, ebony, flickering amber",
+          "status": "completed",
+          "width": 832,
+          "seed": 93598948977332,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 1216,
+          "image_file": "images/!Draw/chunk_002.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt pale man with disheveled hair and dark shadowed eyes, expression of frantic terror and wide-eyed fear, wearing a heavy dark velvet dressing gown, a large stately ebony-feathered bird with a shorn crest, iridescent black plumage, fiery burning eyes, grim and stern mien, medium close-up, dramatic side-lighting, flickering lamp light, long distorted dancing shadows, tenebrism, chiaroscuro, heavy purple silk curtains rustling in the gloom, claustrophobic Gothic chamber, leather-bound books, pallid white marble bust of Pallas, velvet-violet cushioned seat, tufted floor with dying embers, Plutonian darkness, Gothic Romanticism, highly tactile textures, sheen of silk, weight of velvet, midnight blue, deep violet, ebony, flickering amber",
+          "status": "completed",
+          "width": 832,
+          "seed": 93598948977332,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 1216,
+          "image_file": "images/animab/chunk_002.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt pale man with disheveled hair and dark shadowed eyes, expression of frantic terror and wide-eyed fear, wearing a heavy dark velvet dressing gown, a large stately ebony-feathered bird with a shorn crest, iridescent black plumage, fiery burning eyes, grim and stern mien, medium close-up, dramatic side-lighting, flickering lamp light, long distorted dancing shadows, tenebrism, chiaroscuro, heavy purple silk curtains rustling in the gloom, claustrophobic Gothic chamber, leather-bound books, pallid white marble bust of Pallas, velvet-violet cushioned seat, tufted floor with dying embers, Plutonian darkness, Gothic Romanticism, highly tactile textures, sheen of silk, weight of velvet, midnight blue, deep violet, ebony, flickering amber",
+          "status": "completed",
+          "width": 832,
+          "seed": 631043021178479,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 1216,
+          "image_file": "images/animab/chunk_002.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt pale man with disheveled hair and dark shadowed eyes, expression of frantic terror and wide-eyed fear, wearing a heavy dark velvet dressing gown, a large stately ebony-feathered bird with a shorn crest, iridescent black plumage, fiery burning eyes, grim and stern mien, medium close-up, dramatic side-lighting, flickering lamp light, long distorted dancing shadows, tenebrism, chiaroscuro, heavy purple silk curtains rustling in the gloom, claustrophobic Gothic chamber, leather-bound books, pallid white marble bust of Pallas, velvet-violet cushioned seat, tufted floor with dying embers, Plutonian darkness, Gothic Romanticism, highly tactile textures, sheen of silk, weight of velvet, midnight blue, deep violet, ebony, flickering amber",
+          "status": "completed",
+          "width": 832,
+          "seed": 631043021178479,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 1216,
+          "image_file": "images/ZIT/chunk_002.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt pale man with disheveled hair and dark shadowed eyes, expression of frantic terror and wide-eyed fear, wearing a heavy dark velvet dressing gown, a large stately ebony-feathered bird with a shorn crest, iridescent black plumage, fiery burning eyes, grim and stern mien, medium close-up, dramatic side-lighting, flickering lamp light, long distorted dancing shadows, tenebrism, chiaroscuro, heavy purple silk curtains rustling in the gloom, claustrophobic Gothic chamber, leather-bound books, pallid white marble bust of Pallas, velvet-violet cushioned seat, tufted floor with dying embers, Plutonian darkness, Gothic Romanticism, highly tactile textures, sheen of silk, weight of velvet, midnight blue, deep violet, ebony, flickering amber",
+          "status": "completed",
+          "width": 832,
+          "seed": 688309255047190,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 1216,
+          "image_file": "images/ZIT/chunk_002.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt pale man with disheveled hair and dark shadowed eyes, expression of frantic terror and wide-eyed fear, wearing a heavy dark velvet dressing gown, a large stately ebony-feathered bird with a shorn crest, iridescent black plumage, fiery burning eyes, grim and stern mien, medium close-up, dramatic side-lighting, flickering lamp light, long distorted dancing shadows, tenebrism, chiaroscuro, heavy purple silk curtains rustling in the gloom, claustrophobic Gothic chamber, leather-bound books, pallid white marble bust of Pallas, velvet-violet cushioned seat, tufted floor with dying embers, Plutonian darkness, Gothic Romanticism, highly tactile textures, sheen of silk, weight of velvet, midnight blue, deep violet, ebony, flickering amber",
+          "status": "completed",
+          "width": 832,
+          "seed": 688309255047190,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_003",
@@ -50,14 +266,86 @@
       "chunk_id": "chunk_004",
       "illustration": {
         "height": 768,
-        "image_file": "images/chunk_004.png",
+        "image_file": "images/ZIT/chunk_004.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "A gaunt, physically depleted man in a heavy dark velvet dressing gown, disheveled hair, shadowed eyes, expression of frantic terror, silhouette, peering into an impenetrable Plutonian void through an open door, a large ebony-feathered bird with a shaven crest and fiery eyes, wide shot, extreme tenebrism, high-contrast chiaroscuro, high-ceilinged Gothic chamber, pallid marble bust of Pallas above the door, heavy purple silk curtains, leather-bound books, velvet-violet furniture, tufted floor with dying embers, swirling incense smoke, single flickering lamp, long distorted dancing shadows, midnight blue, deep violet, ebony, flickering amber, Gothic Romanticism, highly tactile textures of silk and velvet, cinematic, moody.",
         "status": "completed",
         "width": 1344,
-        "seed": 194660947249962
+        "seed": 144835108679225,
+        "workflow": "ZIT.json"
       },
-      "text": "Deep into that darkness peering, long I stood there wondering, fearing,\nDoubting, dreaming dreams no mortal ever dared to dream before;\n    But the silence was unbroken, and the stillness gave no token,\n    And the only word there spoken was the whispered word, “Lenore?”\nThis I whispered, and an echo murmured back the word, “Lenore!”—\n            Merely this and nothing more."
+      "text": "Deep into that darkness peering, long I stood there wondering, fearing,\nDoubting, dreaming dreams no mortal ever dared to dream before;\n    But the silence was unbroken, and the stillness gave no token,\n    And the only word there spoken was the whispered word, “Lenore?”\nThis I whispered, and an echo murmured back the word, “Lenore!”—\n            Merely this and nothing more.",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 768,
+          "image_file": "images/chunk_004.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, physically depleted man in a heavy dark velvet dressing gown, disheveled hair, shadowed eyes, expression of frantic terror, silhouette, peering into an impenetrable Plutonian void through an open door, a large ebony-feathered bird with a shaven crest and fiery eyes, wide shot, extreme tenebrism, high-contrast chiaroscuro, high-ceilinged Gothic chamber, pallid marble bust of Pallas above the door, heavy purple silk curtains, leather-bound books, velvet-violet furniture, tufted floor with dying embers, swirling incense smoke, single flickering lamp, long distorted dancing shadows, midnight blue, deep violet, ebony, flickering amber, Gothic Romanticism, highly tactile textures of silk and velvet, cinematic, moody.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 194660947249962
+        },
+        "!Draw.json": {
+          "height": 768,
+          "image_file": "images/!Draw/chunk_004.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, physically depleted man in a heavy dark velvet dressing gown, disheveled hair, shadowed eyes, expression of frantic terror, silhouette, peering into an impenetrable Plutonian void through an open door, a large ebony-feathered bird with a shaven crest and fiery eyes, wide shot, extreme tenebrism, high-contrast chiaroscuro, high-ceilinged Gothic chamber, pallid marble bust of Pallas above the door, heavy purple silk curtains, leather-bound books, velvet-violet furniture, tufted floor with dying embers, swirling incense smoke, single flickering lamp, long distorted dancing shadows, midnight blue, deep violet, ebony, flickering amber, Gothic Romanticism, highly tactile textures of silk and velvet, cinematic, moody.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 921470818747339,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 768,
+          "image_file": "images/!Draw/chunk_004.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, physically depleted man in a heavy dark velvet dressing gown, disheveled hair, shadowed eyes, expression of frantic terror, silhouette, peering into an impenetrable Plutonian void through an open door, a large ebony-feathered bird with a shaven crest and fiery eyes, wide shot, extreme tenebrism, high-contrast chiaroscuro, high-ceilinged Gothic chamber, pallid marble bust of Pallas above the door, heavy purple silk curtains, leather-bound books, velvet-violet furniture, tufted floor with dying embers, swirling incense smoke, single flickering lamp, long distorted dancing shadows, midnight blue, deep violet, ebony, flickering amber, Gothic Romanticism, highly tactile textures of silk and velvet, cinematic, moody.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 921470818747339,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 768,
+          "image_file": "images/animab/chunk_004.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, physically depleted man in a heavy dark velvet dressing gown, disheveled hair, shadowed eyes, expression of frantic terror, silhouette, peering into an impenetrable Plutonian void through an open door, a large ebony-feathered bird with a shaven crest and fiery eyes, wide shot, extreme tenebrism, high-contrast chiaroscuro, high-ceilinged Gothic chamber, pallid marble bust of Pallas above the door, heavy purple silk curtains, leather-bound books, velvet-violet furniture, tufted floor with dying embers, swirling incense smoke, single flickering lamp, long distorted dancing shadows, midnight blue, deep violet, ebony, flickering amber, Gothic Romanticism, highly tactile textures of silk and velvet, cinematic, moody.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 505379352026524,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 768,
+          "image_file": "images/animab/chunk_004.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, physically depleted man in a heavy dark velvet dressing gown, disheveled hair, shadowed eyes, expression of frantic terror, silhouette, peering into an impenetrable Plutonian void through an open door, a large ebony-feathered bird with a shaven crest and fiery eyes, wide shot, extreme tenebrism, high-contrast chiaroscuro, high-ceilinged Gothic chamber, pallid marble bust of Pallas above the door, heavy purple silk curtains, leather-bound books, velvet-violet furniture, tufted floor with dying embers, swirling incense smoke, single flickering lamp, long distorted dancing shadows, midnight blue, deep violet, ebony, flickering amber, Gothic Romanticism, highly tactile textures of silk and velvet, cinematic, moody.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 505379352026524,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 768,
+          "image_file": "images/ZIT/chunk_004.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, physically depleted man in a heavy dark velvet dressing gown, disheveled hair, shadowed eyes, expression of frantic terror, silhouette, peering into an impenetrable Plutonian void through an open door, a large ebony-feathered bird with a shaven crest and fiery eyes, wide shot, extreme tenebrism, high-contrast chiaroscuro, high-ceilinged Gothic chamber, pallid marble bust of Pallas above the door, heavy purple silk curtains, leather-bound books, velvet-violet furniture, tufted floor with dying embers, swirling incense smoke, single flickering lamp, long distorted dancing shadows, midnight blue, deep violet, ebony, flickering amber, Gothic Romanticism, highly tactile textures of silk and velvet, cinematic, moody.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 144835108679225,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 768,
+          "image_file": "images/ZIT/chunk_004.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, physically depleted man in a heavy dark velvet dressing gown, disheveled hair, shadowed eyes, expression of frantic terror, silhouette, peering into an impenetrable Plutonian void through an open door, a large ebony-feathered bird with a shaven crest and fiery eyes, wide shot, extreme tenebrism, high-contrast chiaroscuro, high-ceilinged Gothic chamber, pallid marble bust of Pallas above the door, heavy purple silk curtains, leather-bound books, velvet-violet furniture, tufted floor with dying embers, swirling incense smoke, single flickering lamp, long distorted dancing shadows, midnight blue, deep violet, ebony, flickering amber, Gothic Romanticism, highly tactile textures of silk and velvet, cinematic, moody.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 144835108679225,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_005",
@@ -68,27 +356,171 @@
       "chunk_id": "chunk_006",
       "illustration": {
         "height": 768,
-        "image_file": "images/chunk_006.png",
+        "image_file": "images/ZIT/chunk_006.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "A large stately ebony raven, ghastly grim, iridescent black plumage, shorn crest, fiery glowing eyes, lordly presence, perched atop a pale white marble bust of Pallas Athena, a gaunt pale man, weary and depleted, disheveled hair, dark shadowed eyes, wearing heavy dark velvet scholarly dressing gown, expression of frantic terror, low angle wide shot, moonlight streaming through open window shutter, stark silhouette of bird against white marble, high-contrast chiaroscuro, tenebrism, long distorted dancing shadows, claustrophobic high-ceilinged Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet cushions, flickering lamp light, midnight blue, deep violet, ebony, amber, highly tactile textures, cinematic, Gothic Romanticism",
         "status": "completed",
         "width": 1344,
-        "seed": 897624870133145
+        "seed": 543566517347265,
+        "workflow": "ZIT.json"
       },
-      "text": "Open here I flung the shutter, when, with many a flirt and flutter,\nIn there stepped a stately Raven of the saintly days of yore;\n    Not the least obeisance made he; not a minute stopped or stayed he;\n    But, with mien of lord or lady, perched above my chamber door—\nPerched upon a bust of Pallas just above my chamber door—\n            Perched, and sat, and nothing more."
+      "text": "Open here I flung the shutter, when, with many a flirt and flutter,\nIn there stepped a stately Raven of the saintly days of yore;\n    Not the least obeisance made he; not a minute stopped or stayed he;\n    But, with mien of lord or lady, perched above my chamber door—\nPerched upon a bust of Pallas just above my chamber door—\n            Perched, and sat, and nothing more.",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 768,
+          "image_file": "images/chunk_006.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony raven, ghastly grim, iridescent black plumage, shorn crest, fiery glowing eyes, lordly presence, perched atop a pale white marble bust of Pallas Athena, a gaunt pale man, weary and depleted, disheveled hair, dark shadowed eyes, wearing heavy dark velvet scholarly dressing gown, expression of frantic terror, low angle wide shot, moonlight streaming through open window shutter, stark silhouette of bird against white marble, high-contrast chiaroscuro, tenebrism, long distorted dancing shadows, claustrophobic high-ceilinged Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet cushions, flickering lamp light, midnight blue, deep violet, ebony, amber, highly tactile textures, cinematic, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 897624870133145
+        },
+        "!Draw.json": {
+          "height": 768,
+          "image_file": "images/!Draw/chunk_006.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony raven, ghastly grim, iridescent black plumage, shorn crest, fiery glowing eyes, lordly presence, perched atop a pale white marble bust of Pallas Athena, a gaunt pale man, weary and depleted, disheveled hair, dark shadowed eyes, wearing heavy dark velvet scholarly dressing gown, expression of frantic terror, low angle wide shot, moonlight streaming through open window shutter, stark silhouette of bird against white marble, high-contrast chiaroscuro, tenebrism, long distorted dancing shadows, claustrophobic high-ceilinged Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet cushions, flickering lamp light, midnight blue, deep violet, ebony, amber, highly tactile textures, cinematic, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 57924675441214,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 768,
+          "image_file": "images/!Draw/chunk_006.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony raven, ghastly grim, iridescent black plumage, shorn crest, fiery glowing eyes, lordly presence, perched atop a pale white marble bust of Pallas Athena, a gaunt pale man, weary and depleted, disheveled hair, dark shadowed eyes, wearing heavy dark velvet scholarly dressing gown, expression of frantic terror, low angle wide shot, moonlight streaming through open window shutter, stark silhouette of bird against white marble, high-contrast chiaroscuro, tenebrism, long distorted dancing shadows, claustrophobic high-ceilinged Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet cushions, flickering lamp light, midnight blue, deep violet, ebony, amber, highly tactile textures, cinematic, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 57924675441214,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 768,
+          "image_file": "images/animab/chunk_006.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony raven, ghastly grim, iridescent black plumage, shorn crest, fiery glowing eyes, lordly presence, perched atop a pale white marble bust of Pallas Athena, a gaunt pale man, weary and depleted, disheveled hair, dark shadowed eyes, wearing heavy dark velvet scholarly dressing gown, expression of frantic terror, low angle wide shot, moonlight streaming through open window shutter, stark silhouette of bird against white marble, high-contrast chiaroscuro, tenebrism, long distorted dancing shadows, claustrophobic high-ceilinged Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet cushions, flickering lamp light, midnight blue, deep violet, ebony, amber, highly tactile textures, cinematic, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 843555552618259,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 768,
+          "image_file": "images/animab/chunk_006.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony raven, ghastly grim, iridescent black plumage, shorn crest, fiery glowing eyes, lordly presence, perched atop a pale white marble bust of Pallas Athena, a gaunt pale man, weary and depleted, disheveled hair, dark shadowed eyes, wearing heavy dark velvet scholarly dressing gown, expression of frantic terror, low angle wide shot, moonlight streaming through open window shutter, stark silhouette of bird against white marble, high-contrast chiaroscuro, tenebrism, long distorted dancing shadows, claustrophobic high-ceilinged Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet cushions, flickering lamp light, midnight blue, deep violet, ebony, amber, highly tactile textures, cinematic, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 843555552618259,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 768,
+          "image_file": "images/ZIT/chunk_006.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony raven, ghastly grim, iridescent black plumage, shorn crest, fiery glowing eyes, lordly presence, perched atop a pale white marble bust of Pallas Athena, a gaunt pale man, weary and depleted, disheveled hair, dark shadowed eyes, wearing heavy dark velvet scholarly dressing gown, expression of frantic terror, low angle wide shot, moonlight streaming through open window shutter, stark silhouette of bird against white marble, high-contrast chiaroscuro, tenebrism, long distorted dancing shadows, claustrophobic high-ceilinged Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet cushions, flickering lamp light, midnight blue, deep violet, ebony, amber, highly tactile textures, cinematic, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 543566517347265,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 768,
+          "image_file": "images/ZIT/chunk_006.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony raven, ghastly grim, iridescent black plumage, shorn crest, fiery glowing eyes, lordly presence, perched atop a pale white marble bust of Pallas Athena, a gaunt pale man, weary and depleted, disheveled hair, dark shadowed eyes, wearing heavy dark velvet scholarly dressing gown, expression of frantic terror, low angle wide shot, moonlight streaming through open window shutter, stark silhouette of bird against white marble, high-contrast chiaroscuro, tenebrism, long distorted dancing shadows, claustrophobic high-ceilinged Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet cushions, flickering lamp light, midnight blue, deep violet, ebony, amber, highly tactile textures, cinematic, Gothic Romanticism",
+          "status": "completed",
+          "width": 1344,
+          "seed": 543566517347265,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_007",
       "illustration": {
         "height": 1216,
-        "image_file": "images/chunk_007.png",
+        "image_file": "images/ZIT/chunk_007.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "Close-up of a large, stately ebony-feathered raven, ghastly grim and ancient countenance, stern and unnerving expression, highly textured dark feathers, sculptural plumage, slight iridescent sheen, shorn and shaven rugged crest, piercing fiery eyes burning with demonic intensity, mien of a lord, extreme close-up, tenebrism lighting, dramatic chiaroscuro, intense highlights on the sharp beak and glowing eyes, deep velvety shadows, high contrast, Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, flickering amber lamp light, long distorted shadows, dense atmospheric haze, swirling incense, Plutonian darkness, Gothic Romanticism, rich moody color palette of midnight blue, deep violet, ebony, and flickering amber, tactile textures",
         "status": "completed",
         "width": 832,
-        "seed": 326676612926825
+        "seed": 652579080281576,
+        "workflow": "ZIT.json"
       },
-      "text": "Then this ebony bird beguiling my sad fancy into smiling,\nBy the grave and stern decorum of the countenance it wore,\n“Though thy crest be shorn and shaven, thou,” I said, “art sure no craven,\nGhastly grim and ancient Raven wandering from the Nightly shore—\nTell me what thy lordly name is on the Night’s Plutonian shore!”\n            Quoth the Raven “Nevermore.”"
+      "text": "Then this ebony bird beguiling my sad fancy into smiling,\nBy the grave and stern decorum of the countenance it wore,\n“Though thy crest be shorn and shaven, thou,” I said, “art sure no craven,\nGhastly grim and ancient Raven wandering from the Nightly shore—\nTell me what thy lordly name is on the Night’s Plutonian shore!”\n            Quoth the Raven “Nevermore.”",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 1216,
+          "image_file": "images/chunk_007.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of a large, stately ebony-feathered raven, ghastly grim and ancient countenance, stern and unnerving expression, highly textured dark feathers, sculptural plumage, slight iridescent sheen, shorn and shaven rugged crest, piercing fiery eyes burning with demonic intensity, mien of a lord, extreme close-up, tenebrism lighting, dramatic chiaroscuro, intense highlights on the sharp beak and glowing eyes, deep velvety shadows, high contrast, Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, flickering amber lamp light, long distorted shadows, dense atmospheric haze, swirling incense, Plutonian darkness, Gothic Romanticism, rich moody color palette of midnight blue, deep violet, ebony, and flickering amber, tactile textures",
+          "status": "completed",
+          "width": 832,
+          "seed": 326676612926825
+        },
+        "!Draw.json": {
+          "height": 1216,
+          "image_file": "images/!Draw/chunk_007.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of a large, stately ebony-feathered raven, ghastly grim and ancient countenance, stern and unnerving expression, highly textured dark feathers, sculptural plumage, slight iridescent sheen, shorn and shaven rugged crest, piercing fiery eyes burning with demonic intensity, mien of a lord, extreme close-up, tenebrism lighting, dramatic chiaroscuro, intense highlights on the sharp beak and glowing eyes, deep velvety shadows, high contrast, Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, flickering amber lamp light, long distorted shadows, dense atmospheric haze, swirling incense, Plutonian darkness, Gothic Romanticism, rich moody color palette of midnight blue, deep violet, ebony, and flickering amber, tactile textures",
+          "status": "completed",
+          "width": 832,
+          "seed": 159486140052915,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 1216,
+          "image_file": "images/!Draw/chunk_007.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of a large, stately ebony-feathered raven, ghastly grim and ancient countenance, stern and unnerving expression, highly textured dark feathers, sculptural plumage, slight iridescent sheen, shorn and shaven rugged crest, piercing fiery eyes burning with demonic intensity, mien of a lord, extreme close-up, tenebrism lighting, dramatic chiaroscuro, intense highlights on the sharp beak and glowing eyes, deep velvety shadows, high contrast, Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, flickering amber lamp light, long distorted shadows, dense atmospheric haze, swirling incense, Plutonian darkness, Gothic Romanticism, rich moody color palette of midnight blue, deep violet, ebony, and flickering amber, tactile textures",
+          "status": "completed",
+          "width": 832,
+          "seed": 159486140052915,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 1216,
+          "image_file": "images/animab/chunk_007.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of a large, stately ebony-feathered raven, ghastly grim and ancient countenance, stern and unnerving expression, highly textured dark feathers, sculptural plumage, slight iridescent sheen, shorn and shaven rugged crest, piercing fiery eyes burning with demonic intensity, mien of a lord, extreme close-up, tenebrism lighting, dramatic chiaroscuro, intense highlights on the sharp beak and glowing eyes, deep velvety shadows, high contrast, Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, flickering amber lamp light, long distorted shadows, dense atmospheric haze, swirling incense, Plutonian darkness, Gothic Romanticism, rich moody color palette of midnight blue, deep violet, ebony, and flickering amber, tactile textures",
+          "status": "completed",
+          "width": 832,
+          "seed": 325774684014745,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 1216,
+          "image_file": "images/animab/chunk_007.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of a large, stately ebony-feathered raven, ghastly grim and ancient countenance, stern and unnerving expression, highly textured dark feathers, sculptural plumage, slight iridescent sheen, shorn and shaven rugged crest, piercing fiery eyes burning with demonic intensity, mien of a lord, extreme close-up, tenebrism lighting, dramatic chiaroscuro, intense highlights on the sharp beak and glowing eyes, deep velvety shadows, high contrast, Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, flickering amber lamp light, long distorted shadows, dense atmospheric haze, swirling incense, Plutonian darkness, Gothic Romanticism, rich moody color palette of midnight blue, deep violet, ebony, and flickering amber, tactile textures",
+          "status": "completed",
+          "width": 832,
+          "seed": 325774684014745,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 1216,
+          "image_file": "images/ZIT/chunk_007.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of a large, stately ebony-feathered raven, ghastly grim and ancient countenance, stern and unnerving expression, highly textured dark feathers, sculptural plumage, slight iridescent sheen, shorn and shaven rugged crest, piercing fiery eyes burning with demonic intensity, mien of a lord, extreme close-up, tenebrism lighting, dramatic chiaroscuro, intense highlights on the sharp beak and glowing eyes, deep velvety shadows, high contrast, Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, flickering amber lamp light, long distorted shadows, dense atmospheric haze, swirling incense, Plutonian darkness, Gothic Romanticism, rich moody color palette of midnight blue, deep violet, ebony, and flickering amber, tactile textures",
+          "status": "completed",
+          "width": 832,
+          "seed": 652579080281576,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 1216,
+          "image_file": "images/ZIT/chunk_007.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Close-up of a large, stately ebony-feathered raven, ghastly grim and ancient countenance, stern and unnerving expression, highly textured dark feathers, sculptural plumage, slight iridescent sheen, shorn and shaven rugged crest, piercing fiery eyes burning with demonic intensity, mien of a lord, extreme close-up, tenebrism lighting, dramatic chiaroscuro, intense highlights on the sharp beak and glowing eyes, deep velvety shadows, high contrast, Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, flickering amber lamp light, long distorted shadows, dense atmospheric haze, swirling incense, Plutonian darkness, Gothic Romanticism, rich moody color palette of midnight blue, deep violet, ebony, and flickering amber, tactile textures",
+          "status": "completed",
+          "width": 832,
+          "seed": 652579080281576,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_008",
@@ -99,14 +531,86 @@
       "chunk_id": "chunk_009",
       "illustration": {
         "height": 1024,
-        "image_file": "images/chunk_009.png",
+        "image_file": "images/ZIT/chunk_009.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "A large stately ebony-feathered raven with a shorn crest and fiery demonic eyes, perched in absolute stillness upon a pallid white marble bust of Pallas, a gaunt weary man with pale skin and disheveled hair in dark velvet scholarly robes, profound melancholy, medium shot, centered on the bust, claustrophobic Gothic chamber, high ceilings, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, Plutonian darkness, low-key lighting, Chiaroscuro, tenebrism, flickering amber light catching the marble edges, long distorted dancing shadows, dying embers, Gothic Romanticism, deep midnight blue and ebony shadows, rich palette of violet and amber, highly tactile textures, sheen of silk, weight of velvet, cold marble.",
         "status": "completed",
         "width": 1024,
-        "seed": 1078830839901636
+        "seed": 246081111347292,
+        "workflow": "ZIT.json"
       },
-      "text": "But the Raven, sitting lonely on the placid bust, spoke only\nThat one word, as if his soul in that one word he did outpour.\n    Nothing farther then he uttered—not a feather then he fluttered—\n    Till I scarcely more than muttered “Other friends have flown before—\nOn the morrow he will leave me, as my Hopes have flown before.”\n            Then the bird said “Nevermore.”"
+      "text": "But the Raven, sitting lonely on the placid bust, spoke only\nThat one word, as if his soul in that one word he did outpour.\n    Nothing farther then he uttered—not a feather then he fluttered—\n    Till I scarcely more than muttered “Other friends have flown before—\nOn the morrow he will leave me, as my Hopes have flown before.”\n            Then the bird said “Nevermore.”",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 1024,
+          "image_file": "images/chunk_009.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony-feathered raven with a shorn crest and fiery demonic eyes, perched in absolute stillness upon a pallid white marble bust of Pallas, a gaunt weary man with pale skin and disheveled hair in dark velvet scholarly robes, profound melancholy, medium shot, centered on the bust, claustrophobic Gothic chamber, high ceilings, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, Plutonian darkness, low-key lighting, Chiaroscuro, tenebrism, flickering amber light catching the marble edges, long distorted dancing shadows, dying embers, Gothic Romanticism, deep midnight blue and ebony shadows, rich palette of violet and amber, highly tactile textures, sheen of silk, weight of velvet, cold marble.",
+          "status": "completed",
+          "width": 1024,
+          "seed": 1078830839901636
+        },
+        "!Draw.json": {
+          "height": 1024,
+          "image_file": "images/!Draw/chunk_009.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony-feathered raven with a shorn crest and fiery demonic eyes, perched in absolute stillness upon a pallid white marble bust of Pallas, a gaunt weary man with pale skin and disheveled hair in dark velvet scholarly robes, profound melancholy, medium shot, centered on the bust, claustrophobic Gothic chamber, high ceilings, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, Plutonian darkness, low-key lighting, Chiaroscuro, tenebrism, flickering amber light catching the marble edges, long distorted dancing shadows, dying embers, Gothic Romanticism, deep midnight blue and ebony shadows, rich palette of violet and amber, highly tactile textures, sheen of silk, weight of velvet, cold marble.",
+          "status": "completed",
+          "width": 1024,
+          "seed": 290127775211650,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 1024,
+          "image_file": "images/!Draw/chunk_009.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony-feathered raven with a shorn crest and fiery demonic eyes, perched in absolute stillness upon a pallid white marble bust of Pallas, a gaunt weary man with pale skin and disheveled hair in dark velvet scholarly robes, profound melancholy, medium shot, centered on the bust, claustrophobic Gothic chamber, high ceilings, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, Plutonian darkness, low-key lighting, Chiaroscuro, tenebrism, flickering amber light catching the marble edges, long distorted dancing shadows, dying embers, Gothic Romanticism, deep midnight blue and ebony shadows, rich palette of violet and amber, highly tactile textures, sheen of silk, weight of velvet, cold marble.",
+          "status": "completed",
+          "width": 1024,
+          "seed": 290127775211650,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 1024,
+          "image_file": "images/animab/chunk_009.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony-feathered raven with a shorn crest and fiery demonic eyes, perched in absolute stillness upon a pallid white marble bust of Pallas, a gaunt weary man with pale skin and disheveled hair in dark velvet scholarly robes, profound melancholy, medium shot, centered on the bust, claustrophobic Gothic chamber, high ceilings, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, Plutonian darkness, low-key lighting, Chiaroscuro, tenebrism, flickering amber light catching the marble edges, long distorted dancing shadows, dying embers, Gothic Romanticism, deep midnight blue and ebony shadows, rich palette of violet and amber, highly tactile textures, sheen of silk, weight of velvet, cold marble.",
+          "status": "completed",
+          "width": 1024,
+          "seed": 799428756613401,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 1024,
+          "image_file": "images/animab/chunk_009.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony-feathered raven with a shorn crest and fiery demonic eyes, perched in absolute stillness upon a pallid white marble bust of Pallas, a gaunt weary man with pale skin and disheveled hair in dark velvet scholarly robes, profound melancholy, medium shot, centered on the bust, claustrophobic Gothic chamber, high ceilings, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, Plutonian darkness, low-key lighting, Chiaroscuro, tenebrism, flickering amber light catching the marble edges, long distorted dancing shadows, dying embers, Gothic Romanticism, deep midnight blue and ebony shadows, rich palette of violet and amber, highly tactile textures, sheen of silk, weight of velvet, cold marble.",
+          "status": "completed",
+          "width": 1024,
+          "seed": 799428756613401,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 1024,
+          "image_file": "images/ZIT/chunk_009.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony-feathered raven with a shorn crest and fiery demonic eyes, perched in absolute stillness upon a pallid white marble bust of Pallas, a gaunt weary man with pale skin and disheveled hair in dark velvet scholarly robes, profound melancholy, medium shot, centered on the bust, claustrophobic Gothic chamber, high ceilings, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, Plutonian darkness, low-key lighting, Chiaroscuro, tenebrism, flickering amber light catching the marble edges, long distorted dancing shadows, dying embers, Gothic Romanticism, deep midnight blue and ebony shadows, rich palette of violet and amber, highly tactile textures, sheen of silk, weight of velvet, cold marble.",
+          "status": "completed",
+          "width": 1024,
+          "seed": 246081111347292,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 1024,
+          "image_file": "images/ZIT/chunk_009.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A large stately ebony-feathered raven with a shorn crest and fiery demonic eyes, perched in absolute stillness upon a pallid white marble bust of Pallas, a gaunt weary man with pale skin and disheveled hair in dark velvet scholarly robes, profound melancholy, medium shot, centered on the bust, claustrophobic Gothic chamber, high ceilings, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, Plutonian darkness, low-key lighting, Chiaroscuro, tenebrism, flickering amber light catching the marble edges, long distorted dancing shadows, dying embers, Gothic Romanticism, deep midnight blue and ebony shadows, rich palette of violet and amber, highly tactile textures, sheen of silk, weight of velvet, cold marble.",
+          "status": "completed",
+          "width": 1024,
+          "seed": 246081111347292,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_010",
@@ -117,53 +621,341 @@
       "chunk_id": "chunk_011",
       "illustration": {
         "height": 1024,
-        "image_file": "images/chunk_011.png",
+        "image_file": "images/ZIT/chunk_011.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "Gaunt weary man, pale complexion, dark shadowed eyes, disheveled hair, heavy dark velvet dressing gown, sitting heavily in a plush violet velvet chair, large stately ebony-feathered raven, shorn crest, fiery demonic eyes, perched on a pallid white marble bust of Pallas, side profile, medium shot, high-contrast Chiaroscuro, tenebrism, deep ebony shadows, flickering amber lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, highly tactile textures of silk, velvet, and cold marble, Gothic Romanticism",
         "status": "completed",
         "width": 1024,
-        "seed": 943592083969189
+        "seed": 527304032621032,
+        "workflow": "ZIT.json"
       },
-      "text": "But the Raven still beguiling all my fancy into smiling,\nStraight I wheeled a cushioned seat in front of bird, and bust and door;\n    Then, upon the velvet sinking, I betook myself to linking\n    Fancy unto fancy, thinking what this ominous bird of yore—\nWhat this grim, ungainly, ghastly, gaunt, and ominous bird of yore\n            Meant in croaking “Nevermore.”"
+      "text": "But the Raven still beguiling all my fancy into smiling,\nStraight I wheeled a cushioned seat in front of bird, and bust and door;\n    Then, upon the velvet sinking, I betook myself to linking\n    Fancy unto fancy, thinking what this ominous bird of yore—\nWhat this grim, ungainly, ghastly, gaunt, and ominous bird of yore\n            Meant in croaking “Nevermore.”",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 1024,
+          "image_file": "images/chunk_011.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Gaunt weary man, pale complexion, dark shadowed eyes, disheveled hair, heavy dark velvet dressing gown, sitting heavily in a plush violet velvet chair, large stately ebony-feathered raven, shorn crest, fiery demonic eyes, perched on a pallid white marble bust of Pallas, side profile, medium shot, high-contrast Chiaroscuro, tenebrism, deep ebony shadows, flickering amber lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, highly tactile textures of silk, velvet, and cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1024,
+          "seed": 943592083969189
+        },
+        "!Draw.json": {
+          "height": 1024,
+          "image_file": "images/!Draw/chunk_011.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Gaunt weary man, pale complexion, dark shadowed eyes, disheveled hair, heavy dark velvet dressing gown, sitting heavily in a plush violet velvet chair, large stately ebony-feathered raven, shorn crest, fiery demonic eyes, perched on a pallid white marble bust of Pallas, side profile, medium shot, high-contrast Chiaroscuro, tenebrism, deep ebony shadows, flickering amber lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, highly tactile textures of silk, velvet, and cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1024,
+          "seed": 757680479794360,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 1024,
+          "image_file": "images/!Draw/chunk_011.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Gaunt weary man, pale complexion, dark shadowed eyes, disheveled hair, heavy dark velvet dressing gown, sitting heavily in a plush violet velvet chair, large stately ebony-feathered raven, shorn crest, fiery demonic eyes, perched on a pallid white marble bust of Pallas, side profile, medium shot, high-contrast Chiaroscuro, tenebrism, deep ebony shadows, flickering amber lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, highly tactile textures of silk, velvet, and cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1024,
+          "seed": 757680479794360,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 1024,
+          "image_file": "images/animab/chunk_011.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Gaunt weary man, pale complexion, dark shadowed eyes, disheveled hair, heavy dark velvet dressing gown, sitting heavily in a plush violet velvet chair, large stately ebony-feathered raven, shorn crest, fiery demonic eyes, perched on a pallid white marble bust of Pallas, side profile, medium shot, high-contrast Chiaroscuro, tenebrism, deep ebony shadows, flickering amber lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, highly tactile textures of silk, velvet, and cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1024,
+          "seed": 319579480709326,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 1024,
+          "image_file": "images/animab/chunk_011.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Gaunt weary man, pale complexion, dark shadowed eyes, disheveled hair, heavy dark velvet dressing gown, sitting heavily in a plush violet velvet chair, large stately ebony-feathered raven, shorn crest, fiery demonic eyes, perched on a pallid white marble bust of Pallas, side profile, medium shot, high-contrast Chiaroscuro, tenebrism, deep ebony shadows, flickering amber lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, highly tactile textures of silk, velvet, and cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1024,
+          "seed": 319579480709326,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 1024,
+          "image_file": "images/ZIT/chunk_011.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Gaunt weary man, pale complexion, dark shadowed eyes, disheveled hair, heavy dark velvet dressing gown, sitting heavily in a plush violet velvet chair, large stately ebony-feathered raven, shorn crest, fiery demonic eyes, perched on a pallid white marble bust of Pallas, side profile, medium shot, high-contrast Chiaroscuro, tenebrism, deep ebony shadows, flickering amber lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, highly tactile textures of silk, velvet, and cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1024,
+          "seed": 527304032621032,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 1024,
+          "image_file": "images/ZIT/chunk_011.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Gaunt weary man, pale complexion, dark shadowed eyes, disheveled hair, heavy dark velvet dressing gown, sitting heavily in a plush violet velvet chair, large stately ebony-feathered raven, shorn crest, fiery demonic eyes, perched on a pallid white marble bust of Pallas, side profile, medium shot, high-contrast Chiaroscuro, tenebrism, deep ebony shadows, flickering amber lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, dense atmosphere, swirling incense smoke, midnight blue and deep violet color palette, highly tactile textures of silk, velvet, and cold marble, Gothic Romanticism",
+          "status": "completed",
+          "width": 1024,
+          "seed": 527304032621032,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_012",
       "illustration": {
         "height": 1216,
-        "image_file": "images/chunk_012.png",
+        "image_file": "images/ZIT/chunk_012.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "Extreme close-up of a large, stately raven's eyes, burning with unnatural fiery amber light, demonic intensity, ebony-feathered plumage with iridescent sheen, shorn and shaven crest, ghastly grim and ancient appearance, glinting lamp-light on rich tactile violet velvet chair lining, heavy suffocating luxury, close-up, shallow depth of field, heavy Tenebrism, Chiaroscuro, high contrast, long distorted dancing shadows, claustrophobic Gothic chamber, midnight blue and deep violet color palette, flickering amber glow, Plutonian darkness, Gothic Romanticism, highly tactile textures, cinematic, moody, hyper-detailed.",
         "status": "completed",
         "width": 832,
-        "seed": 1086545173698073
+        "seed": 175942194203945,
+        "workflow": "ZIT.json"
       },
-      "text": "This I sat engaged in guessing, but no syllable expressing\nTo the fowl whose fiery eyes now burned into my bosom’s core;\n    This and more I sat divining, with my head at ease reclining\n    On the cushion’s velvet lining that the lamp-light gloated o’er,\nBut whose velvet-violet lining with the lamp-light gloating o’er,\n            She shall press, ah, nevermore!"
+      "text": "This I sat engaged in guessing, but no syllable expressing\nTo the fowl whose fiery eyes now burned into my bosom’s core;\n    This and more I sat divining, with my head at ease reclining\n    On the cushion’s velvet lining that the lamp-light gloated o’er,\nBut whose velvet-violet lining with the lamp-light gloating o’er,\n            She shall press, ah, nevermore!",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 1216,
+          "image_file": "images/chunk_012.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Extreme close-up of a large, stately raven's eyes, burning with unnatural fiery amber light, demonic intensity, ebony-feathered plumage with iridescent sheen, shorn and shaven crest, ghastly grim and ancient appearance, glinting lamp-light on rich tactile violet velvet chair lining, heavy suffocating luxury, close-up, shallow depth of field, heavy Tenebrism, Chiaroscuro, high contrast, long distorted dancing shadows, claustrophobic Gothic chamber, midnight blue and deep violet color palette, flickering amber glow, Plutonian darkness, Gothic Romanticism, highly tactile textures, cinematic, moody, hyper-detailed.",
+          "status": "completed",
+          "width": 832,
+          "seed": 1086545173698073
+        },
+        "!Draw.json": {
+          "height": 1216,
+          "image_file": "images/!Draw/chunk_012.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Extreme close-up of a large, stately raven's eyes, burning with unnatural fiery amber light, demonic intensity, ebony-feathered plumage with iridescent sheen, shorn and shaven crest, ghastly grim and ancient appearance, glinting lamp-light on rich tactile violet velvet chair lining, heavy suffocating luxury, close-up, shallow depth of field, heavy Tenebrism, Chiaroscuro, high contrast, long distorted dancing shadows, claustrophobic Gothic chamber, midnight blue and deep violet color palette, flickering amber glow, Plutonian darkness, Gothic Romanticism, highly tactile textures, cinematic, moody, hyper-detailed.",
+          "status": "completed",
+          "width": 832,
+          "seed": 981090706114086,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 1216,
+          "image_file": "images/!Draw/chunk_012.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Extreme close-up of a large, stately raven's eyes, burning with unnatural fiery amber light, demonic intensity, ebony-feathered plumage with iridescent sheen, shorn and shaven crest, ghastly grim and ancient appearance, glinting lamp-light on rich tactile violet velvet chair lining, heavy suffocating luxury, close-up, shallow depth of field, heavy Tenebrism, Chiaroscuro, high contrast, long distorted dancing shadows, claustrophobic Gothic chamber, midnight blue and deep violet color palette, flickering amber glow, Plutonian darkness, Gothic Romanticism, highly tactile textures, cinematic, moody, hyper-detailed.",
+          "status": "completed",
+          "width": 832,
+          "seed": 981090706114086,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 1216,
+          "image_file": "images/animab/chunk_012.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Extreme close-up of a large, stately raven's eyes, burning with unnatural fiery amber light, demonic intensity, ebony-feathered plumage with iridescent sheen, shorn and shaven crest, ghastly grim and ancient appearance, glinting lamp-light on rich tactile violet velvet chair lining, heavy suffocating luxury, close-up, shallow depth of field, heavy Tenebrism, Chiaroscuro, high contrast, long distorted dancing shadows, claustrophobic Gothic chamber, midnight blue and deep violet color palette, flickering amber glow, Plutonian darkness, Gothic Romanticism, highly tactile textures, cinematic, moody, hyper-detailed.",
+          "status": "completed",
+          "width": 832,
+          "seed": 1076925003965768,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 1216,
+          "image_file": "images/animab/chunk_012.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Extreme close-up of a large, stately raven's eyes, burning with unnatural fiery amber light, demonic intensity, ebony-feathered plumage with iridescent sheen, shorn and shaven crest, ghastly grim and ancient appearance, glinting lamp-light on rich tactile violet velvet chair lining, heavy suffocating luxury, close-up, shallow depth of field, heavy Tenebrism, Chiaroscuro, high contrast, long distorted dancing shadows, claustrophobic Gothic chamber, midnight blue and deep violet color palette, flickering amber glow, Plutonian darkness, Gothic Romanticism, highly tactile textures, cinematic, moody, hyper-detailed.",
+          "status": "completed",
+          "width": 832,
+          "seed": 1076925003965768,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 1216,
+          "image_file": "images/ZIT/chunk_012.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Extreme close-up of a large, stately raven's eyes, burning with unnatural fiery amber light, demonic intensity, ebony-feathered plumage with iridescent sheen, shorn and shaven crest, ghastly grim and ancient appearance, glinting lamp-light on rich tactile violet velvet chair lining, heavy suffocating luxury, close-up, shallow depth of field, heavy Tenebrism, Chiaroscuro, high contrast, long distorted dancing shadows, claustrophobic Gothic chamber, midnight blue and deep violet color palette, flickering amber glow, Plutonian darkness, Gothic Romanticism, highly tactile textures, cinematic, moody, hyper-detailed.",
+          "status": "completed",
+          "width": 832,
+          "seed": 175942194203945,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 1216,
+          "image_file": "images/ZIT/chunk_012.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Extreme close-up of a large, stately raven's eyes, burning with unnatural fiery amber light, demonic intensity, ebony-feathered plumage with iridescent sheen, shorn and shaven crest, ghastly grim and ancient appearance, glinting lamp-light on rich tactile violet velvet chair lining, heavy suffocating luxury, close-up, shallow depth of field, heavy Tenebrism, Chiaroscuro, high contrast, long distorted dancing shadows, claustrophobic Gothic chamber, midnight blue and deep violet color palette, flickering amber glow, Plutonian darkness, Gothic Romanticism, highly tactile textures, cinematic, moody, hyper-detailed.",
+          "status": "completed",
+          "width": 832,
+          "seed": 175942194203945,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_013",
       "illustration": {
         "height": 768,
-        "image_file": "images/chunk_013.png",
+        "image_file": "images/ZIT/chunk_013.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "thick swirling plumes of incense smoke, ethereal ghostly shapes suggesting Seraphim, dancing shadows, wide shot, low angle, looking through a haze of smoke and shadow, single flickering amber lamp, tenebrism, chiaroscuro, deep dramatic shadows, Plutonian darkness, Gothic Scholar's Chamber, high-ceilinged claustrophobic room, old leather-bound books, heavy rustling purple silk curtains, velvet-violet cushioned seat, pallid white marble bust of Pallas above the door, tufted floor, dying embers, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism, cinematic, highly detailed",
         "status": "completed",
         "width": 1344,
-        "seed": 403549322654684
+        "seed": 1047275871443781,
+        "workflow": "ZIT.json"
       },
-      "text": "Then, methought, the air grew denser, perfumed from an unseen censer\nSwung by Seraphim whose foot-falls tinkled on the tufted floor.\n    “Wretch,” I cried, “thy God hath lent thee—by these angels he hath sent thee\n    Respite—respite and nepenthe from thy memories of Lenore;\nQuaff, oh quaff this kind nepenthe and forget this lost Lenore!”\n            Quoth the Raven “Nevermore.”"
+      "text": "Then, methought, the air grew denser, perfumed from an unseen censer\nSwung by Seraphim whose foot-falls tinkled on the tufted floor.\n    “Wretch,” I cried, “thy God hath lent thee—by these angels he hath sent thee\n    Respite—respite and nepenthe from thy memories of Lenore;\nQuaff, oh quaff this kind nepenthe and forget this lost Lenore!”\n            Quoth the Raven “Nevermore.”",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 768,
+          "image_file": "images/chunk_013.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "thick swirling plumes of incense smoke, ethereal ghostly shapes suggesting Seraphim, dancing shadows, wide shot, low angle, looking through a haze of smoke and shadow, single flickering amber lamp, tenebrism, chiaroscuro, deep dramatic shadows, Plutonian darkness, Gothic Scholar's Chamber, high-ceilinged claustrophobic room, old leather-bound books, heavy rustling purple silk curtains, velvet-violet cushioned seat, pallid white marble bust of Pallas above the door, tufted floor, dying embers, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism, cinematic, highly detailed",
+          "status": "completed",
+          "width": 1344,
+          "seed": 403549322654684
+        },
+        "!Draw.json": {
+          "height": 768,
+          "image_file": "images/!Draw/chunk_013.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "thick swirling plumes of incense smoke, ethereal ghostly shapes suggesting Seraphim, dancing shadows, wide shot, low angle, looking through a haze of smoke and shadow, single flickering amber lamp, tenebrism, chiaroscuro, deep dramatic shadows, Plutonian darkness, Gothic Scholar's Chamber, high-ceilinged claustrophobic room, old leather-bound books, heavy rustling purple silk curtains, velvet-violet cushioned seat, pallid white marble bust of Pallas above the door, tufted floor, dying embers, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism, cinematic, highly detailed",
+          "status": "completed",
+          "width": 1344,
+          "seed": 920956779259316,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 768,
+          "image_file": "images/!Draw/chunk_013.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "thick swirling plumes of incense smoke, ethereal ghostly shapes suggesting Seraphim, dancing shadows, wide shot, low angle, looking through a haze of smoke and shadow, single flickering amber lamp, tenebrism, chiaroscuro, deep dramatic shadows, Plutonian darkness, Gothic Scholar's Chamber, high-ceilinged claustrophobic room, old leather-bound books, heavy rustling purple silk curtains, velvet-violet cushioned seat, pallid white marble bust of Pallas above the door, tufted floor, dying embers, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism, cinematic, highly detailed",
+          "status": "completed",
+          "width": 1344,
+          "seed": 920956779259316,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 768,
+          "image_file": "images/animab/chunk_013.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "thick swirling plumes of incense smoke, ethereal ghostly shapes suggesting Seraphim, dancing shadows, wide shot, low angle, looking through a haze of smoke and shadow, single flickering amber lamp, tenebrism, chiaroscuro, deep dramatic shadows, Plutonian darkness, Gothic Scholar's Chamber, high-ceilinged claustrophobic room, old leather-bound books, heavy rustling purple silk curtains, velvet-violet cushioned seat, pallid white marble bust of Pallas above the door, tufted floor, dying embers, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism, cinematic, highly detailed",
+          "status": "completed",
+          "width": 1344,
+          "seed": 31816449274335,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 768,
+          "image_file": "images/animab/chunk_013.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "thick swirling plumes of incense smoke, ethereal ghostly shapes suggesting Seraphim, dancing shadows, wide shot, low angle, looking through a haze of smoke and shadow, single flickering amber lamp, tenebrism, chiaroscuro, deep dramatic shadows, Plutonian darkness, Gothic Scholar's Chamber, high-ceilinged claustrophobic room, old leather-bound books, heavy rustling purple silk curtains, velvet-violet cushioned seat, pallid white marble bust of Pallas above the door, tufted floor, dying embers, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism, cinematic, highly detailed",
+          "status": "completed",
+          "width": 1344,
+          "seed": 31816449274335,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 768,
+          "image_file": "images/ZIT/chunk_013.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "thick swirling plumes of incense smoke, ethereal ghostly shapes suggesting Seraphim, dancing shadows, wide shot, low angle, looking through a haze of smoke and shadow, single flickering amber lamp, tenebrism, chiaroscuro, deep dramatic shadows, Plutonian darkness, Gothic Scholar's Chamber, high-ceilinged claustrophobic room, old leather-bound books, heavy rustling purple silk curtains, velvet-violet cushioned seat, pallid white marble bust of Pallas above the door, tufted floor, dying embers, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism, cinematic, highly detailed",
+          "status": "completed",
+          "width": 1344,
+          "seed": 1047275871443781,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 768,
+          "image_file": "images/ZIT/chunk_013.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "thick swirling plumes of incense smoke, ethereal ghostly shapes suggesting Seraphim, dancing shadows, wide shot, low angle, looking through a haze of smoke and shadow, single flickering amber lamp, tenebrism, chiaroscuro, deep dramatic shadows, Plutonian darkness, Gothic Scholar's Chamber, high-ceilinged claustrophobic room, old leather-bound books, heavy rustling purple silk curtains, velvet-violet cushioned seat, pallid white marble bust of Pallas above the door, tufted floor, dying embers, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, sheen of silk, weight of velvet, cold marble, Gothic Romanticism, cinematic, highly detailed",
+          "status": "completed",
+          "width": 1344,
+          "seed": 1047275871443781,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_014",
       "illustration": {
         "height": 1216,
-        "image_file": "images/chunk_014.png",
+        "image_file": "images/ZIT/chunk_014.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "Haggard man with gaunt pale complexion, dark shadowed eyes, disheveled hair, expression of profound anguish and madness, crying out in spiritual desperation, leaning into light, wearing heavy dark velvet dressing gown, large stately ebony-feathered bird, ghastly grim, iridescent black plumage, shorn crest, fiery demonic eyes, mien of a lord, close-up, dramatic low angle, high-contrast chiaroscuro, tenebrism, single flickering lamp, long distorted dancing shadows, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, velvet-violet furniture, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble, cinematic lighting",
         "status": "completed",
         "width": 832,
-        "seed": 1094559248287560
+        "seed": 705450695943714,
+        "workflow": "ZIT.json"
       },
-      "text": "“Prophet!” said I, “thing of evil!—prophet still, if bird or devil!—\nWhether Tempter sent, or whether tempest tossed thee here ashore,\n    Desolate yet all undaunted, on this desert land enchanted—\n    On this home by Horror haunted—tell me truly, I implore—\nIs there—is there balm in Gilead?—tell me—tell me, I implore!”\n            Quoth the Raven “Nevermore.”"
+      "text": "“Prophet!” said I, “thing of evil!—prophet still, if bird or devil!—\nWhether Tempter sent, or whether tempest tossed thee here ashore,\n    Desolate yet all undaunted, on this desert land enchanted—\n    On this home by Horror haunted—tell me truly, I implore—\nIs there—is there balm in Gilead?—tell me—tell me, I implore!”\n            Quoth the Raven “Nevermore.”",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 1216,
+          "image_file": "images/chunk_014.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Haggard man with gaunt pale complexion, dark shadowed eyes, disheveled hair, expression of profound anguish and madness, crying out in spiritual desperation, leaning into light, wearing heavy dark velvet dressing gown, large stately ebony-feathered bird, ghastly grim, iridescent black plumage, shorn crest, fiery demonic eyes, mien of a lord, close-up, dramatic low angle, high-contrast chiaroscuro, tenebrism, single flickering lamp, long distorted dancing shadows, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, velvet-violet furniture, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble, cinematic lighting",
+          "status": "completed",
+          "width": 832,
+          "seed": 1094559248287560
+        },
+        "!Draw.json": {
+          "height": 1216,
+          "image_file": "images/!Draw/chunk_014.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Haggard man with gaunt pale complexion, dark shadowed eyes, disheveled hair, expression of profound anguish and madness, crying out in spiritual desperation, leaning into light, wearing heavy dark velvet dressing gown, large stately ebony-feathered bird, ghastly grim, iridescent black plumage, shorn crest, fiery demonic eyes, mien of a lord, close-up, dramatic low angle, high-contrast chiaroscuro, tenebrism, single flickering lamp, long distorted dancing shadows, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, velvet-violet furniture, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble, cinematic lighting",
+          "status": "completed",
+          "width": 832,
+          "seed": 1060821745556120,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 1216,
+          "image_file": "images/!Draw/chunk_014.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Haggard man with gaunt pale complexion, dark shadowed eyes, disheveled hair, expression of profound anguish and madness, crying out in spiritual desperation, leaning into light, wearing heavy dark velvet dressing gown, large stately ebony-feathered bird, ghastly grim, iridescent black plumage, shorn crest, fiery demonic eyes, mien of a lord, close-up, dramatic low angle, high-contrast chiaroscuro, tenebrism, single flickering lamp, long distorted dancing shadows, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, velvet-violet furniture, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble, cinematic lighting",
+          "status": "completed",
+          "width": 832,
+          "seed": 1060821745556120,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 1216,
+          "image_file": "images/animab/chunk_014.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Haggard man with gaunt pale complexion, dark shadowed eyes, disheveled hair, expression of profound anguish and madness, crying out in spiritual desperation, leaning into light, wearing heavy dark velvet dressing gown, large stately ebony-feathered bird, ghastly grim, iridescent black plumage, shorn crest, fiery demonic eyes, mien of a lord, close-up, dramatic low angle, high-contrast chiaroscuro, tenebrism, single flickering lamp, long distorted dancing shadows, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, velvet-violet furniture, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble, cinematic lighting",
+          "status": "completed",
+          "width": 832,
+          "seed": 1031734900603846,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 1216,
+          "image_file": "images/animab/chunk_014.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Haggard man with gaunt pale complexion, dark shadowed eyes, disheveled hair, expression of profound anguish and madness, crying out in spiritual desperation, leaning into light, wearing heavy dark velvet dressing gown, large stately ebony-feathered bird, ghastly grim, iridescent black plumage, shorn crest, fiery demonic eyes, mien of a lord, close-up, dramatic low angle, high-contrast chiaroscuro, tenebrism, single flickering lamp, long distorted dancing shadows, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, velvet-violet furniture, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble, cinematic lighting",
+          "status": "completed",
+          "width": 832,
+          "seed": 1031734900603846,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 1216,
+          "image_file": "images/ZIT/chunk_014.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Haggard man with gaunt pale complexion, dark shadowed eyes, disheveled hair, expression of profound anguish and madness, crying out in spiritual desperation, leaning into light, wearing heavy dark velvet dressing gown, large stately ebony-feathered bird, ghastly grim, iridescent black plumage, shorn crest, fiery demonic eyes, mien of a lord, close-up, dramatic low angle, high-contrast chiaroscuro, tenebrism, single flickering lamp, long distorted dancing shadows, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, velvet-violet furniture, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble, cinematic lighting",
+          "status": "completed",
+          "width": 832,
+          "seed": 705450695943714,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 1216,
+          "image_file": "images/ZIT/chunk_014.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Haggard man with gaunt pale complexion, dark shadowed eyes, disheveled hair, expression of profound anguish and madness, crying out in spiritual desperation, leaning into light, wearing heavy dark velvet dressing gown, large stately ebony-feathered bird, ghastly grim, iridescent black plumage, shorn crest, fiery demonic eyes, mien of a lord, close-up, dramatic low angle, high-contrast chiaroscuro, tenebrism, single flickering lamp, long distorted dancing shadows, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, pallid marble bust of Pallas, velvet-violet furniture, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble, cinematic lighting",
+          "status": "completed",
+          "width": 832,
+          "seed": 705450695943714,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_015",
@@ -174,28 +966,178 @@
       "chunk_id": "chunk_016",
       "illustration": {
         "height": 1216,
-        "image_file": "images/chunk_016.png",
+        "image_file": "images/ZIT/chunk_016.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "A gaunt, pale, weary man with disheveled hair and dark shadowed eyes, wearing a heavy dark velvet dressing gown, face contorted in a frantic shriek of grief and fury, facing a large stately ebony bird with a shorn crest and burning fiery eyes, frantic desperate movement, medium shot, low angle, dramatic side-lighting, tenebrism, chiaroscuro, flickering lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, pallid white marble bust of Pallas, velvet-violet cushioned seat, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble",
         "status": "completed",
         "width": 832,
-        "seed": 686160428985529
+        "seed": 389358201873314,
+        "workflow": "ZIT.json"
       },
-      "text": "“Be that word our sign of parting, bird or fiend!” I shrieked, upstarting—\n“Get thee back into the tempest and the Night’s Plutonian shore!\n    Leave no black plume as a token of that lie thy soul hath spoken!\n    Leave my loneliness unbroken!—quit the bust above my door!\nTake thy beak from out my heart, and take thy form from off my door!”\n            Quoth the Raven “Nevermore.”"
+      "text": "“Be that word our sign of parting, bird or fiend!” I shrieked, upstarting—\n“Get thee back into the tempest and the Night’s Plutonian shore!\n    Leave no black plume as a token of that lie thy soul hath spoken!\n    Leave my loneliness unbroken!—quit the bust above my door!\nTake thy beak from out my heart, and take thy form from off my door!”\n            Quoth the Raven “Nevermore.”",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 1216,
+          "image_file": "images/chunk_016.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale, weary man with disheveled hair and dark shadowed eyes, wearing a heavy dark velvet dressing gown, face contorted in a frantic shriek of grief and fury, facing a large stately ebony bird with a shorn crest and burning fiery eyes, frantic desperate movement, medium shot, low angle, dramatic side-lighting, tenebrism, chiaroscuro, flickering lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, pallid white marble bust of Pallas, velvet-violet cushioned seat, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble",
+          "status": "completed",
+          "width": 832,
+          "seed": 686160428985529
+        },
+        "!Draw.json": {
+          "height": 1216,
+          "image_file": "images/!Draw/chunk_016.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale, weary man with disheveled hair and dark shadowed eyes, wearing a heavy dark velvet dressing gown, face contorted in a frantic shriek of grief and fury, facing a large stately ebony bird with a shorn crest and burning fiery eyes, frantic desperate movement, medium shot, low angle, dramatic side-lighting, tenebrism, chiaroscuro, flickering lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, pallid white marble bust of Pallas, velvet-violet cushioned seat, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble",
+          "status": "completed",
+          "width": 832,
+          "seed": 194554114124053,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 1216,
+          "image_file": "images/!Draw/chunk_016.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale, weary man with disheveled hair and dark shadowed eyes, wearing a heavy dark velvet dressing gown, face contorted in a frantic shriek of grief and fury, facing a large stately ebony bird with a shorn crest and burning fiery eyes, frantic desperate movement, medium shot, low angle, dramatic side-lighting, tenebrism, chiaroscuro, flickering lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, pallid white marble bust of Pallas, velvet-violet cushioned seat, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble",
+          "status": "completed",
+          "width": 832,
+          "seed": 194554114124053,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 1216,
+          "image_file": "images/animab/chunk_016.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale, weary man with disheveled hair and dark shadowed eyes, wearing a heavy dark velvet dressing gown, face contorted in a frantic shriek of grief and fury, facing a large stately ebony bird with a shorn crest and burning fiery eyes, frantic desperate movement, medium shot, low angle, dramatic side-lighting, tenebrism, chiaroscuro, flickering lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, pallid white marble bust of Pallas, velvet-violet cushioned seat, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble",
+          "status": "completed",
+          "width": 832,
+          "seed": 529013297466488,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 1216,
+          "image_file": "images/animab/chunk_016.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale, weary man with disheveled hair and dark shadowed eyes, wearing a heavy dark velvet dressing gown, face contorted in a frantic shriek of grief and fury, facing a large stately ebony bird with a shorn crest and burning fiery eyes, frantic desperate movement, medium shot, low angle, dramatic side-lighting, tenebrism, chiaroscuro, flickering lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, pallid white marble bust of Pallas, velvet-violet cushioned seat, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble",
+          "status": "completed",
+          "width": 832,
+          "seed": 529013297466488,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 1216,
+          "image_file": "images/ZIT/chunk_016.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale, weary man with disheveled hair and dark shadowed eyes, wearing a heavy dark velvet dressing gown, face contorted in a frantic shriek of grief and fury, facing a large stately ebony bird with a shorn crest and burning fiery eyes, frantic desperate movement, medium shot, low angle, dramatic side-lighting, tenebrism, chiaroscuro, flickering lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, pallid white marble bust of Pallas, velvet-violet cushioned seat, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble",
+          "status": "completed",
+          "width": 832,
+          "seed": 389358201873314,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 1216,
+          "image_file": "images/ZIT/chunk_016.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A gaunt, pale, weary man with disheveled hair and dark shadowed eyes, wearing a heavy dark velvet dressing gown, face contorted in a frantic shriek of grief and fury, facing a large stately ebony bird with a shorn crest and burning fiery eyes, frantic desperate movement, medium shot, low angle, dramatic side-lighting, tenebrism, chiaroscuro, flickering lamp light, long distorted dancing shadows, claustrophobic Gothic chamber, high ceilings, old leather-bound books, heavy purple silk curtains, pallid white marble bust of Pallas, velvet-violet cushioned seat, dying embers, swirling incense smoke, Plutonian darkness, Gothic Romanticism, midnight blue, deep violet, ebony, flickering amber, highly tactile textures, silk, velvet, marble",
+          "status": "completed",
+          "width": 832,
+          "seed": 389358201873314,
+          "workflow": "ZIT.json"
+        }
+      }
     },
     {
       "chunk_id": "chunk_017",
       "illustration": {
         "height": 1024,
-        "image_file": "images/chunk_017.png",
+        "image_file": "images/ZIT/chunk_017.png",
         "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
         "prompt": "Ebony-feathered raven, shorn crest, fiery glowing eyes, stern mien, perched atop a pallid white marble bust of Pallas, motionless, sharp dark shadow cast across the floor, close-up, high-contrast chiaroscuro, tenebrism, single flickering lamp-light, dramatic amber glow, a gaunt and weary scholar with disheveled hair and dark velvet scholarly attire in the background, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, dying embers, dense atmosphere, swirling incense, Plutonian darkness, midnight blue and deep violet and ebony color palette, Gothic Romanticism, highly tactile textures, iridescent plumage, smooth marble, cinematic, hyper-detailed",
         "status": "completed",
         "width": 1024,
-        "seed": 1030952648748340
+        "seed": 553941363574123,
+        "workflow": "ZIT.json"
       },
-      "text": "And the Raven, never flitting, still is sitting, still is sitting\nOn the pallid bust of Pallas just above my chamber door;\n    And his eyes have all the seeming of a demon’s that is dreaming,\n    And the lamp-light o’er him streaming throws his shadow on the floor;\nAnd my soul from out that shadow that lies floating on the floor\n            Shall be lifted—nevermore!"
+      "text": "And the Raven, never flitting, still is sitting, still is sitting\nOn the pallid bust of Pallas just above my chamber door;\n    And his eyes have all the seeming of a demon’s that is dreaming,\n    And the lamp-light o’er him streaming throws his shadow on the floor;\nAnd my soul from out that shadow that lies floating on the floor\n            Shall be lifted—nevermore!",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 1024,
+          "image_file": "images/chunk_017.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Ebony-feathered raven, shorn crest, fiery glowing eyes, stern mien, perched atop a pallid white marble bust of Pallas, motionless, sharp dark shadow cast across the floor, close-up, high-contrast chiaroscuro, tenebrism, single flickering lamp-light, dramatic amber glow, a gaunt and weary scholar with disheveled hair and dark velvet scholarly attire in the background, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, dying embers, dense atmosphere, swirling incense, Plutonian darkness, midnight blue and deep violet and ebony color palette, Gothic Romanticism, highly tactile textures, iridescent plumage, smooth marble, cinematic, hyper-detailed",
+          "status": "completed",
+          "width": 1024,
+          "seed": 1030952648748340
+        },
+        "!Draw.json": {
+          "height": 1024,
+          "image_file": "images/!Draw/chunk_017.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Ebony-feathered raven, shorn crest, fiery glowing eyes, stern mien, perched atop a pallid white marble bust of Pallas, motionless, sharp dark shadow cast across the floor, close-up, high-contrast chiaroscuro, tenebrism, single flickering lamp-light, dramatic amber glow, a gaunt and weary scholar with disheveled hair and dark velvet scholarly attire in the background, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, dying embers, dense atmosphere, swirling incense, Plutonian darkness, midnight blue and deep violet and ebony color palette, Gothic Romanticism, highly tactile textures, iridescent plumage, smooth marble, cinematic, hyper-detailed",
+          "status": "completed",
+          "width": 1024,
+          "seed": 580925253661182,
+          "workflow": "!Draw.json"
+        },
+        "!Draw": {
+          "height": 1024,
+          "image_file": "images/!Draw/chunk_017.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Ebony-feathered raven, shorn crest, fiery glowing eyes, stern mien, perched atop a pallid white marble bust of Pallas, motionless, sharp dark shadow cast across the floor, close-up, high-contrast chiaroscuro, tenebrism, single flickering lamp-light, dramatic amber glow, a gaunt and weary scholar with disheveled hair and dark velvet scholarly attire in the background, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, dying embers, dense atmosphere, swirling incense, Plutonian darkness, midnight blue and deep violet and ebony color palette, Gothic Romanticism, highly tactile textures, iridescent plumage, smooth marble, cinematic, hyper-detailed",
+          "status": "completed",
+          "width": 1024,
+          "seed": 580925253661182,
+          "workflow": "!Draw.json"
+        },
+        "animab.json": {
+          "height": 1024,
+          "image_file": "images/animab/chunk_017.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Ebony-feathered raven, shorn crest, fiery glowing eyes, stern mien, perched atop a pallid white marble bust of Pallas, motionless, sharp dark shadow cast across the floor, close-up, high-contrast chiaroscuro, tenebrism, single flickering lamp-light, dramatic amber glow, a gaunt and weary scholar with disheveled hair and dark velvet scholarly attire in the background, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, dying embers, dense atmosphere, swirling incense, Plutonian darkness, midnight blue and deep violet and ebony color palette, Gothic Romanticism, highly tactile textures, iridescent plumage, smooth marble, cinematic, hyper-detailed",
+          "status": "completed",
+          "width": 1024,
+          "seed": 6922451355787,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 1024,
+          "image_file": "images/animab/chunk_017.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Ebony-feathered raven, shorn crest, fiery glowing eyes, stern mien, perched atop a pallid white marble bust of Pallas, motionless, sharp dark shadow cast across the floor, close-up, high-contrast chiaroscuro, tenebrism, single flickering lamp-light, dramatic amber glow, a gaunt and weary scholar with disheveled hair and dark velvet scholarly attire in the background, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, dying embers, dense atmosphere, swirling incense, Plutonian darkness, midnight blue and deep violet and ebony color palette, Gothic Romanticism, highly tactile textures, iridescent plumage, smooth marble, cinematic, hyper-detailed",
+          "status": "completed",
+          "width": 1024,
+          "seed": 6922451355787,
+          "workflow": "animab.json"
+        },
+        "ZIT.json": {
+          "height": 1024,
+          "image_file": "images/ZIT/chunk_017.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Ebony-feathered raven, shorn crest, fiery glowing eyes, stern mien, perched atop a pallid white marble bust of Pallas, motionless, sharp dark shadow cast across the floor, close-up, high-contrast chiaroscuro, tenebrism, single flickering lamp-light, dramatic amber glow, a gaunt and weary scholar with disheveled hair and dark velvet scholarly attire in the background, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, dying embers, dense atmosphere, swirling incense, Plutonian darkness, midnight blue and deep violet and ebony color palette, Gothic Romanticism, highly tactile textures, iridescent plumage, smooth marble, cinematic, hyper-detailed",
+          "status": "completed",
+          "width": 1024,
+          "seed": 553941363574123,
+          "workflow": "ZIT.json"
+        },
+        "ZIT": {
+          "height": 1024,
+          "image_file": "images/ZIT/chunk_017.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Ebony-feathered raven, shorn crest, fiery glowing eyes, stern mien, perched atop a pallid white marble bust of Pallas, motionless, sharp dark shadow cast across the floor, close-up, high-contrast chiaroscuro, tenebrism, single flickering lamp-light, dramatic amber glow, a gaunt and weary scholar with disheveled hair and dark velvet scholarly attire in the background, claustrophobic Gothic chamber, heavy purple silk curtains, leather-bound books, velvet-violet upholstery, dying embers, dense atmosphere, swirling incense, Plutonian darkness, midnight blue and deep violet and ebony color palette, Gothic Romanticism, highly tactile textures, iridescent plumage, smooth marble, cinematic, hyper-detailed",
+          "status": "completed",
+          "width": 1024,
+          "seed": 553941363574123,
+          "workflow": "ZIT.json"
+        }
+      }
     }
   ],
-  "story_title": "The Raven"
+  "active_workflow": "ZIT.json",
+  "metadata": {
+    "author": "Edgar Allan Poe",
+    "publisher": "Gothic Classic Editions",
+    "language": "en",
+    "description": "The quintessential Gothic poem."
+  }
 }

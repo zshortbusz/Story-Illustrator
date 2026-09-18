@@ -36,6 +36,8 @@ Thumbs.db
 projects/*
 !projects/the_raven/
 !projects/the_raven/**
+projects/*/exports/
+projects/the_raven/exports/
 tests/artifacts/
 scratch/
 *.log

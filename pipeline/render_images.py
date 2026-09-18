@@ -10,7 +10,7 @@ import json
 import random
 import argparse
 from typing import Dict, Any, Optional, List
-from pipeline.comfy_client import ComfyUIClient
+from pipeline.comfy_client import ComfyUIClient, load_workflow_file
 from pipeline.image_client import BaseImageClient, create_image_client
 
 
@@ -80,8 +80,7 @@ def resolve_workflow(project_dir: str, explicit_workflow: Optional[str] = None) 
     for path in candidates:
         if path and os.path.isfile(path):
             print(f"[*] Using ComfyUI workflow: {path}")
-            with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
+            return load_workflow_file(path)
 
     raise FileNotFoundError(f"No valid workflow_api.json found. Checked paths: {candidates}")
 

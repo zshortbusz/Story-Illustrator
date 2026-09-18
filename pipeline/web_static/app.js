@@ -997,12 +997,129 @@ function loadReaderPreview(targetWf = null) {
   const url = `/api/project/${currentSlug}/reader?t=${Date.now()}${wfParam}`;
   if (iframe) iframe.src = url;
 
-  const btnDownload = document.getElementById("btnDownloadReader");
-  if (btnDownload) {
-    btnDownload.href = `/api/project/${currentSlug}/reader?download=1${wfParam}`;
-    const cleanWf = selectedWf ? `_${selectedWf.replace('.json', '')}` : "";
-    btnDownload.download = `${currentSlug}${cleanWf}_illustrated.html`;
+  // Portable HTML download removed in favor of professional PDF / FXL EPUB / Reflowable EPUB exports
+}
+
+// ----------------------------------------------------------------------------
+// Ebook Retailer Metadata & Multi-Format Book Exporters
+// ----------------------------------------------------------------------------
+let pendingExportFormat = null;
+let currentProjectMetadata = null;
+
+async function fetchProjectMetadata() {
+  if (!currentSlug) return null;
+  try {
+    const res = await fetch(`/api/project/${currentSlug}/metadata`);
+    const data = await res.json();
+    if (data.success) {
+      currentProjectMetadata = data.metadata;
+      return currentProjectMetadata;
+    }
+  } catch (err) {
+    console.error("Failed to fetch project metadata", err);
   }
+  return null;
+}
+
+async function openMetadataModal(formatToDownloadAfter = null) {
+  pendingExportFormat = formatToDownloadAfter;
+  const meta = await fetchProjectMetadata();
+
+  document.getElementById("metaBookTitle").value = meta?.title || currentManifest?.story_title || currentSlug || "";
+  document.getElementById("metaBookAuthor").value = meta?.author && meta.author !== "Author Unknown" ? meta.author : "";
+  document.getElementById("metaBookPublisher").value = meta?.publisher || "Self-Published";
+  document.getElementById("metaBookLanguage").value = meta?.language || "en";
+  document.getElementById("metaBookIsbn").value = meta?.isbn || "";
+  document.getElementById("metaBookDescription").value = meta?.description || "";
+
+  const btnSaveExport = document.getElementById("btnSaveAndExport");
+  const btnSaveOnly = document.getElementById("btnSaveMetadata");
+  if (formatToDownloadAfter) {
+    btnSaveExport.style.display = "inline-flex";
+    btnSaveExport.textContent = `Save & Download ${formatToDownloadAfter.replace('_', ' ').toUpperCase()}`;
+    btnSaveOnly.style.display = "none";
+  } else {
+    btnSaveExport.style.display = "none";
+    btnSaveOnly.style.display = "inline-flex";
+  }
+
+  document.getElementById("modalEbookMetadata").style.display = "flex";
+}
+
+function closeMetadataModal() {
+  document.getElementById("modalEbookMetadata").style.display = "none";
+  pendingExportFormat = null;
+}
+
+async function saveMetadata(andDownload = false) {
+  const title = document.getElementById("metaBookTitle").value.trim();
+  const author = document.getElementById("metaBookAuthor").value.trim();
+  if (!title || !author) {
+    showToast("Book Title and Author are required for publication metadata.", "error");
+    return false;
+  }
+
+  const payload = {
+    title: title,
+    author: author,
+    publisher: document.getElementById("metaBookPublisher").value.trim() || "Self-Published",
+    language: document.getElementById("metaBookLanguage").value.trim() || "en",
+    isbn: document.getElementById("metaBookIsbn").value.trim(),
+    description: document.getElementById("metaBookDescription").value.trim()
+  };
+
+  try {
+    const res = await fetch(`/api/project/${currentSlug}/metadata`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      currentProjectMetadata = data.metadata;
+      showToast("Publication metadata saved!");
+      const formatToExport = pendingExportFormat;
+      closeMetadataModal();
+      if (andDownload && formatToExport) {
+        executeDownload(formatToExport);
+      }
+      return true;
+    } else {
+      showToast("Failed to save metadata: " + data.error, "error");
+      return false;
+    }
+  } catch (err) {
+    showToast("Error saving metadata: " + err, "error");
+    return false;
+  }
+}
+
+async function triggerBookExport(format) {
+  if (!currentSlug) {
+    showToast("Please select a story project first.", "error");
+    return;
+  }
+  const meta = await fetchProjectMetadata();
+  if (!meta || !meta.author || meta.author === "Author Unknown") {
+    openMetadataModal(format);
+  } else {
+    executeDownload(format);
+  }
+}
+
+function executeDownload(format) {
+  const wfSelect = document.getElementById("readerWorkflowSelect");
+  const selectedWf = wfSelect?.value || "";
+  const wfParam = selectedWf ? `?workflow=${encodeURIComponent(selectedWf)}` : "";
+  const downloadUrl = `/api/project/${currentSlug}/export/${format}${wfParam}`;
+
+  showToast(`Preparing ${format.replace('_', ' ').toUpperCase()} export...`);
+  const a = document.createElement("a");
+  a.href = downloadUrl;
+  a.setAttribute("download", "");
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 async function compileReader() {
@@ -1244,6 +1361,31 @@ function setupEventListeners() {
       loadReaderPreview(e.target.value);
     });
   }
+
+  // Export buttons & Metadata Modal Event Listeners
+  const btnExpPdf = document.getElementById("btnExportPdf");
+  if (btnExpPdf) btnExpPdf.addEventListener("click", () => triggerBookExport("pdf"));
+
+  const btnExpFxl = document.getElementById("btnExportFxl");
+  if (btnExpFxl) btnExpFxl.addEventListener("click", () => triggerBookExport("fxl_epub"));
+
+  const btnExpReflow = document.getElementById("btnExportReflowable");
+  if (btnExpReflow) btnExpReflow.addEventListener("click", () => triggerBookExport("reflowable_epub"));
+
+  const btnEditMeta = document.getElementById("btnEditEbookMetadata");
+  if (btnEditMeta) btnEditMeta.addEventListener("click", () => openMetadataModal(null));
+
+  const btnCloseMeta = document.getElementById("btnCloseMetadataModal");
+  if (btnCloseMeta) btnCloseMeta.addEventListener("click", closeMetadataModal);
+
+  const btnCancelMeta = document.getElementById("btnCancelMetadata");
+  if (btnCancelMeta) btnCancelMeta.addEventListener("click", closeMetadataModal);
+
+  const btnSaveMeta = document.getElementById("btnSaveMetadata");
+  if (btnSaveMeta) btnSaveMeta.addEventListener("click", () => saveMetadata(false));
+
+  const btnSaveExp = document.getElementById("btnSaveAndExport");
+  if (btnSaveExp) btnSaveExp.addEventListener("click", () => saveMetadata(true));
 
   // Active diffusion profile switcher in Tab 4
   const activeProfSel = document.getElementById("activeProfileSelect");

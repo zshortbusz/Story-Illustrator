@@ -13,7 +13,94 @@ import random
 import requests
 import asyncio
 import websockets
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, List
+
+
+REQUIRED_WORKFLOW_TAGS = ["%PositivePrompt%", "%NegativePrompt%", "%Width%", "%Height%"]
+
+
+def load_workflow_file(filepath: str) -> Dict[str, Any]:
+    """
+    Loads a ComfyUI workflow JSON file, robustly handling multiple encodings
+    (UTF-8, UTF-8 with BOM, UTF-16, Latin-1) without decoding errors.
+    """
+    if not os.path.isfile(filepath):
+        raise FileNotFoundError(f"Workflow file not found: {filepath}")
+    with open(filepath, "rb") as f:
+        raw = f.read()
+
+    for enc in ["utf-8-sig", "utf-8", "utf-16", "latin-1"]:
+        try:
+            text = raw.decode(enc)
+            return json.loads(text)
+        except Exception:
+            continue
+
+    raise ValueError(f"Could not parse workflow JSON from {filepath}. Ensure it is a valid ComfyUI JSON file.")
+
+
+def find_missing_workflow_tags(workflow: Dict[str, Any]) -> List[str]:
+    """
+    Checks whether a ComfyUI workflow contains all required wildcard tags.
+    Returns a list of missing tags (empty list if all tags are present).
+    """
+    dumped = json.dumps(workflow)
+    missing = []
+    if "%PositivePrompt%" not in dumped:
+        missing.append("%PositivePrompt%")
+    if "%NegativePrompt%" not in dumped:
+        missing.append("%NegativePrompt%")
+
+    has_width = "%Width%" in dumped or "%width%" in dumped or "%WIDTH%" in dumped
+    if not has_width:
+        missing.append("%Width%")
+
+    has_height = "%Height%" in dumped or "%height%" in dumped or "%HEIGHT%" in dumped
+    if not has_height:
+        missing.append("%Height%")
+
+    return missing
+
+
+def replace_wildcard_tags_in_obj(obj: Any, prompt: str, negative_prompt: str, width: int, height: int) -> Any:
+    """
+    Recursively replaces wildcard tags in a JSON data structure.
+    Converts exact '%Width%' and '%Height%' matches to integer values for ComfyUI.
+    """
+    if isinstance(obj, dict):
+        return {k: replace_wildcard_tags_in_obj(v, prompt, negative_prompt, width, height) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [replace_wildcard_tags_in_obj(item, prompt, negative_prompt, width, height) for item in obj]
+    elif isinstance(obj, str):
+        val = obj
+        # Check exact replacements for integers
+        if val.strip() in ["%Width%", "%width%", "%WIDTH%"]:
+            return int(width)
+        if val.strip() in ["%Height%", "%height%", "%HEIGHT%"]:
+            return int(height)
+
+        # String replacements
+        if "%PositivePrompt%" in val:
+            val = val.replace("%PositivePrompt%", prompt)
+        if "%NegativePrompt%" in val:
+            val = val.replace("%NegativePrompt%", negative_prompt)
+        if "%Width%" in val:
+            val = val.replace("%Width%", str(width))
+        elif "%width%" in val:
+            val = val.replace("%width%", str(width))
+        elif "%WIDTH%" in val:
+            val = val.replace("%WIDTH%", str(width))
+
+        if "%Height%" in val:
+            val = val.replace("%Height%", str(height))
+        elif "%height%" in val:
+            val = val.replace("%height%", str(height))
+        elif "%HEIGHT%" in val:
+            val = val.replace("%HEIGHT%", str(height))
+
+        return val
+    else:
+        return obj
 
 
 class ComfyUIClient:
@@ -127,49 +214,30 @@ class ComfyUIClient:
         seed: Optional[int] = None,
         filename_prefix: str = "asi_render"
     ) -> Tuple[Dict[str, Any], Dict[str, str]]:
-        """Creates a modified copy of workflow with injected generation parameters."""
+        """Creates a modified copy of workflow with injected generation parameters via wildcard tags."""
+        missing_tags = find_missing_workflow_tags(workflow)
+        if missing_tags:
+            raise ValueError(
+                f"ComfyUI workflow is missing required wildcard tag(s): {', '.join(missing_tags)}.\n"
+                f"Please open your ComfyUI workflow JSON and replace:\n"
+                f"  - Positive prompt with %PositivePrompt%\n"
+                f"  - Negative prompt with %NegativePrompt%\n"
+                f"  - Width with \"%Width%\"\n"
+                f"  - Height with \"%Height%\""
+            )
+
         wf = copy.deepcopy(workflow)
-        # Remove metadata wrapper if present
-        bindings = self.detect_node_bindings(wf)
         if "_bindings" in wf:
             del wf["_bindings"]
 
         if seed is None:
             seed = random.randint(1, 1125899906842624)
 
-        # Inject Positive Prompt
-        pos_id = bindings.get("positive_prompt_node")
-        if pos_id and pos_id in wf:
-            pos_inputs = wf[pos_id].setdefault("inputs", {})
-            ctype = wf[pos_id].get("class_type", "")
-            if "positive" in pos_inputs or "Eff. Loader" in ctype or "Efficient Loader" in ctype:
-                pos_inputs["positive"] = prompt
-            else:
-                pos_inputs["text"] = prompt
+        # 1. Replace wildcard tags
+        wf = replace_wildcard_tags_in_obj(wf, prompt, negative_prompt, width, height)
 
-        # Inject Negative Prompt
-        neg_id = bindings.get("negative_prompt_node")
-        if neg_id and neg_id in wf:
-            neg_inputs = wf[neg_id].setdefault("inputs", {})
-            ctype = wf[neg_id].get("class_type", "")
-            if "negative" in neg_inputs or "Eff. Loader" in ctype or "Efficient Loader" in ctype:
-                neg_inputs["negative"] = negative_prompt
-            else:
-                neg_inputs["text"] = negative_prompt
-
-        # Inject Latent Dimensions
-        lat_id = bindings.get("latent_node")
-        if lat_id and lat_id in wf:
-            lat_inputs = wf[lat_id].setdefault("inputs", {})
-            ctype = wf[lat_id].get("class_type", "")
-            if "empty_latent_width" in lat_inputs or "Eff. Loader" in ctype or "Efficient Loader" in ctype:
-                lat_inputs["empty_latent_width"] = width
-                lat_inputs["empty_latent_height"] = height
-            else:
-                lat_inputs["width"] = width
-                lat_inputs["height"] = height
-
-        # Inject Seed
+        # 2. Update sampler seeds and SaveImage prefix
+        bindings = self.detect_node_bindings(wf)
         samp_id = bindings.get("sampler_node")
         if samp_id and samp_id in wf:
             inputs = wf[samp_id].setdefault("inputs", {})
@@ -177,12 +245,23 @@ class ComfyUIClient:
                 inputs["noise_seed"] = seed
             if "seed" in inputs or "noise_seed" not in inputs:
                 inputs["seed"] = seed
+        else:
+            for nid, node in wf.items():
+                if isinstance(node, dict) and "inputs" in node:
+                    inp = node["inputs"]
+                    if "noise_seed" in inp and not isinstance(inp["noise_seed"], list):
+                        inp["noise_seed"] = seed
+                    elif "seed" in inp and not isinstance(inp["seed"], list):
+                        inp["seed"] = seed
 
-        # Inject SaveImage filename prefix
         save_id = bindings.get("save_image_node")
         if save_id and save_id in wf:
             inputs = wf[save_id].setdefault("inputs", {})
             inputs["filename_prefix"] = filename_prefix
+        else:
+            for nid, node in wf.items():
+                if isinstance(node, dict) and node.get("class_type") == "SaveImage":
+                    node.setdefault("inputs", {})["filename_prefix"] = filename_prefix
 
         return wf, bindings
 

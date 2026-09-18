@@ -94,7 +94,7 @@ class TestUIDOMStructure(unittest.TestCase):
             # Tab 5
             'selectWorkflow', 'btnToggleSelectAll', 'btnRegenerateSelected', 'btnStartBatchRender', 'renderProgressBox', 'renderProgressBar', 'imagesGallery',
             # Tab 6
-            'readerWorkflowSelect', 'btnDownloadReader', 'readerIframe'
+            'readerWorkflowSelect', 'btnExportPdf', 'btnExportFxl', 'btnExportReflowable', 'btnEditEbookMetadata', 'readerIframe'
         ]
         for cid in required_controls:
             self.assertIn(cid, self.parsed_ids, f"Control ID {cid} missing in index.html")
@@ -105,6 +105,9 @@ class TestUIDOMStructure(unittest.TestCase):
             'loadedFileInfo', 'newStorySlug', 'newStoryText', 'btnCancelNewProject', 'btnSubmitNewProject',
             'modalTweakRerun', 'tweakChunkId', 'btnCloseTweakModal', 'tweakPrompt', 'tweakNegativePrompt',
             'tweakWidth', 'tweakHeight', 'tweakSeed', 'btnCancelTweak', 'btnSubmitTweakRerun',
+            'modalEbookMetadata', 'btnCloseMetadataModal', 'metaBookTitle', 'metaBookAuthor',
+            'metaBookPublisher', 'metaBookLanguage', 'metaBookIsbn', 'metaBookDescription',
+            'btnCancelMetadata', 'btnSaveMetadata', 'btnSaveAndExport',
             'toast'
         ]
         for mid in modal_ids:
