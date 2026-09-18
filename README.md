@@ -5,7 +5,7 @@
 [![ComfyUI Compatible](https://img.shields.io/badge/ComfyUI-Compatible-brightgreen.svg)](https://github.com/comfyanonymous/ComfyUI)
 [![LM Studio Compatible](https://img.shields.io/badge/LM%20Studio-Compatible-purple.svg)](https://lmstudio.ai/)
 
-**Automated Story Illustrator (ASI)** is an end-to-end local generative pipeline and interactive web dashboard that transforms raw text stories and novels into fully illustrated, beautifully formatted static web readers.
+**Automated Story Illustrator (ASI)** is an end-to-end local generative pipeline and interactive web dashboard that transforms raw text stories and novels into fully illustrated, publication-grade digital editions—including High-Resolution Print PDFs, Fixed-Layout FXL EPUB 3.0, Reflowable EPUBs, and interactive web readers.
 
 Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce RTX 3070 with 8GB VRAM), ASI implements a strict **three-phase decoupled architecture** that separates literary analysis from diffusion rendering, guaranteeing zero GPU memory contention or VRAM Out-of-Memory (OOM) crashes.
 
@@ -14,24 +14,32 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
 ## Key Features
 
 - **Strict Three-Phase Lifecycle**:
-  - **Phase 1 (Analysis & Prompts)**: Powered by local LLMs via LM Studio (`http://localhost:1234/v1`).
-  - **Phase 2 (Diffusion Rendering)**: Batch rendered headless via ComfyUI WebSocket & REST API (`http://127.0.0.1:8188`).
-  - **Phase 3 (Reader Assembly)**: Pure Python compilation into standalone, offline, responsive HTML readers.
+  - **Phase 1 (Analysis & Prompts)**: Powered by local LLMs via LM Studio (`http://localhost:1234/v1`) or custom remote API endpoints.
+  - **Phase 2 (Diffusion Rendering)**: Batch rendered headless via ComfyUI WebSocket & REST API (`http://127.0.0.1:8188`) with strict wildcard tag injection.
+  - **Phase 3 (Retailer Ebook & Publication Export)**: Pure Python compilation into retailer-ready High-Resolution Print PDF, Fixed-Layout FXL EPUB 3.0, Reflowable EPUB, and interactive web reader previews.
+- **Retailer-Compliant Ebook & Print Exports**:
+  - **📄 High-Resolution Print PDF**: Formatted with vector typography, running headers, page numbers, dialogue highlighting, uncompressed image plates, and catalog metadata.
+  - **📖 Fixed-Layout FXL EPUB 3.0**: Pre-paginated EPUB 3.0 with Amazon KDP / Apple Books / Kobo metadata (`rendition:layout="pre-paginated"`, `fixed-layout="true"`, `original-resolution`, `cover-image`).
+  - **📱 Reflowable EPUB**: Responsive EPUB 3.0 / EPUB 2 with scalable typography and responsive figures for standard e-readers.
+  - **⚙️ Ebook Retailer Metadata**: Built-in modal and API for Title, Author, Publisher, Language, ISBN, and catalog blurb.
+- **Bring Your Own ComfyUI Workflow (BYOW)**:
+  - Drop any ComfyUI API workflow into `workflows/` with our 4 standard wildcard tags: `%PositivePrompt%`, `%NegativePrompt%`, `"%Width%"`, `"%Height%"`.
+  - Strict tag validation: immediately alerts users if required tags are missing, ensuring reliable renders without silent heuristic degradation.
 - **Visual Bible Compendium & Continuity**:
-  - Automatically extracts exhaustive character profiles (configurable prompts and models)
+  - Automatically extracts exhaustive character profiles (configurable prompts and models).
   - Multi-strategy entity resolution (exact, case-insensitive, substring, and token overlap) connects characters and locations across beats for prompt consistency.
 - **5-Element Diffusion Prompt Synthesis**:
   - Synthesizes rich diffusion prompts combining: (1) Character visual appearance, (2) Action beat, (3) Setting architecture & texture, (4) Camera angle & lighting, and (5) Global art style.
-  - Use your own Comfy UI workflows
+- **Multi-Workflow Sets & Reader Comparison**:
+  - Render alternate image sets across different workflows without overwriting existing art. Compare workflows live in the reader.
 - **Failure Visibility & Uncapped Thinking**:
-  - Zero synthetic fallbacks: errors and empty model responses fail loudly with clear diagnostics.
+  - Zero synthetic fallbacks: errors, missing tags, and empty model responses fail loudly with clear diagnostics.
   - Uncapped thinking token budget (`max_tokens: -1`) to empower modern reasoning models (e.g., DeepSeek-R1, Orion, Gemma 4, Qwen).
 - **Interactive WebUI Dashboard**:
   - Single-page application with real-time service health monitoring for LM Studio and ComfyUI.
-  - Hardware warning banners instructing the user when to load or unload models between phases.
-  - In-tab model overrides, parameter tuning, drag-and-drop story creation, manifest filtering, and single-chunk tweak & regeneration.
+  - In-tab model overrides, parameter tuning, drag-and-drop story creation, manifest filtering, mass scene regeneration with checkboxes, and ebook metadata management.
 - **Automated Verification Suite**:
-  - 35 automated tests covering DOM structure, JavaScript contracts, reader styling, API endpoints, ComfyUI node injection, and visible Chrome DevTools E2E automation with image quality verification.
+  - 75 automated tests covering DOM structure, JavaScript contracts, reader styling, API endpoints, ComfyUI node injection, wildcard tag validation, PDF/EPUB export generation, and live Chrome DevTools E2E automation.
 
 ---
 
@@ -61,18 +69,21 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
 │                     PHASE 2: DIFFUSION BATCH (ComfyUI)                          │
 │                                                                                 │
 │   - Headless WebSocket execution tracking & REST job dispatch                   │
-│   - Automatic node parameter injection (prompt, negative, width, height, seed)  │
-│   - Compatible with SDXL diffusion workflows (custom workflows supported)       │
-│   - Atomic manifest checkpointing and single-chunk tweak & rerun                │
+│   - Strict wildcard tag injection (%PositivePrompt%, %NegativePrompt%, etc.)   │
+│   - Multi-workflow isolation (images/<workflow>/<chunk_id>.png)                 │
+│   - Checkbox-driven mass scene regeneration with freshly randomized seeds       │
 └────────────────────────────────────────┬────────────────────────────────────────┘
                                          │
                                          ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                    PHASE 3: STATIC READER ASSEMBLY (Python)                     │
+│              PHASE 3: RETAILER EBOOK & PUBLICATION EXPORT (Python)              │
 │                                                                                 │
-│   - Pure Python zero-footprint compilation (no GPU / no server required)        │
-│   - Dialogue quote highlighting (<strong class="q">) and embedded figures       │
-│   - Generates standalone, dark-mode, mobile-responsive index.html               │
+│   - Pure Python zero-footprint generation (no GPU / no server required)         │
+│   - High-Res Print PDF (ReportLab vector typography, running headers, plates)   │
+│   - Fixed-Layout FXL EPUB 3.0 (Pre-paginated package for Amazon KDP & Apple)    │
+│   - Reflowable EPUB 3.0 / EPUB 2 (Scalable text & figures for e-readers)        │
+│   - Retailer metadata injection (ISBN, Author, Publisher, Language, Blurb)      │
+│   - Interactive in-app reader preview with dialogue quote styling (<strong.q>) │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -94,11 +105,12 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
 ├── pipeline/                        # Core Python pipeline modules
 │   ├── chunker.py                   # Deterministic regex story chunker
 │   ├── llm_client.py                # LM Studio client & robust text parsers
+│   ├── image_client.py              # Agnostic image generation client (ComfyUI & OpenAI-compatible)
 │   ├── build_manifest.py            # Phase 1 orchestrator (Chunks -> Bible -> Beats -> Manifest)
 │   ├── comfy_client.py              # ComfyUI client with strict wildcard tag injection
 │   ├── render_images.py             # Phase 2 batch orchestrator & rerun handler
-│   ├── compile_html.py              # Phase 3 reader compiler (dialogue quote parsing)
-│   ├── book_exporter.py             # Retailer-ready High-Res PDF, FXL EPUB3, and Reflowable EPUB
+│   ├── book_exporter.py             # Phase 3: Retailer-ready High-Res PDF, FXL EPUB3, and Reflowable EPUB
+│   ├── compile_html.py              # In-dashboard web reader compiler (dialogue quote parsing)
 │   ├── project_manager.py           # Project scaffolding & default configuration
 │   ├── web_server.py                # Flask backend REST API & export streaming
 │   └── web_static/                  # WebUI SPA frontend
@@ -131,7 +143,8 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
 3. **ComfyUI**: [github.com/comfyanonymous/ComfyUI](https://github.com/comfyanonymous/ComfyUI)
    - Running at `http://127.0.0.1:8188`.
    - Ensure the required checkpoints for your chosen workflow are installed in `ComfyUI/models/`.
-4. ADDED SUPPORT FOR OTHER PROVIDERS.
+4. **Remote / Alternative Providers (Optional)**:
+   - ASI is backend-agnostic: you can configure custom OpenAI-compatible API endpoints and keys for LLMs and image generation directly in the dashboard.
 
 ---
 
@@ -297,18 +310,22 @@ python -m pipeline.render_images --project ./projects/the_raven --workflow ./wor
 # Rerun a single image with adjustments:
 python -m pipeline.render_images --project ./projects/the_raven --rerun chunk_000
 
-# Phase 3: Compile Portable Standalone Reader (Embeds base64 images into a single self-contained HTML file)
-python -m pipeline.compile_html --project ./projects/the_raven
+# Phase 3: Export Retailer-Ready Ebooks & Publications (PDF, FXL EPUB3, Reflowable EPUB)
+# Export all formats with active workflow:
+python -m pipeline.book_exporter --project ./projects/the_raven --format all
 
-# Or compile with relative image paths:
-python -m pipeline.compile_html --project ./projects/the_raven --no-embed
+# Export specific format with custom metadata overrides:
+python -m pipeline.book_exporter --project ./projects/the_raven --format pdf --author "Edgar Allan Poe" --isbn "978-0-123456-47-2"
+
+# (Optional) Compile in-dashboard web reader preview:
+python -m pipeline.compile_html --project ./projects/the_raven
 ```
 
 ---
 
 ## Running Tests
 
-Run the full automated test suite (all 44 unit, contract, API, context detection, and visible browser E2E tests):
+Run the full automated test suite (all 75 unit, contract, tag validation, ebook exporter, and visible browser E2E tests):
 
 ```bash
 python -m unittest discover -s tests -v

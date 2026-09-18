@@ -976,3 +976,71 @@ figcaption {
 
     return output_path
 
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Export illustrated story to retailer-ready High-Res PDF, FXL EPUB3, or Reflowable EPUB.")
+    parser.add_argument("--project", "-p", required=True, help="Path to project directory (e.g. ./projects/the_raven)")
+    parser.add_argument("--format", "-f", choices=["pdf", "fxl", "reflowable", "all"], default="all", help="Export format (default: all)")
+    parser.add_argument("--workflow", "-w", default=None, help="Workflow name or slug to use for illustration plates")
+    parser.add_argument("--title", default=None, help="Override book title")
+    parser.add_argument("--author", default=None, help="Override author name")
+    parser.add_argument("--publisher", default=None, help="Override publisher name")
+    parser.add_argument("--language", default=None, help="Override language code (e.g. en)")
+    parser.add_argument("--isbn", default=None, help="Override ISBN / catalog identifier")
+    args = parser.parse_args()
+
+    project_dir = os.path.abspath(args.project)
+    if not os.path.isdir(project_dir):
+        print(f"Error: Project directory not found: {project_dir}")
+        return 1
+
+    manifest_path = os.path.join(project_dir, "artifacts", "manifest.json")
+    if not os.path.isfile(manifest_path):
+        print(f"Error: manifest.json not found in {os.path.join(project_dir, 'artifacts')}")
+        return 1
+
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+
+    slug = os.path.basename(project_dir)
+    workflow = args.workflow or manifest.get("active_workflow")
+    wf_suffix = f"_{workflow.replace('.json', '')}" if workflow else ""
+
+    overrides = {}
+    if args.title:
+        overrides["title"] = args.title
+    if args.author:
+        overrides["author"] = args.author
+    if args.publisher:
+        overrides["publisher"] = args.publisher
+    if args.language:
+        overrides["language"] = args.language
+    if args.isbn:
+        overrides["identifier"] = args.isbn
+
+    export_dir = os.path.join(project_dir, "exports")
+    os.makedirs(export_dir, exist_ok=True)
+
+    formats = ["pdf", "fxl", "reflowable"] if args.format == "all" else [args.format]
+    for fmt in formats:
+        print(f"[*] Exporting {fmt.upper()} for {slug}...")
+        if fmt == "pdf":
+            out_path = os.path.join(export_dir, f"{slug}{wf_suffix}_print.pdf")
+            out = export_high_res_pdf(manifest, project_dir, out_path, workflow=workflow, overrides=overrides)
+        elif fmt == "fxl":
+            out_path = os.path.join(export_dir, f"{slug}{wf_suffix}_fxl.epub")
+            out = export_fxl_epub(manifest, project_dir, out_path, workflow=workflow, overrides=overrides)
+        elif fmt == "reflowable":
+            out_path = os.path.join(export_dir, f"{slug}{wf_suffix}_reflowable.epub")
+            out = export_reflowable_epub(manifest, project_dir, out_path, workflow=workflow, overrides=overrides)
+        print(f"[+] Successfully exported {fmt.upper()} -> {out} ({os.path.getsize(out):,} bytes)")
+
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+
+
