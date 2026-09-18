@@ -89,6 +89,22 @@ class ComfyUIClient:
                 continue
             ctype = node.get("class_type", "")
             title = node.get("_meta", {}).get("title", "").lower()
+            inputs = node.get("inputs", {})
+
+            # Support Efficiency Nodes (Eff. Loader SDXL / Efficient Loader)
+            is_eff_loader = (
+                "Eff. Loader" in ctype or
+                "Efficient Loader" in ctype or
+                ("positive" in inputs and isinstance(inputs.get("positive"), str) and
+                 "negative" in inputs and isinstance(inputs.get("negative"), str))
+            )
+            if is_eff_loader:
+                if "positive_prompt_node" not in detected:
+                    detected["positive_prompt_node"] = nid
+                if "negative_prompt_node" not in detected:
+                    detected["negative_prompt_node"] = nid
+                if "latent_node" not in detected:
+                    detected["latent_node"] = nid
 
             if "positive_prompt_node" not in detected and ctype == "CLIPTextEncode" and "negative" not in title:
                 detected["positive_prompt_node"] = nid
@@ -124,19 +140,34 @@ class ComfyUIClient:
         # Inject Positive Prompt
         pos_id = bindings.get("positive_prompt_node")
         if pos_id and pos_id in wf:
-            wf[pos_id].setdefault("inputs", {})["text"] = prompt
+            pos_inputs = wf[pos_id].setdefault("inputs", {})
+            ctype = wf[pos_id].get("class_type", "")
+            if "positive" in pos_inputs or "Eff. Loader" in ctype or "Efficient Loader" in ctype:
+                pos_inputs["positive"] = prompt
+            else:
+                pos_inputs["text"] = prompt
 
         # Inject Negative Prompt
         neg_id = bindings.get("negative_prompt_node")
         if neg_id and neg_id in wf:
-            wf[neg_id].setdefault("inputs", {})["text"] = negative_prompt
+            neg_inputs = wf[neg_id].setdefault("inputs", {})
+            ctype = wf[neg_id].get("class_type", "")
+            if "negative" in neg_inputs or "Eff. Loader" in ctype or "Efficient Loader" in ctype:
+                neg_inputs["negative"] = negative_prompt
+            else:
+                neg_inputs["text"] = negative_prompt
 
         # Inject Latent Dimensions
         lat_id = bindings.get("latent_node")
         if lat_id and lat_id in wf:
-            inputs = wf[lat_id].setdefault("inputs", {})
-            inputs["width"] = width
-            inputs["height"] = height
+            lat_inputs = wf[lat_id].setdefault("inputs", {})
+            ctype = wf[lat_id].get("class_type", "")
+            if "empty_latent_width" in lat_inputs or "Eff. Loader" in ctype or "Efficient Loader" in ctype:
+                lat_inputs["empty_latent_width"] = width
+                lat_inputs["empty_latent_height"] = height
+            else:
+                lat_inputs["width"] = width
+                lat_inputs["height"] = height
 
         # Inject Seed
         samp_id = bindings.get("sampler_node")
