@@ -235,11 +235,17 @@ footer.story-footer {
 """
 
 
-def compile_manifest_to_html(manifest: Dict[str, Any], project_dir: str, embed_images: bool = True) -> str:
+def compile_manifest_to_html(
+    manifest: Dict[str, Any],
+    project_dir: str,
+    embed_images: bool = True,
+    workflow: Optional[str] = None
+) -> str:
     """
     Compiles manifest blocks into offline HTML document.
     When embed_images is True (default), encodes images as base64 data URIs
     producing a fully portable, self-contained single-file illustrated story.
+    Supports selecting an explicit workflow image set for comparison and export.
     """
     title = manifest.get("story_title", "Illustrated Story")
     blocks = manifest.get("blocks", [])
@@ -258,10 +264,27 @@ def compile_manifest_to_html(manifest: Dict[str, Any], project_dir: str, embed_i
         rendered_p = render_dialogue_content(raw_text)
         body_html_parts.append(f'<p class="story-paragraph">{rendered_p}</p>')
 
-        illus = block.get("illustration")
-        if illus:
-            img_rel_path = illus.get("image_file", f"images/{block['chunk_id']}.png")
+        # Resolve illustration for specified workflow or fallback to active illustration
+        illus = None
+        if workflow and "illustrations" in block and isinstance(block["illustrations"], dict):
+            wf_candidates = [workflow, f"{workflow}.json", os.path.splitext(workflow)[0]]
+            for cand in wf_candidates:
+                if cand in block["illustrations"]:
+                    illus = block["illustrations"][cand]
+                    break
+        elif block.get("illustration"):
+            illus = block["illustration"]
+
+        if illus and illus.get("image_file"):
+            img_rel_path = illus["image_file"]
             full_img_path = os.path.join(project_dir, img_rel_path)
+            # Check fallback root images path if not found
+            if not os.path.isfile(full_img_path):
+                fallback_path = os.path.join(project_dir, "images", f"{block['chunk_id']}.png")
+                if os.path.isfile(fallback_path):
+                    full_img_path = fallback_path
+                    img_rel_path = f"images/{block['chunk_id']}.png"
+
             # Render illustration if status is completed or image file exists on disk
             if os.path.isfile(full_img_path):
                 illustrations_count += 1
@@ -288,7 +311,7 @@ def compile_manifest_to_html(manifest: Dict[str, Any], project_dir: str, embed_i
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{escape_html(title)}</title>
+  <title>{escape_html(title)} - Illustrated Story</title>
   <style>
 {css}
   </style>
@@ -301,8 +324,6 @@ def compile_manifest_to_html(manifest: Dict[str, Any], project_dir: str, embed_i
         <span>{total_words:,} words</span>
         <span>&bull;</span>
         <span>{illustrations_count} illustrations</span>
-        <span>&bull;</span>
-        <span>{len(blocks)} paragraphs</span>
       </div>
     </header>
 
@@ -320,7 +341,12 @@ def compile_manifest_to_html(manifest: Dict[str, Any], project_dir: str, embed_i
     return html_doc
 
 
-def compile_html(project_dir: str, output_filepath: Optional[str] = None, embed_images: bool = True) -> str:
+def compile_html(
+    project_dir: str,
+    output_filepath: Optional[str] = None,
+    embed_images: bool = True,
+    workflow: Optional[str] = None
+) -> str:
     """Reads manifest.json from project, verifies rendered images, and compiles index.html."""
     manifest_path = os.path.join(project_dir, "artifacts", "manifest.json")
     if not os.path.isfile(manifest_path):
@@ -329,7 +355,7 @@ def compile_html(project_dir: str, output_filepath: Optional[str] = None, embed_
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
-    html_content = compile_manifest_to_html(manifest, project_dir, embed_images=embed_images)
+    html_content = compile_manifest_to_html(manifest, project_dir, embed_images=embed_images, workflow=workflow)
 
     target = output_filepath or os.path.join(project_dir, "index.html")
     with open(target, "w", encoding="utf-8") as f:

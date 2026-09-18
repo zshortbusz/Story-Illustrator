@@ -758,3 +758,20 @@ input[type="range"] {
     grid-template-columns: 1fr;
   }
 }
+
+/* Image selection in Tab 5 */
+.image-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.img-card-checkbox {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 22px;
+  height: 22px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  z-index: 10;
+}

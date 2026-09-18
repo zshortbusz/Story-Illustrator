@@ -1,0 +1,17 @@
+the ability to choose a new image workflow and batch generate images again after you already batch generated images for a particular project using a different workflow, 
+
+
+the ability to specifiy positive prompt pre-fix per workflow, similar to the default negatives.
+
+the ability to mass select generated images for regeneration.
+
+
+
+bug, click new story, paste text into text field, save raw text, run chunker, get error story has been deselected in top drop down.
+
+
+remove all the options from the render preview except for the download portable option.
+
+.
+
+update github documentation. For github only, remove all the example workflows except for sdxl_base

@@ -244,8 +244,8 @@ class TestPhase2BackendAgnostic(unittest.TestCase):
 
         block = updated["blocks"][0]
         self.assertEqual(block["illustration"]["status"], "completed")
-        self.assertEqual(block["illustration"]["image_file"], "images/chunk_000.png")
-        self.assertTrue(os.path.isfile(os.path.join(self.pdir, "images", "chunk_000.png")))
+        self.assertIn("images/", block["illustration"]["image_file"])
+        self.assertTrue(os.path.isfile(os.path.join(self.pdir, block["illustration"]["image_file"])))
 
 
 class TestWebAPIProvidersEndpoint(unittest.TestCase):

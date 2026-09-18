@@ -14,6 +14,7 @@ from pipeline.project_manager import (
     get_base_dir,
     list_projects,
     init_project,
+    slugify,
     DEFAULT_LLM_CONFIG,
     DEFAULT_DIFFUSION_PROFILES
 )
@@ -111,7 +112,7 @@ def create_app() -> Flask:
             chunks_exists = os.path.isfile(os.path.join(pdir, "artifacts", "01_chunks.json"))
             source_exists = os.path.isfile(os.path.join(pdir, "source", "input_story.txt"))
             images_dir = os.path.join(pdir, "images")
-            img_count = len([f for f in os.listdir(images_dir) if f.endswith(".png")]) if os.path.isdir(images_dir) else 0
+            img_count = sum(len([f for f in files if f.endswith(".png")]) for _, _, files in os.walk(images_dir)) if os.path.isdir(images_dir) else 0
 
             results.append({
                 "slug": s,
@@ -126,7 +127,8 @@ def create_app() -> Flask:
     @app.route("/api/projects", methods=["POST"])
     def create_project():
         data = request.json or {}
-        slug = data.get("slug", "").strip().lower().replace(" ", "_")
+        raw_slug = data.get("slug", "")
+        slug = slugify(raw_slug)
         if not slug:
             return jsonify({"error": "Story slug is required."}), 400
         story_text = data.get("story_text", "")
@@ -431,12 +433,38 @@ def create_app() -> Flask:
         pdir = get_project_dir(slug)
         data = request.json or {}
         workflow_name = data.get("workflow")
+        chunk_ids = data.get("chunk_ids")
+        force_all = bool(data.get("force_all", False))
         wf_path = None
         if workflow_name:
             wf_path = os.path.join(base_dir, "workflows", workflow_name)
+            # Copy to project config workflow_api.json if it exists
+            if os.path.isfile(wf_path):
+                target_wf = os.path.join(pdir, "config", "workflow_api.json")
+                try:
+                    import shutil
+                    shutil.copyfile(wf_path, target_wf)
+                except Exception as ex:
+                    print(f"[!] Warning: failed to copy workflow to project config: {ex}")
+            # Update workflow name in diffusion_profiles.json
+            diff_path = os.path.join(pdir, "config", "diffusion_profiles.json")
+            if os.path.isfile(diff_path):
+                try:
+                    with open(diff_path, "r", encoding="utf-8") as f:
+                        diff_cfg = json.load(f)
+                    diff_cfg.setdefault("comfyui", {})["workflow"] = workflow_name
+                    with open(diff_path, "w", encoding="utf-8") as f:
+                        json.dump(diff_cfg, f, indent=2, ensure_ascii=False)
+                except Exception:
+                    pass
 
         try:
-            manifest = run_phase_2(project_dir=pdir, workflow_path=wf_path)
+            manifest = run_phase_2(
+                project_dir=pdir,
+                workflow_path=wf_path,
+                rerun_chunk_ids=chunk_ids,
+                force_all=force_all
+            )
             return jsonify({"success": True, "manifest": manifest})
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
@@ -483,7 +511,8 @@ def create_app() -> Flask:
         try:
             data = request.json or {}
             embed = data.get("embed_images", True)
-            target = compile_html(pdir, embed_images=embed)
+            workflow = data.get("workflow")
+            target = compile_html(pdir, embed_images=embed, workflow=workflow)
             return jsonify({"success": True, "path": target, "embedded": embed})
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
@@ -491,7 +520,7 @@ def create_app() -> Flask:
     # -------------------------------------------------------------------------
     # Image Serving & Reader Preview
     # -------------------------------------------------------------------------
-    @app.route("/api/project/<slug>/images/<filename>")
+    @app.route("/api/project/<slug>/images/<path:filename>")
     def serve_project_image(slug, filename):
         pdir = get_project_dir(slug)
         images_dir = os.path.join(pdir, "images")
@@ -500,28 +529,19 @@ def create_app() -> Flask:
     @app.route("/api/project/<slug>/reader")
     def serve_project_reader(slug):
         pdir = get_project_dir(slug)
-        index_file = os.path.join(pdir, "index.html")
+        workflow = request.args.get("workflow")
         as_download = request.args.get("download") == "1"
-        download_name = f"{slug}_illustrated.html"
+        wf_suffix = f"_{workflow.replace('.json', '')}" if workflow else ""
+        download_name = f"{slug}{wf_suffix}_illustrated.html"
 
-        if os.path.isfile(index_file):
-            # Auto-heal: if index.html contains legacy relative image links ('src="images/'),
-            # recompile it on the fly with embedded base64 images so it is always 100% portable
-            try:
-                with open(index_file, "r", encoding="utf-8") as f:
-                    content = f.read()
-                if '<img src="images/' in content:
-                    compile_html(pdir, embed_images=True)
-            except Exception:
-                pass
-            return send_file(index_file, as_attachment=as_download, download_name=download_name)
-
-        # Fallback compile on the fly if manifest exists
         manifest_path = os.path.join(pdir, "artifacts", "manifest.json")
         if os.path.isfile(manifest_path):
             with open(manifest_path, "r", encoding="utf-8") as f:
                 manifest = json.load(f)
-            html_content = compile_manifest_to_html(manifest, pdir, embed_images=True)
+
+            target_workflow = workflow or manifest.get("active_workflow")
+            html_content = compile_manifest_to_html(manifest, pdir, embed_images=True, workflow=target_workflow)
+
             if as_download:
                 import io
                 return send_file(

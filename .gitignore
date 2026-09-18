@@ -45,3 +45,8 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Workflows (publish only reference sdxl_base workflow to GitHub; keep other models local)
+workflows/*
+!workflows/sdxl_base.json
+

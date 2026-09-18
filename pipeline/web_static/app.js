@@ -4,6 +4,29 @@ let currentSlug = "";
 let systemStatus = null;
 let currentManifest = null;
 let availableModels = [];
+const selectedImageChunks = new Set();
+
+function updateSelectedImagesUI() {
+  const count = selectedImageChunks.size;
+  const btnRegen = document.getElementById("btnRegenerateSelected");
+  if (btnRegen) {
+    btnRegen.textContent = `↻ Regenerate Selected (${count})`;
+    btnRegen.disabled = count === 0;
+  }
+  const btnToggle = document.getElementById("btnToggleSelectAll");
+  if (btnToggle) {
+    const totalIllustrated = (currentManifest?.blocks || []).filter(b => b.illustration).length;
+    btnToggle.textContent = (count > 0 && count === totalIllustrated) ? "Deselect All" : "Select All";
+  }
+  document.querySelectorAll(".image-card").forEach(card => {
+    const cid = card.dataset.chunkId;
+    if (selectedImageChunks.has(cid)) {
+      card.classList.add("selected");
+    } else {
+      card.classList.remove("selected");
+    }
+  });
+}
 
 // Toast notification helper
 function showToast(message, type = "success") {
@@ -162,7 +185,7 @@ function populateModelDropdowns(models) {
 // ----------------------------------------------------------------------------
 // Projects Management
 // ----------------------------------------------------------------------------
-async function loadProjects() {
+async function loadProjects(preferredSlug = null) {
   try {
     const res = await fetch("/api/projects");
     const projects = await res.json();
@@ -177,9 +200,16 @@ async function loadProjects() {
     });
 
     if (projects.length > 0) {
-      currentSlug = projects[0].slug;
+      let targetSlug = preferredSlug || currentSlug;
+      if (!targetSlug || !projects.some(p => p.slug === targetSlug)) {
+        targetSlug = projects[0].slug;
+      }
+      currentSlug = targetSlug;
       select.value = currentSlug;
       await loadProjectData(currentSlug);
+    } else {
+      currentSlug = "";
+      select.value = "";
     }
   } catch (err) {
     showToast("Failed to load projects: " + err, "error");
@@ -322,6 +352,8 @@ async function loadDiffusionConfig() {
     sel.value = cfg.active_profile || "sdxl_base";
     const curProfile = profiles[sel.value] || {};
     document.getElementById("profileNegativePrompt").value = curProfile.default_negative || "";
+    const prefixEl = document.getElementById("profilePositivePrefix");
+    if (prefixEl) prefixEl.value = curProfile.positive_prefix || "";
   } catch (err) {
     console.error("Diffusion config load error:", err);
   }
@@ -335,6 +367,10 @@ async function saveDiffusionConfig() {
     cfg.active_profile = activeProf;
     if (cfg.profiles && cfg.profiles[activeProf]) {
       cfg.profiles[activeProf].default_negative = document.getElementById("profileNegativePrompt").value.trim();
+      const prefixEl = document.getElementById("profilePositivePrefix");
+      if (prefixEl) {
+        cfg.profiles[activeProf].positive_prefix = prefixEl.value.trim();
+      }
     }
 
     await fetch(`/api/project/${currentSlug}/config/diffusion`, {
@@ -685,20 +721,28 @@ async function loadManifest() {
 
     // Render in Image Gallery Tab (Tab 5)
     const blocks = currentManifest.blocks || [];
+    const activeWf = document.getElementById("selectWorkflow")?.value || currentManifest.active_workflow || "sdxl_base.json";
+
     blocks.filter(b => b.illustration).forEach(block => {
       const cid = block.chunk_id;
-      const illus = block.illustration;
+      const illus = (block.illustrations && block.illustrations[activeWf])
+        ? block.illustrations[activeWf]
+        : block.illustration;
       const isCompleted = illus.status === "completed";
+      const isChecked = selectedImageChunks.has(cid);
 
       const imgCard = document.createElement("div");
-      imgCard.className = "image-card";
-      const imgSrc = `/api/project/${currentSlug}/images/${cid}.png?t=${Date.now()}`;
+      imgCard.className = `image-card ${isChecked ? "selected" : ""}`;
+      imgCard.dataset.chunkId = cid;
+      const relImgPath = illus.image_file ? illus.image_file.replace(/^images\//, "") : `${cid}.png`;
+      const imgSrc = `/api/project/${currentSlug}/images/${encodeURI(relImgPath)}?t=${Date.now()}`;
 
       imgCard.innerHTML = `
         <div class="image-card-preview">
+          <input type="checkbox" class="img-card-checkbox" data-chunk-id="${cid}" ${isChecked ? "checked" : ""} title="Select for regeneration">
           ${isCompleted
             ? `<img src="${imgSrc}" alt="${cid}" onerror="this.parentElement.innerHTML='<div class=\\'image-placeholder\\'>Rendered file not found on disk</div>'">`
-            : `<div class="image-placeholder">&#9654; Ready to Render (${illus.width}x${illus.height})</div>`}
+            : `<div class="image-placeholder">&#9654; Ready to Render (${illus.width || 1344}x${illus.height || 768})</div>`}
         </div>
         <div class="image-card-body">
           <div class="card-header" style="margin-bottom: 4px;">
@@ -714,12 +758,24 @@ async function loadManifest() {
         </div>
       `;
 
+      const chk = imgCard.querySelector(".img-card-checkbox");
+      chk.addEventListener("change", (e) => {
+        e.stopPropagation();
+        if (chk.checked) {
+          selectedImageChunks.add(cid);
+        } else {
+          selectedImageChunks.delete(cid);
+        }
+        updateSelectedImagesUI();
+      });
+
       imgCard.querySelector(".btn-tweak-rerun").addEventListener("click", () => {
         openTweakModal(block);
       });
 
       gallery.appendChild(imgCard);
     });
+    updateSelectedImagesUI();
 
   } catch (err) {
     console.error("Manifest load error:", err);
@@ -760,7 +816,8 @@ async function saveManifest() {
 // Phase 2: Render & Regenerate Modal
 // ----------------------------------------------------------------------------
 function openTweakModal(block) {
-  const illus = block.illustration;
+  const activeWf = document.getElementById("selectWorkflow")?.value || currentManifest?.active_workflow || "sdxl_base.json";
+  const illus = (block.illustrations && block.illustrations[activeWf]) ? block.illustrations[activeWf] : block.illustration;
   document.getElementById("tweakChunkId").textContent = block.chunk_id;
   document.getElementById("tweakPrompt").value = illus.prompt || "";
   document.getElementById("tweakNegativePrompt").value = illus.negative_prompt || "";
@@ -780,7 +837,7 @@ async function submitTweakRerun() {
   const wf = document.getElementById("selectWorkflow").value;
 
   document.getElementById("modalTweakRerun").style.display = "none";
-  showToast(`Rendering ${cid} in ComfyUI...`);
+  showToast(`Rendering ${cid} [${wf}] in ComfyUI...`);
 
   try {
     const res = await fetch(`/api/project/${currentSlug}/rerun`, {
@@ -800,7 +857,7 @@ async function submitTweakRerun() {
     if (data.success) {
       showToast(`Successfully rendered ${cid}!`, "success");
       await loadManifest();
-      loadReaderPreview();
+      loadReaderPreview(wf);
     } else {
       showToast("Rendering error: " + data.error, "error");
     }
@@ -811,24 +868,39 @@ async function submitTweakRerun() {
 
 async function startBatchRender() {
   const wf = document.getElementById("selectWorkflow").value;
+  const blocks = (currentManifest?.blocks || []).filter(b => b.illustration);
+  const pendingCount = blocks.filter(b => {
+    const illus = (b.illustrations && b.illustrations[wf]) ? b.illustrations[wf] : b.illustration;
+    return !illus || illus.status !== "completed";
+  }).length;
+
+  let forceAll = false;
+  if (pendingCount === 0 && blocks.length > 0) {
+    if (!confirm(`All illustrations for workflow '${wf}' are already completed. Re-render all scenes with fresh seeds?`)) {
+      return;
+    }
+    forceAll = true;
+  }
+
   const pbox = document.getElementById("renderProgressBox");
   pbox.style.display = "block";
-  document.getElementById("renderStatusText").innerHTML = `<span class="spinner"></span> Dispatching batch to ComfyUI...`;
+  document.getElementById("renderStatusText").innerHTML = `<span class="spinner"></span> Dispatching batch to ComfyUI [${wf}]...`;
   document.getElementById("renderProgressBar").style.width = "20%";
 
   try {
     const res = await fetch(`/api/project/${currentSlug}/render`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workflow: wf })
+      body: JSON.stringify({ workflow: wf, force_all: forceAll })
     });
     const data = await res.json();
     if (data.success) {
       document.getElementById("renderProgressBar").style.width = "100%";
       document.getElementById("renderStatusText").textContent = "Batch render completed!";
       showToast("All illustrations completed successfully!");
+      selectedImageChunks.clear();
       await loadManifest();
-      loadReaderPreview();
+      loadReaderPreview(wf);
     } else {
       document.getElementById("renderStatusText").textContent = "Render stopped with error.";
       showToast("Render error: " + data.error, "error");
@@ -840,19 +912,96 @@ async function startBatchRender() {
   }
 }
 
+async function regenerateSelectedImages() {
+  if (selectedImageChunks.size === 0) return;
+  const wf = document.getElementById("selectWorkflow").value;
+  const chunkIds = Array.from(selectedImageChunks);
+
+  const pbox = document.getElementById("renderProgressBox");
+  pbox.style.display = "block";
+  document.getElementById("renderStatusText").innerHTML = `<span class="spinner"></span> Regenerating ${chunkIds.length} scene(s) [${wf}]...`;
+  document.getElementById("renderProgressBar").style.width = "25%";
+
+  try {
+    const res = await fetch(`/api/project/${currentSlug}/render`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workflow: wf, chunk_ids: chunkIds })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById("renderProgressBar").style.width = "100%";
+      document.getElementById("renderStatusText").textContent = `Regenerated ${chunkIds.length} scene(s)!`;
+      showToast(`Successfully regenerated ${chunkIds.length} scene(s)!`);
+      selectedImageChunks.clear();
+      await loadManifest();
+      loadReaderPreview(wf);
+    } else {
+      document.getElementById("renderStatusText").textContent = "Regeneration stopped with error.";
+      showToast("Regeneration error: " + data.error, "error");
+    }
+  } catch (err) {
+    showToast("Network error: " + err, "error");
+  } finally {
+    setTimeout(() => { pbox.style.display = "none"; }, 5000);
+  }
+}
+
 // ----------------------------------------------------------------------------
 // Phase 3: Reader Preview
 // ----------------------------------------------------------------------------
-function loadReaderPreview() {
+function loadReaderPreview(targetWf = null) {
+  if (!currentSlug) return;
   const iframe = document.getElementById("readerIframe");
-  const url = `/api/project/${currentSlug}/reader?t=${Date.now()}`;
-  iframe.src = url;
-  const btnOpen = document.getElementById("btnOpenReaderTab");
-  if (btnOpen) btnOpen.href = url;
+  const wfSelect = document.getElementById("readerWorkflowSelect");
+
+  const availableWorkflows = new Set();
+  if (currentManifest) {
+    if (currentManifest.active_workflow) availableWorkflows.add(currentManifest.active_workflow);
+    (currentManifest.blocks || []).forEach(b => {
+      if (b.illustrations && typeof b.illustrations === "object") {
+        Object.keys(b.illustrations).forEach(k => availableWorkflows.add(k));
+      }
+      if (b.illustration && b.illustration.workflow) {
+        availableWorkflows.add(b.illustration.workflow);
+      }
+    });
+  }
+  if (availableWorkflows.size === 0) {
+    availableWorkflows.add("sdxl_base.json");
+  }
+
+  if (wfSelect) {
+    const currentVal = targetWf || wfSelect.value || currentManifest?.active_workflow || "sdxl_base.json";
+    wfSelect.innerHTML = "";
+    Array.from(availableWorkflows).sort().forEach(wf => {
+      const opt = document.createElement("option");
+      opt.value = wf;
+      const count = (currentManifest?.blocks || []).filter(b => {
+        const ill = b.illustrations?.[wf] || (b.illustration?.workflow === wf ? b.illustration : null);
+        return ill && ill.status === "completed";
+      }).length;
+      opt.textContent = `${wf} (${count} images)`;
+      wfSelect.appendChild(opt);
+    });
+
+    if (Array.from(wfSelect.options).some(o => o.value === currentVal)) {
+      wfSelect.value = currentVal;
+    } else if (wfSelect.options.length > 0) {
+      wfSelect.value = wfSelect.options[0].value;
+    }
+  }
+
+  const selectedWf = wfSelect?.value || targetWf || "";
+  const wfParam = selectedWf ? `&workflow=${encodeURIComponent(selectedWf)}` : "";
+  const url = `/api/project/${currentSlug}/reader?t=${Date.now()}${wfParam}`;
+  if (iframe) iframe.src = url;
+
   const btnDownload = document.getElementById("btnDownloadReader");
   if (btnDownload) {
-    btnDownload.href = `/api/project/${currentSlug}/reader?download=1`;
-    btnDownload.download = `${currentSlug}_illustrated.html`;
+    btnDownload.href = `/api/project/${currentSlug}/reader?download=1${wfParam}`;
+    const cleanWf = selectedWf ? `_${selectedWf.replace('.json', '')}` : "";
+    btnDownload.download = `${currentSlug}${cleanWf}_illustrated.html`;
   }
 }
 
@@ -882,6 +1031,15 @@ const stageElements = {
 };
 
 async function triggerStage(stageName, label) {
+  if (!currentSlug) {
+    const sel = document.getElementById("projectSelect");
+    if (sel && sel.value) currentSlug = sel.value;
+  }
+  if (!currentSlug) {
+    showToast("No story selected in the dropdown. Please select or create a story first.", "error");
+    return;
+  }
+
   const el = stageElements[stageName] || {};
   const btn = el.btn ? document.getElementById(el.btn) : null;
   const box = el.box ? document.getElementById(el.box) : null;
@@ -1046,10 +1204,73 @@ function setupEventListeners() {
 
   // Batch render & compile
   document.getElementById("btnStartBatchRender").addEventListener("click", startBatchRender);
-  document.getElementById("btnCompileReader").addEventListener("click", compileReader);
+
+  // Mass selection controls
+  const btnToggleAll = document.getElementById("btnToggleSelectAll");
+  if (btnToggleAll) {
+    btnToggleAll.addEventListener("click", () => {
+      const totalIllustrated = (currentManifest?.blocks || []).filter(b => b.illustration);
+      if (selectedImageChunks.size === totalIllustrated.length && totalIllustrated.length > 0) {
+        selectedImageChunks.clear();
+      } else {
+        totalIllustrated.forEach(b => selectedImageChunks.add(b.chunk_id));
+      }
+      updateSelectedImagesUI();
+      document.querySelectorAll(".img-card-checkbox").forEach(chk => {
+        chk.checked = selectedImageChunks.has(chk.dataset.chunkId);
+      });
+    });
+  }
+
+  const btnRegenSel = document.getElementById("btnRegenerateSelected");
+  if (btnRegenSel) {
+    btnRegenSel.addEventListener("click", regenerateSelectedImages);
+  }
+
+  // Workflow switcher in Tab 5 to refresh gallery
+  const selWf = document.getElementById("selectWorkflow");
+  if (selWf) {
+    selWf.addEventListener("change", () => {
+      if (currentManifest) {
+        loadManifest();
+      }
+    });
+  }
+
+  // Workflow switcher in Tab 6 reader preview
+  const readerWfSel = document.getElementById("readerWorkflowSelect");
+  if (readerWfSel) {
+    readerWfSel.addEventListener("change", (e) => {
+      loadReaderPreview(e.target.value);
+    });
+  }
+
+  // Active diffusion profile switcher in Tab 4
+  const activeProfSel = document.getElementById("activeProfileSelect");
+  if (activeProfSel) {
+    activeProfSel.addEventListener("change", async () => {
+      try {
+        const res = await fetch(`/api/project/${currentSlug}/config/diffusion`);
+        const cfg = await res.json();
+        const profiles = cfg.profiles || {};
+        const curProfile = profiles[activeProfSel.value] || {};
+        document.getElementById("profileNegativePrompt").value = curProfile.default_negative || "";
+        const prefixEl = document.getElementById("profilePositivePrefix");
+        if (prefixEl) prefixEl.value = curProfile.positive_prefix || "";
+      } catch (err) {}
+    });
+  }
 
   // Save source text
   document.getElementById("btnSaveSource").addEventListener("click", async () => {
+    if (!currentSlug) {
+      const sel = document.getElementById("projectSelect");
+      if (sel && sel.value) currentSlug = sel.value;
+    }
+    if (!currentSlug) {
+      showToast("No story selected. Please create or select a story first.", "error");
+      return;
+    }
     const text = document.getElementById("sourceStoryText").value;
     const res = await fetch(`/api/project/${currentSlug}/source`, {
       method: "POST",
@@ -1200,21 +1421,23 @@ function setupEventListeners() {
     document.getElementById("modalNewProject").style.display = "none";
   });
   document.getElementById("btnSubmitNewProject").addEventListener("click", async () => {
-    const slug = document.getElementById("newStorySlug").value.trim();
+    let rawSlug = document.getElementById("newStorySlug").value.trim();
+    let slug = rawSlug.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    if (!slug) slug = `story_${Date.now()}`;
     const text = document.getElementById("newStoryText").value;
-    if (!slug) return showToast("Slug is required", "error");
 
     const res = await fetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slug, story_text: text })
     });
-    if (res.ok) {
+    const data = await res.json();
+    if (res.ok && data.success) {
       document.getElementById("modalNewProject").style.display = "none";
-      showToast(`Created story: ${slug}`);
-      await loadProjects();
-      document.getElementById("projectSelect").value = slug;
-      loadProjectData(slug);
+      showToast(`Created story: ${data.slug}`);
+      await loadProjects(data.slug);
+    } else {
+      showToast("Error creating story: " + (data.error || "Unknown error"), "error");
     }
   });
 

@@ -90,11 +90,11 @@ class TestUIDOMStructure(unittest.TestCase):
             # Tab 4
             'chkShowIllustratedOnly', 'btnSaveManifest', 'btnRunManifest', 'modelPromptSynthesizer',
             'modelPromptSynthesizerCustom', 'tempSynth', 'promptSynth', 'activeProfileSelect',
-            'profileNegativePrompt', 'btnSaveSynthConfig', 'manifestProgressBox', 'manifestBlocksContainer',
+            'profilePositivePrefix', 'profileNegativePrompt', 'btnSaveSynthConfig', 'manifestProgressBox', 'manifestBlocksContainer',
             # Tab 5
-            'selectWorkflow', 'btnStartBatchRender', 'renderProgressBox', 'renderProgressBar', 'imagesGallery',
+            'selectWorkflow', 'btnToggleSelectAll', 'btnRegenerateSelected', 'btnStartBatchRender', 'renderProgressBox', 'renderProgressBar', 'imagesGallery',
             # Tab 6
-            'btnCompileReader', 'btnOpenReaderTab', 'readerIframe'
+            'readerWorkflowSelect', 'btnDownloadReader', 'readerIframe'
         ]
         for cid in required_controls:
             self.assertIn(cid, self.parsed_ids, f"Control ID {cid} missing in index.html")
@@ -640,8 +640,6 @@ class TestVisibleChromeDevToolsE2E(unittest.TestCase):
 
         # 11. Step 7: Reader Preview
         self.eval_js("document.querySelector('.tab-btn[data-tab=\"tab-reader\"]').click()")
-        time.sleep(1.0)
-        self.eval_js("document.getElementById('btnCompileReader').click()")
         time.sleep(2.0)
 
         reader_html_path = os.path.join(pdir, 'index.html')

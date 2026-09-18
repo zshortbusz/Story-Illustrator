@@ -62,7 +62,7 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
 │                                                                                 │
 │   - Headless WebSocket execution tracking & REST job dispatch                   │
 │   - Automatic node parameter injection (prompt, negative, width, height, seed)  │
-│   - Compatible with SDXL, Flux.1 Dev, and Anima 1.5 / Qwen workflows           │
+│   - Compatible with SDXL diffusion workflows (custom workflows supported)       │
 │   - Atomic manifest checkpointing and single-chunk tweak & rerun                │
 └────────────────────────────────────────┬────────────────────────────────────────┘
                                          │
@@ -87,9 +87,7 @@ Designed specifically for consumer-grade GPU setups (such as an NVIDIA GeForce R
 ├── LICENSE                          # MIT License
 ├── README.md                        # Documentation
 ├── workflows/                       # ComfyUI API workflow templates
-│   ├── animap.json                  # Anima 1.5 + Qwen fast diffusion workflow
-│   ├── sdxl_base.json               # SDXL base diffusion workflow
-│   └── flux_dev.json                # Flux.1 Dev diffusion workflow
+│   └── sdxl_base.json               # SDXL base diffusion workflow
 ├── pipeline/                        # Core Python pipeline modules
 │   ├── chunker.py                   # Deterministic regex story chunker
 │   ├── llm_client.py                # LM Studio client & robust text parsers
@@ -172,9 +170,9 @@ http://127.0.0.1:5000
 2. **Tab 1 (Chunks)**: Click **Run Chunker** to divide your story into scene-length paragraphs.
 3. **Tab 2 (Visual Bible)**: Select your loaded LM Studio model and click **Run Extraction** to extract character and setting profiles.
 4. **Tab 3 (Visual Beats)**: Click **Run Beat Selection** to select dramatic visual moments.
-5. **Tab 4 (Manifest & Prompts)**: Click **Synthesize Prompts** to generate diffusion prompts. Review or fine-tune prompts directly.
-6. **Tab 5 (Render & Regenerate)**: Select your ComfyUI workflow (`animap.json`, `sdxl_base.json`, etc.) and click **Start Batch Render**. Inspect generated illustrations or click **Tweak & Rerun** to adjust individual scenes.
-7. **Tab 6 (Reader Preview)**: Click **Compile index.html** to generate the final illustrated offline reader.
+5. **Tab 4 (Manifest & Prompts)**: Click **Synthesize Prompts** to generate diffusion prompts. Review or fine-tune prompts, and optionally configure positive prompt prefixes per profile/workflow.
+6. **Tab 5 (Render & Regenerate)**: Select your ComfyUI workflow (`sdxl_base.json`) and click **Start Batch Render**. Inspect generated illustrations, mass-select scenes with checkboxes for batch regeneration, or switch workflows to generate alternate model image sets without losing previous generations.
+7. **Tab 6 (Reader Preview)**: Switch between your generated workflow image sets to compare illustrations, then click **Download Portable HTML** to export the self-contained offline reader.
 
 ---
 

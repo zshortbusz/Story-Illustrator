@@ -250,10 +250,14 @@
               <input type="range" id="tempSynth" min="0" max="1" step="0.05" value="0.4">
             </div>
           </div>
-          <div class="config-grid" style="grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;">
+          <div class="config-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 10px;">
             <div class="form-group">
               <label>Active Diffusion Profile:</label>
               <select id="activeProfileSelect" class="select-input"></select>
+            </div>
+            <div class="form-group">
+              <label>Positive Prompt Prefix:</label>
+              <input type="text" id="profilePositivePrefix" class="text-input" placeholder="e.g. masterpiece, ultra-detailed, 8k...">
             </div>
             <div class="form-group">
               <label>Default Negative Prompt:</label>
@@ -286,9 +290,11 @@
           <h2>Phase 2: Headless Diffusion Batch &amp; Image Review</h2>
           <p class="section-desc">Select your ComfyUI workflow, render images, inspect outputs, and tweak &amp; regenerate individual scenes.</p>
         </div>
-        <div class="render-controls-group">
+        <div class="render-controls-group" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <label for="selectWorkflow">Workflow:</label>
-          <select id="selectWorkflow" class="select-input" style="width: 200px;"></select>
+          <select id="selectWorkflow" class="select-input" style="width: 180px;"></select>
+          <button id="btnToggleSelectAll" class="btn btn-secondary" title="Select or deselect all scene illustrations">Select All</button>
+          <button id="btnRegenerateSelected" class="btn btn-primary" disabled title="Regenerate checked scenes">&#8635; Regenerate Selected (0)</button>
           <button id="btnStartBatchRender" class="btn btn-success">&#9654; Start Batch Render</button>
         </div>
       </div>
@@ -314,9 +320,9 @@
           <h2>Phase 3: Static Reader Preview</h2>
           <p class="section-desc">Responsive offline reader layout with dialogue quote highlighting (preserved from <code>build_site.cjs</code>) and embedded illustrations.</p>
         </div>
-        <div class="btn-group">
-          <button id="btnCompileReader" class="btn btn-primary">&#9654; Compile index.html</button>
-          <a id="btnOpenReaderTab" href="#" target="_blank" class="btn btn-secondary">Open in New Tab &#8599;</a>
+        <div class="btn-group" style="display: flex; gap: 10px; align-items: center;">
+          <label for="readerWorkflowSelect" style="font-size: 0.88rem; color: var(--text-dim);">Image Set:</label>
+          <select id="readerWorkflowSelect" class="select-input" style="width: auto; min-width: 160px; font-size: 0.88rem;"></select>
           <a id="btnDownloadReader" href="#" download="" class="btn btn-secondary">&#128190; Download Portable HTML</a>
         </div>
       </div>

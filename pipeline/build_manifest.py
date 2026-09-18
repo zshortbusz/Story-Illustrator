@@ -513,6 +513,7 @@ def run_stage_manifest(
         "camera framing, and the global art style."
     )
     default_negative = profile.get("default_negative", "")
+    positive_prefix = profile.get("positive_prefix", "").strip()
 
     role_cfg = llm_config.get("roles", {}).get("prompt_synthesizer", {})
     model = role_cfg.get("model", "thedrummer_orion-26b-a4b-v1")
@@ -568,6 +569,7 @@ def run_stage_manifest(
         print(f"  -> {status_msg}")
         if callback: callback(status_msg)
 
+        prefix_instruction = f"- Positive Prompt Prefix (Must be included at the beginning): {positive_prefix}\n" if positive_prefix else ""
         user_prompt = f"""SCENE COMPOSITION REQUIREMENTS:
 - Action Beat: {beat.get('action_beat', '')}
 - Camera Framing & Lighting: {beat.get('camera_framing', '')}
@@ -577,7 +579,7 @@ def run_stage_manifest(
   {setting_desc}
 - Global Art Style & Medium: {bible.get('global_art_style', '')}
 - Target Aspect Ratio: {scene_type} ({dims['width']}x{dims['height']})
-- Default Negative Prompt: {default_negative}
+{prefix_instruction}- Default Negative Prompt: {default_negative}
 
 SYNTHESIZE THE DIFFUSION PROMPT:
 Construct a high-quality positive diffusion prompt that seamlessly combines:
@@ -606,6 +608,12 @@ NEGATIVE: <negative prompt string>
                 f"Prompt synthesis failed for {cid}: model '{resolved_model}' produced an empty or unparseable prompt. "
                 f"Raw model response: {raw_resp[:200]!r}"
             )
+
+        # Apply positive_prefix if specified and not already prepended
+        if positive_prefix:
+            clean_prefix = positive_prefix.rstrip(" ,")
+            if not prompt_text.lower().startswith(clean_prefix.lower()):
+                prompt_text = f"{clean_prefix}, {prompt_text.lstrip(' ,')}"
 
         if not neg_prompt or not neg_prompt.strip():
             neg_prompt = default_negative

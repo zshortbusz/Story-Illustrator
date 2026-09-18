@@ -58,6 +58,7 @@ DEFAULT_DIFFUSION_PROFILES = {
                 "square": {"width": 1024, "height": 1024}
             },
             "system_prompt": "You are an expert diffusion prompt synthesizer. Convert the provided scene beat, character appearance, setting, and style into a detailed natural-language description (2-3 complete sentences). Avoid booru tags and keyword lists.",
+            "positive_prefix": "",
             "default_negative": ""
         },
         "sdxl_base": {
@@ -67,6 +68,7 @@ DEFAULT_DIFFUSION_PROFILES = {
                 "square": {"width": 1024, "height": 1024}
             },
             "system_prompt": "You are an expert SDXL prompt synthesizer. Combine the scene elements into a keyword-focused, comma-separated prompt. Place primary subjects first, followed by camera framing, lighting, environment, and art style.",
+            "positive_prefix": "",
             "default_negative": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo"
         },
         "anime_danbooru": {
@@ -76,6 +78,7 @@ DEFAULT_DIFFUSION_PROFILES = {
                 "square": {"width": 1024, "height": 1024}
             },
             "system_prompt": "You are a prompt generator for anime diffusion models. Convert the scene components into Danbooru-style comma-separated tags. Always start with character counts (e.g., 1boy, 1girl), character visual tags, clothing, action pose, background tags, and style tags.",
+            "positive_prefix": "",
             "default_negative": "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality"
         }
     }
@@ -98,11 +101,18 @@ def list_projects() -> List[str]:
     ]
 
 
+def slugify(text: str) -> str:
+    """Sanitizes text into a safe directory and URL slug."""
+    import re
+    return re.sub(r'[^a-z0-9]+', '_', text.lower()).strip('_')
+
+
 def init_project(story_slug: str, input_text: Optional[str] = None, workflow_name: str = "sdxl_base.json") -> str:
     """
     Scaffolds /projects/{story_slug}/ with source, config, artifacts, images directories,
     default configs, and optionally initial input_story.txt.
     """
+    story_slug = slugify(story_slug)
     base_dir = get_base_dir()
     project_dir = os.path.join(base_dir, "projects", story_slug)
 
@@ -134,3 +144,36 @@ def init_project(story_slug: str, input_text: Optional[str] = None, workflow_nam
             f.write(input_text)
 
     return project_dir
+
+
+def get_project_diffusion_profiles(project_dir: str) -> Dict[str, Any]:
+    """Loads diffusion profiles for a project, falling back to defaults."""
+    diff_path = os.path.join(project_dir, "config", "diffusion_profiles.json")
+    if os.path.isfile(diff_path):
+        try:
+            with open(diff_path, "r", encoding="utf-8") as f:
+                return json.load(f).get("profiles", {})
+        except Exception:
+            pass
+    return DEFAULT_DIFFUSION_PROFILES.get("profiles", {})
+
+
+def update_project_diffusion_profile(project_dir: str, profile_name: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+    """Updates fields for a specific profile in diffusion_profiles.json."""
+    diff_path = os.path.join(project_dir, "config", "diffusion_profiles.json")
+    cfg = dict(DEFAULT_DIFFUSION_PROFILES)
+    if os.path.isfile(diff_path):
+        try:
+            with open(diff_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except Exception:
+            pass
+    if "profiles" not in cfg:
+        cfg["profiles"] = dict(DEFAULT_DIFFUSION_PROFILES.get("profiles", {}))
+    if profile_name not in cfg["profiles"]:
+        cfg["profiles"][profile_name] = {}
+    cfg["profiles"][profile_name].update(updates)
+    os.makedirs(os.path.dirname(diff_path), exist_ok=True)
+    with open(diff_path, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, indent=2)
+    return cfg["profiles"]
