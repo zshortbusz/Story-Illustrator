@@ -201,16 +201,20 @@ class NumberedCanvas(canvas.Canvas):
         self._saved_page_states = []
 
     def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
+        self._saved_page_states.append({
+            "page_number": self._pageNumber,
+            "page_size": self._pagesize,
+        })
+        canvas.Canvas.showPage(self)
 
     def save(self):
         num_pages = len(self._saved_page_states)
         for state in self._saved_page_states:
-            self.__dict__.update(state)
+            self._pageNumber = state["page_number"]
+            self._pagesize = state["page_size"]
             self.draw_decorations(num_pages)
-            super().showPage()
-        super().save()
+            canvas.Canvas.showPage(self)
+        canvas.Canvas.save(self)
 
     def draw_decorations(self, total_pages: int):
         if self._pageNumber > 1:  # Omit header/footer on title page
@@ -534,8 +538,7 @@ strong.q {{
             dest_name = f"image_{cid}{img_ext}"
             dest_path = f"OEBPS/Images/{dest_name}"
 
-            with open(img_path, "rb") as f:
-                zf.writestr(dest_path, f.read())
+            zf.write(img_path, dest_path)
 
             is_cover = (img_path == cover_img_path)
             prop = ' properties="cover-image"' if is_cover else ""
@@ -827,8 +830,7 @@ figcaption {
             dest_name = f"image_{cid}{img_ext}"
             dest_path = f"OEBPS/Images/{dest_name}"
 
-            with open(img_path, "rb") as f:
-                zf.writestr(dest_path, f.read())
+            zf.write(img_path, dest_path)
 
             is_cover = (img_path == cover_img_path)
             prop = ' properties="cover-image"' if is_cover else ""

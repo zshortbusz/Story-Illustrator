@@ -43,7 +43,7 @@ def chunk_text(raw_text: str, max_chunk_words: int = 400) -> Dict[str, Any]:
         w_count = count_words(cleaned)
         if max_chunk_words and w_count > max_chunk_words:
             # Split giant paragraph on sentence boundaries
-            sentences = re.split(r"(?<=[.!?])\s+", cleaned)
+            sentences = re.split(r"(?:(?<=[.!?])|(?<=[.!?][\"'\u2019\u201d]))\s+", cleaned)
             sub_chunks: List[str] = []
             curr_text: List[str] = []
             curr_words = 0

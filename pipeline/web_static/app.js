@@ -5,6 +5,18 @@ let systemStatus = null;
 let currentManifest = null;
 let availableModels = [];
 const selectedImageChunks = new Set();
+let currentAuditContext = null;
+let currentTweakBlock = null;
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 function updateSelectedImagesUI() {
   const count = selectedImageChunks.size;
@@ -457,15 +469,54 @@ async function loadBible() {
     document.getElementById("bibleArtStyle").value = bible.global_art_style || "";
 
     const chars = bible.characters || {};
-    Object.entries(chars).forEach(([name, desc]) => {
+    Object.entries(chars).forEach(([name, charData]) => {
+      let baseDna = "";
+      let defaultAttire = "";
+      let timelineMods = [];
+      let wardrobeTimeline = [];
+      let altAttires = {};
+
+      if (typeof charData === "string") {
+        baseDna = charData;
+      } else if (charData && typeof charData === "object") {
+        baseDna = charData.base_dna || charData.physical_dna || charData.description || "";
+        defaultAttire = charData.default_attire || "";
+        timelineMods = charData.timeline_modifications || [];
+        wardrobeTimeline = charData.wardrobe_timeline || [];
+        altAttires = charData.alternate_attires || {};
+      }
+
       const item = document.createElement("div");
       item.className = "bible-item-card";
+      item.dataset.timelineMods = JSON.stringify(timelineMods);
+      item.dataset.wardrobeTimeline = JSON.stringify(wardrobeTimeline);
+      item.dataset.altAttires = JSON.stringify(altAttires);
+
+      let modsBadgeHtml = "";
+      if (timelineMods.length > 0) {
+        modsBadgeHtml = `<div style="margin-top: 6px; font-size: 0.75rem; color: #f59e0b;">&#9889; <strong>Modifications:</strong> ${timelineMods.map(m => `[${m.introduced_chunk_id || 'chunk_???'}] ${m.trait || ''}`).join("; ")}</div>`;
+      }
+
+      let wardrobeBadgeHtml = "";
+      if (wardrobeTimeline.length > 1) {
+        wardrobeBadgeHtml = `<div style="margin-top: 4px; font-size: 0.75rem; color: #38bdf8;">&#128084; <strong>Wardrobe Timeline:</strong> ${wardrobeTimeline.map(w => `[${w.from_chunk_id || 'chunk_???'}] ${w.context ? `(${w.context}) ` : ''}${w.attire || ''}`).join("; ")}</div>`;
+      }
+
       item.innerHTML = `
         <div class="card-header">
           <input type="text" class="text-input char-name-input" value="${name}" style="font-weight: 600; width: 60%;">
           <button class="btn btn-sm btn-danger btn-del-char">&times;</button>
         </div>
-        <textarea class="textarea-input char-desc-input" rows="3">${desc}</textarea>
+        <div style="margin-top: 6px;">
+          <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 2px;">Physical Base DNA (Face, hair, build, permanent features):</label>
+          <textarea class="textarea-input char-desc-input char-dna-input" rows="2">${baseDna}</textarea>
+        </div>
+        <div style="margin-top: 6px;">
+          <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 2px;">Default / Everyday Attire:</label>
+          <input type="text" class="text-input char-attire-input" value="${defaultAttire}" placeholder="e.g. Weathered leather aviator jacket, utility cargo trousers">
+        </div>
+        ${modsBadgeHtml}
+        ${wardrobeBadgeHtml}
       `;
       item.querySelector(".btn-del-char").addEventListener("click", () => item.remove());
       charList.appendChild(item);
@@ -497,8 +548,30 @@ function collectBibleFromUI() {
 
   document.querySelectorAll("#charactersList .bible-item-card").forEach(el => {
     const name = el.querySelector(".char-name-input").value.trim();
-    const desc = el.querySelector(".char-desc-input").value.trim();
-    if (name) characters[name] = desc;
+    const dna = el.querySelector(".char-dna-input")?.value.trim() || el.querySelector(".char-desc-input")?.value.trim() || "";
+    const attire = el.querySelector(".char-attire-input")?.value.trim() || "";
+    let timelineMods = [];
+    let wardrobeTimeline = [];
+    let altAttires = {};
+    try { timelineMods = JSON.parse(el.dataset.timelineMods || "[]"); } catch(e) {}
+    try { wardrobeTimeline = JSON.parse(el.dataset.wardrobeTimeline || "[]"); } catch(e) {}
+    try { altAttires = JSON.parse(el.dataset.altAttires || "{}"); } catch(e) {}
+
+    if (name) {
+      // Ensure wardrobe_timeline has base entry if empty but attire provided
+      if (wardrobeTimeline.length === 0 && attire) {
+        wardrobeTimeline = [{ from_chunk_id: "chunk_000", context: "Standard", attire: attire }];
+      } else if (wardrobeTimeline.length > 0 && attire && wardrobeTimeline[0].from_chunk_id === "chunk_000") {
+        wardrobeTimeline[0].attire = attire;
+      }
+      characters[name] = {
+        base_dna: dna,
+        timeline_modifications: timelineMods,
+        wardrobe_timeline: wardrobeTimeline,
+        default_attire: attire,
+        alternate_attires: altAttires
+      };
+    }
   });
 
   document.querySelectorAll("#settingsList .bible-item-card").forEach(el => {
@@ -554,6 +627,15 @@ async function loadBeats() {
     }
 
     beats.forEach((b, idx) => {
+      let attireStr = "";
+      if (b.character_attire) {
+        if (typeof b.character_attire === "string") {
+          attireStr = b.character_attire;
+        } else if (typeof b.character_attire === "object") {
+          attireStr = Object.entries(b.character_attire).map(([c, a]) => `${c}: ${a}`).join("; ");
+        }
+      }
+
       const card = document.createElement("div");
       card.className = "beat-card";
       card.dataset.index = idx;
@@ -575,6 +657,10 @@ async function loadBeats() {
           <input type="text" class="text-input beat-chars" value="${(b.characters_present || []).join(", ")}">
         </div>
         <div class="form-group">
+          <label>Scene-Specific Attire (e.g. Elena: emerald gown; Vance: formal doublet):</label>
+          <input type="text" class="text-input beat-attire" value="${attireStr}" placeholder="Leave blank to use timeline/default wardrobe">
+        </div>
+        <div class="form-group">
           <label>Setting:</label>
           <input type="text" class="text-input beat-setting" value="${b.setting || ""}">
         </div>
@@ -582,11 +668,48 @@ async function loadBeats() {
           <label>Camera Framing &amp; Lighting:</label>
           <input type="text" class="text-input beat-camera" value="${b.camera_framing || ""}">
         </div>
-        <div style="text-align: right;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+          <button class="btn btn-sm btn-secondary btn-preview-context" data-index="${idx}" data-chunk="${b.chunk_id || ''}">&#128065; Preview Prompt Context</button>
           <button class="btn btn-sm btn-danger btn-delete-beat" data-index="${idx}">Delete Beat</button>
         </div>
       `;
       container.appendChild(card);
+    });
+
+    container.querySelectorAll(".btn-preview-context").forEach(btn => {
+      btn.addEventListener("click", e => {
+        const card = e.target.closest(".beat-card");
+        const chunkId = btn.dataset.chunk;
+        const actionBeat = card.querySelector(".beat-action")?.value || "";
+        const charsPresent = (card.querySelector(".beat-chars")?.value || "")
+          .split(",").map(c => c.trim()).filter(c => c);
+        const attireStr = card.querySelector(".beat-attire")?.value || "";
+        const setting = card.querySelector(".beat-setting")?.value || "";
+        const camera = card.querySelector(".beat-camera")?.value || "";
+        const sceneType = card.querySelector(".beat-scene-type")?.value || "landscape";
+
+        let characterAttire = {};
+        if (attireStr) {
+          attireStr.split(";").forEach(pair => {
+            const parts = pair.split(":");
+            if (parts.length === 2) {
+              characterAttire[parts[0].trim()] = parts[1].trim();
+            }
+          });
+        }
+
+        const currentBeatData = {
+          chunk_id: chunkId,
+          scene_type: sceneType,
+          action_beat: actionBeat,
+          characters_present: charsPresent,
+          character_attire: characterAttire,
+          setting: setting,
+          camera_framing: camera
+        };
+
+        previewPromptContext(chunkId, currentBeatData);
+      });
     });
 
     container.querySelectorAll(".btn-delete-beat").forEach(btn => {
@@ -625,19 +748,305 @@ function collectBeatsFromUI() {
     const stype = c.querySelector(".beat-scene-type").value;
     const action = c.querySelector(".beat-action").value;
     const chars = c.querySelector(".beat-chars").value.split(",").map(s => s.trim()).filter(Boolean);
+    const attireRaw = c.querySelector(".beat-attire")?.value.trim() || "";
     const setting = c.querySelector(".beat-setting").value.trim();
     const camera = c.querySelector(".beat-camera").value.trim();
+
+    const charAttire = {};
+    if (attireRaw) {
+      attireRaw.split(";").forEach(part => {
+        part = part.trim();
+        if (part.includes(":")) {
+          const [cname, catt] = part.split(":", 2);
+          if (cname && catt) charAttire[cname.trim()] = catt.trim();
+        } else if (part.includes(" in ")) {
+          const [cname, catt] = part.split(" in ", 2);
+          if (cname && catt) charAttire[cname.trim()] = catt.trim();
+        } else if (part && chars.length > 0) {
+          charAttire[chars[0]] = part;
+        }
+      });
+    }
 
     beats.push({
       chunk_id: cid,
       scene_type: stype,
       characters_present: chars,
+      character_attire: charAttire,
       setting: setting,
       action_beat: action,
       camera_framing: camera
     });
   });
   return beats;
+}
+
+// ----------------------------------------------------------------------------
+// Prompt Context & Visual Bible Audit
+// ----------------------------------------------------------------------------
+function renderContinuityBadgesRow(ctx) {
+  if (!ctx) return "";
+  const badges = [];
+
+  // Setting badge
+  if (ctx.setting && ctx.setting.name) {
+    badges.push(`<span class="audit-badge badge-setting" title="Resolved Setting / Environment">&#127963; ${escapeHtml(ctx.setting.name)}</span>`);
+  }
+
+  // Character badges
+  (ctx.characters || []).forEach(ch => {
+    badges.push(`<span class="audit-badge badge-char" title="Character Base DNA">&#128100; ${escapeHtml(ch.name)}</span>`);
+
+    // Attire badge
+    if (ch.resolved_attire) {
+      const isOverride = ch.attire_source === "scene_override";
+      const icon = isOverride ? "&#9889; " : "&#128087; ";
+      badges.push(`<span class="audit-badge badge-attire" title="${isOverride ? 'Scene Attire Override' : 'Wardrobe'}">${icon}${escapeHtml(ch.resolved_attire)}</span>`);
+    }
+
+    // Active timeline modifications
+    (ch.active_timeline_mods || []).forEach(mod => {
+      const modText = (mod && typeof mod === "object") ? (mod.trait || JSON.stringify(mod)) : String(mod);
+      badges.push(`<span class="audit-badge badge-mod" title="Active Timeline Mod (${escapeHtml(ch.name)})">&#10024; ${escapeHtml(modText)}</span>`);
+    });
+
+    // Skipped timeline modifications
+    if (ch.skipped_timeline_mods && ch.skipped_timeline_mods.length > 0) {
+      badges.push(`<span class="audit-badge badge-skipped" title="Future modification (not active in this scene)">&#9203; Future: ${ch.skipped_timeline_mods.length} mod(s)</span>`);
+    }
+  });
+
+  if (badges.length === 0) return "";
+  return `<div class="continuity-badges-row">${badges.join("")}</div>`;
+}
+
+function openPromptContextModal(ctx, chunkId = "") {
+  if (!ctx) return;
+  currentAuditContext = ctx;
+
+  const modal = document.getElementById("modalPromptContext");
+  if (!modal) return;
+
+  // Header badges
+  const badgeChunk = document.getElementById("promptContextChunkBadge");
+  if (badgeChunk) badgeChunk.textContent = chunkId || ctx.chunk_id || "Scene";
+
+  const badgeProfile = document.getElementById("promptContextProfileBadge");
+  if (badgeProfile) badgeProfile.textContent = `Profile: ${ctx.active_profile || "standard"}`;
+
+  // Tab 1: Visual Bible Audit
+  // 1. Setting card
+  const settingCard = document.getElementById("auditSettingCard");
+  if (settingCard) {
+    if (ctx.setting && (ctx.setting.name || ctx.setting.visual_keywords || ctx.setting.full_description)) {
+      const s = ctx.setting;
+      let html = `<div style="font-weight: 600; font-size: 1rem; color: var(--text); margin-bottom: 4px;">&#127963; ${escapeHtml(s.name || "Setting")}</div>`;
+      if (s.visual_keywords) html += `<p style="margin: 2px 0; font-size: 0.85rem;"><strong>Visual Keywords:</strong> ${escapeHtml(s.visual_keywords)}</p>`;
+      if (s.lighting_ambience) html += `<p style="margin: 2px 0; font-size: 0.85rem;"><strong>Lighting &amp; Ambience:</strong> ${escapeHtml(s.lighting_ambience)}</p>`;
+      if (s.era_architecture) html += `<p style="margin: 2px 0; font-size: 0.85rem;"><strong>Era &amp; Architecture:</strong> ${escapeHtml(s.era_architecture)}</p>`;
+      if (s.full_description) html += `<p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-dim); border-top: 1px dashed var(--border); padding-top: 4px;">${escapeHtml(s.full_description)}</p>`;
+      settingCard.innerHTML = html;
+    } else {
+      settingCard.innerHTML = `<p style="color: var(--text-dim); margin: 0;">No specific setting specified for this beat.</p>`;
+    }
+  }
+
+  // 2. Characters List
+  const charsList = document.getElementById("auditCharactersList");
+  if (charsList) {
+    charsList.innerHTML = "";
+    const chars = ctx.characters || [];
+    if (chars.length === 0) {
+      charsList.innerHTML = `<div class="card" style="padding: 8px 12px; background: rgba(255,255,255,0.02);"><p style="color: var(--text-dim); margin: 0;">No characters present in this beat.</p></div>`;
+    } else {
+      chars.forEach(ch => {
+        const charCard = document.createElement("div");
+        charCard.className = "card";
+        charCard.style.cssText = "background: rgba(255,255,255,0.02); border-left: 3px solid #6366f1; padding: 10px 14px;";
+
+        let modsHtml = "";
+        if (ch.active_timeline_mods && ch.active_timeline_mods.length > 0) {
+          modsHtml = ch.active_timeline_mods.map(m => {
+            const txt = (m && typeof m === "object") ? (m.trait || JSON.stringify(m)) : String(m);
+            return `<span class="audit-badge badge-mod">&#10024; ${escapeHtml(txt)}</span>`;
+          }).join(" ");
+        } else {
+          modsHtml = `<span style="font-size: 0.8rem; color: var(--text-dim);">None (Scene occurs before any timeline changes)</span>`;
+        }
+
+        let skippedHtml = "";
+        if (ch.skipped_timeline_mods && ch.skipped_timeline_mods.length > 0) {
+          skippedHtml = `<div style="margin-top: 6px;"><strong style="font-size: 0.8rem; color: var(--text-dim);">Future Story Modifications (Excluded):</strong><br>` +
+            ch.skipped_timeline_mods.map(m => {
+              const txt = (m && typeof m === "object") ? (m.trait || JSON.stringify(m)) : String(m);
+              const cidTag = (m && m.chunk_id) ? `[${escapeHtml(m.chunk_id)}] ` : "";
+              return `<span class="audit-badge badge-skipped" style="margin-top: 3px;">&#9203; Future ${cidTag}${escapeHtml(txt)}</span>`;
+            }).join(" ") +
+            `</div>`;
+        }
+
+        const attireSourceLabel = (ch.attire_source === "scene_override" || ch.attire_source === "beat_override")
+          ? `<span class="badge badge-accent" style="font-size: 0.7rem;">Scene Override</span>`
+          : `<span class="badge badge-neutral" style="font-size: 0.7rem;">Timeline / Wardrobe</span>`;
+
+        charCard.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-weight: 600; font-size: 0.95rem; color: var(--accent-light);">&#128100; ${escapeHtml(ch.name)}</span>
+            ${attireSourceLabel}
+          </div>
+          <p style="margin: 0 0 6px 0; font-size: 0.85rem;"><strong>Base DNA (Immutable):</strong> ${escapeHtml(ch.base_dna || ch.full_description || "N/A")}</p>
+          <p style="margin: 0 0 6px 0; font-size: 0.85rem;"><strong>Resolved Attire:</strong> <span class="audit-badge badge-attire">${escapeHtml(ch.resolved_attire || "Default Wardrobe")}</span></p>
+          <div style="margin: 0 0 4px 0; font-size: 0.85rem;">
+            <strong>Active Timeline Modifications:</strong><br>
+            <div style="margin-top: 4px;">${modsHtml}</div>
+          </div>
+          ${skippedHtml}
+        `;
+        charsList.appendChild(charCard);
+      });
+    }
+  }
+
+  // 3. Global Art Style & Action Beat
+  const elArtStyle = document.getElementById("auditArtStyle");
+  if (elArtStyle) elArtStyle.textContent = ctx.art_style || "Default Art Style";
+
+  const elActionBeat = document.getElementById("auditActionBeat");
+  if (elActionBeat) elActionBeat.textContent = ctx.action_beat || "N/A";
+
+  const elCamera = document.getElementById("auditCameraFraming");
+  if (elCamera) elCamera.textContent = ctx.camera_framing || "N/A";
+
+  // Tab 2: Raw LLM Messages
+  const elSysPrompt = document.getElementById("auditSystemPrompt");
+  if (elSysPrompt) elSysPrompt.value = ctx.system_prompt || "";
+
+  const elUserPrompt = document.getElementById("auditUserPrompt");
+  if (elUserPrompt) elUserPrompt.value = ctx.raw_user_prompt || ctx.user_prompt || "";
+
+  // Tab 3: Scene & Model Specs
+  const elModel = document.getElementById("auditModelName");
+  if (elModel) elModel.textContent = ctx.model || "N/A";
+
+  const elTemp = document.getElementById("auditTemperature");
+  if (elTemp) elTemp.textContent = ctx.temperature !== undefined ? ctx.temperature : "N/A";
+
+  const elProfile = document.getElementById("auditProfileName");
+  if (elProfile) elProfile.textContent = ctx.active_profile || "standard";
+
+  const elSceneType = document.getElementById("auditSceneType");
+  if (elSceneType) elSceneType.textContent = ctx.scene_type || "landscape";
+
+  const elDims = document.getElementById("auditDimensions");
+  if (elDims) elDims.textContent = `${ctx.dimensions?.width || "?"} x ${ctx.dimensions?.height || "?"}`;
+
+  const elNeg = document.getElementById("auditDefaultNegative");
+  if (elNeg) elNeg.textContent = ctx.default_negative || "None";
+
+  // Reset tab to Tab 1 (Visual Bible Audit)
+  document.querySelectorAll("#modalPromptContext .modal-tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll("#modalPromptContext .modal-tab-pane").forEach(p => p.style.display = "none");
+  const firstTabBtn = document.querySelector('#modalPromptContext .modal-tab-btn[data-tab="tabAuditVisualBible"]');
+  if (firstTabBtn) firstTabBtn.classList.add("active");
+  const firstPane = document.getElementById("tabAuditVisualBible");
+  if (firstPane) firstPane.style.display = "block";
+
+  modal.style.display = "flex";
+}
+
+async function previewPromptContext(chunkId, beatData = null) {
+  if (!currentSlug) return;
+  try {
+    let url = `/api/project/${currentSlug}/prompt_context_preview`;
+    let options = {};
+    if (beatData) {
+      options = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chunk_id: chunkId, beat: beatData })
+      };
+    } else {
+      url += `?chunk_id=${encodeURIComponent(chunkId)}`;
+    }
+    const res = await fetch(url, options);
+    const data = await res.json();
+    if (!res.ok || (!data.success && data.status !== "ok")) {
+      showToast(data.error || "Failed to load context preview", "error");
+      return;
+    }
+    const ctx = data.preview || (Array.isArray(data.previews) ? data.previews[0] : null);
+    if (ctx) {
+      openPromptContextModal(ctx, chunkId);
+    } else {
+      showToast("No context available for this beat.", "warning");
+    }
+  } catch (err) {
+    console.error("Preview prompt context error:", err);
+    showToast("Error loading context preview: " + err, "error");
+  }
+}
+
+async function loadPreGenReviewMatrix(container) {
+  try {
+    const res = await fetch(`/api/project/${currentSlug}/prompt_context_preview`);
+    if (!res.ok) return false;
+    const data = await res.json();
+    const previews = data.previews || data.preview || [];
+    if (!Array.isArray(previews) || previews.length === 0) return false;
+
+    let bannerHtml = `
+      <div class="pregen-review-banner">
+        <div style="font-weight: 600; font-size: 1.05rem; margin-bottom: 4px;">
+          &#128203; Pre-Generation Context Review Matrix (${previews.length} visual beats pending synthesis)
+        </div>
+        <div style="font-size: 0.85rem; opacity: 0.9;">
+          Review resolved character Base DNA, active timeline tags, scene attire overrides, and setting environments before generating prompts.
+        </div>
+      </div>
+      <div class="pregen-grid">
+    `;
+
+    previews.forEach((ctx, idx) => {
+      const cid = ctx.chunk_id;
+      const badgesHtml = renderContinuityBadgesRow(ctx);
+
+      bannerHtml += `
+        <div class="card pregen-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span class="chunk-id">${escapeHtml(cid)}</span>
+              <span class="badge badge-accent">${escapeHtml(ctx.scene_type || "landscape")}</span>
+            </div>
+            <p style="font-size: 0.88rem; margin: 0 0 8px 0;"><strong>Action Beat:</strong> ${escapeHtml(ctx.action_beat || "N/A")}</p>
+            <div style="margin-bottom: 10px;">
+              ${badgesHtml}
+            </div>
+          </div>
+          <div style="margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; text-align: right;">
+            <button class="btn btn-sm btn-secondary btn-pregen-inspect" data-index="${idx}">&#128065; View Exact Prompt Payload</button>
+          </div>
+        </div>
+      `;
+    });
+
+    bannerHtml += `</div>`;
+    container.innerHTML = bannerHtml;
+
+    container.querySelectorAll(".btn-pregen-inspect").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.dataset.index);
+        const ctx = previews[idx];
+        if (ctx) {
+          openPromptContextModal(ctx, ctx.chunk_id);
+        }
+      });
+    });
+
+    return true;
+  } catch (e) {
+    console.error("Failed to load pregen review matrix:", e);
+    return false;
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -653,7 +1062,11 @@ function renderManifestBlocks() {
   const illustratedBlocks = blocks.filter(b => b.illustration);
 
   if (filterIllustratedOnly && illustratedBlocks.length === 0) {
-    container.innerHTML = `<div class="card"><p>No visual beats or illustrated blocks in manifest yet. Complete Step 3 (Visual Beats) and click <strong>Synthesize Prompts</strong>, or uncheck <strong>Show Illustrated Blocks Only</strong> above to view all story blocks.</p></div>`;
+    loadPreGenReviewMatrix(container).then(loaded => {
+      if (!loaded) {
+        container.innerHTML = `<div class="card"><p>No visual beats or illustrated blocks in manifest yet. Complete Step 3 (Visual Beats) and click <strong>Synthesize Prompts</strong>, or uncheck <strong>Show Illustrated Blocks Only</strong> above to view all story blocks.</p></div>`;
+      }
+    });
     return;
   }
 
@@ -672,34 +1085,51 @@ function renderManifestBlocks() {
     if (!illus) {
       card.innerHTML = `
         <div class="card-header">
-          <span class="chunk-id">${cid}</span>
+          <span class="chunk-id">${escapeHtml(cid)}</span>
           <span class="badge">Text Only</span>
         </div>
-        <p class="chunk-text" style="color: var(--text-dim);">${block.text}</p>
+        <p class="chunk-text" style="color: var(--text-dim);">${escapeHtml(block.text)}</p>
       `;
     } else {
       const isCompleted = illus.status === "completed";
+      const badgesHtml = renderContinuityBadgesRow(illus.llm_context);
       card.innerHTML = `
         <div class="card-header">
-          <span class="chunk-id">${cid}</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="chunk-id">${escapeHtml(cid)}</span>
+            <button class="btn btn-sm btn-secondary btn-audit-context" data-chunk-id="${escapeHtml(cid)}" title="Audit Visual Bible context sent to LLM for this prompt">&#128269; Context Audit</button>
+          </div>
           <div>
             <span class="badge ${isCompleted ? 'badge-online' : 'badge-accent'}">${illus.status.toUpperCase()}</span>
             <span class="badge">${illus.width}x${illus.height}</span>
           </div>
         </div>
-        <p class="chunk-text" style="margin-bottom: 12px;">${block.text}</p>
-        <div class="form-group">
+        <p class="chunk-text" style="margin-bottom: 10px;">${escapeHtml(block.text)}</p>
+        ${badgesHtml}
+        <div class="form-group" style="margin-top: 10px;">
           <label>Positive Prompt:</label>
-          <textarea class="textarea-input manifest-prompt" rows="3">${illus.prompt || ""}</textarea>
+          <textarea class="textarea-input manifest-prompt" rows="3">${escapeHtml(illus.prompt || "")}</textarea>
         </div>
         <div class="form-group">
           <label>Negative Prompt:</label>
-          <input type="text" class="text-input manifest-neg-prompt" value="${illus.negative_prompt || ''}">
+          <input type="text" class="text-input manifest-neg-prompt" value="${escapeHtml(illus.negative_prompt || '')}">
         </div>
       `;
     }
 
     container.appendChild(card);
+  });
+
+  container.querySelectorAll(".btn-audit-context").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const cid = btn.dataset.chunkId;
+      const blk = (currentManifest?.blocks || []).find(b => b.chunk_id === cid);
+      if (blk && blk.illustration && blk.illustration.llm_context) {
+        openPromptContextModal(blk.illustration.llm_context, cid);
+      } else {
+        previewPromptContext(cid);
+      }
+    });
   });
 }
 
@@ -712,7 +1142,10 @@ async function loadManifest() {
   try {
     const res = await fetch(`/api/project/${currentSlug}/artifact/manifest`);
     if (!res.ok) {
-      container.innerHTML = `<div class="card"><p>No manifest.json yet. Complete Steps 1-3 and click <strong>Synthesize Prompts</strong>.</p></div>`;
+      const hasPregen = await loadPreGenReviewMatrix(container);
+      if (!hasPregen) {
+        container.innerHTML = `<div class="card"><p>No manifest.json yet. Complete Steps 1-3 and click <strong>Synthesize Prompts</strong>.</p></div>`;
+      }
       return;
     }
 
@@ -749,10 +1182,13 @@ async function loadManifest() {
             <span class="chunk-id">${cid}</span>
             <span class="badge ${isCompleted ? 'badge-online' : 'badge-accent'}">${illus.status}</span>
           </div>
-          <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.35; flex-grow: 1;">${illus.prompt || ""}</p>
+          <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.35; flex-grow: 1;">${escapeHtml(illus.prompt || "")}</p>
           <div style="margin-top: 10px; display: flex; gap: 8px;">
             <button class="btn btn-sm btn-primary btn-tweak-rerun" data-chunk-id="${cid}">
               ${isCompleted ? '&#8635; Tweak &amp; Regenerate' : '&#9654; Render Scene'}
+            </button>
+            <button class="btn btn-sm btn-secondary btn-gallery-audit" data-chunk-id="${cid}" title="Inspect Visual Bible Context Audit">
+              &#128269; Context
             </button>
           </div>
         </div>
@@ -771,6 +1207,14 @@ async function loadManifest() {
 
       imgCard.querySelector(".btn-tweak-rerun").addEventListener("click", () => {
         openTweakModal(block);
+      });
+
+      imgCard.querySelector(".btn-gallery-audit")?.addEventListener("click", () => {
+        if (illus && illus.llm_context) {
+          openPromptContextModal(illus.llm_context, cid);
+        } else {
+          previewPromptContext(cid);
+        }
       });
 
       gallery.appendChild(imgCard);
@@ -816,6 +1260,7 @@ async function saveManifest() {
 // Phase 2: Render & Regenerate Modal
 // ----------------------------------------------------------------------------
 function openTweakModal(block) {
+  currentTweakBlock = block;
   const activeWf = document.getElementById("selectWorkflow")?.value || currentManifest?.active_workflow || "sdxl_base.json";
   const illus = (block.illustrations && block.illustrations[activeWf]) ? block.illustrations[activeWf] : block.illustration;
   document.getElementById("tweakChunkId").textContent = block.chunk_id;
@@ -1429,6 +1874,7 @@ function setupEventListeners() {
       chunk_id: `chunk_${String(beats.length).padStart(3, "0")}`,
       scene_type: "landscape",
       characters_present: [],
+      character_attire: {},
       setting: "",
       action_beat: "New scene action",
       camera_framing: "Cinematic medium shot"
@@ -1440,12 +1886,22 @@ function setupEventListeners() {
     const list = document.getElementById("charactersList");
     const item = document.createElement("div");
     item.className = "bible-item-card";
+    item.dataset.timelineMods = "[]";
+    item.dataset.wardrobeTimeline = "[]";
+    item.dataset.altAttires = "{}";
     item.innerHTML = `
       <div class="card-header">
         <input type="text" class="text-input char-name-input" placeholder="Character Name" style="font-weight: 600; width: 60%;">
         <button class="btn btn-sm btn-danger btn-del-char">&times;</button>
       </div>
-      <textarea class="textarea-input char-desc-input" rows="3" placeholder="Visual traits, clothing, age..."></textarea>
+      <div style="margin-top: 6px;">
+        <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 2px;">Physical Base DNA (Face, hair, build, permanent features):</label>
+        <textarea class="textarea-input char-desc-input char-dna-input" rows="2" placeholder="e.g. Woman in early 30s, sharp angular jawline, dark braided raven hair, grey eyes..."></textarea>
+      </div>
+      <div style="margin-top: 6px;">
+        <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 2px;">Default / Everyday Attire:</label>
+        <input type="text" class="text-input char-attire-input" placeholder="e.g. Weathered brown leather aviator jacket, utility cargo trousers">
+      </div>
     `;
     item.querySelector(".btn-del-char").addEventListener("click", () => item.remove());
     list.prepend(item);
@@ -1591,6 +2047,79 @@ function setupEventListeners() {
     document.getElementById("modalTweakRerun").style.display = "none";
   });
   document.getElementById("btnSubmitTweakRerun").addEventListener("click", submitTweakRerun);
+
+  // Tweak modal Context Audit button
+  const btnTweakAudit = document.getElementById("btnTweakContextAudit");
+  if (btnTweakAudit) {
+    btnTweakAudit.addEventListener("click", () => {
+      if (!currentTweakBlock) return;
+      const cid = currentTweakBlock.chunk_id;
+      const activeWf = document.getElementById("selectWorkflow")?.value || currentManifest?.active_workflow || "sdxl_base.json";
+      const illus = (currentTweakBlock.illustrations && currentTweakBlock.illustrations[activeWf])
+        ? currentTweakBlock.illustrations[activeWf]
+        : currentTweakBlock.illustration;
+      if (illus && illus.llm_context) {
+        openPromptContextModal(illus.llm_context, cid);
+      } else {
+        previewPromptContext(cid);
+      }
+    });
+  }
+
+  // Prompt Context & Visual Bible Audit modal
+  document.querySelectorAll("#modalPromptContext .modal-tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#modalPromptContext .modal-tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll("#modalPromptContext .modal-tab-pane").forEach(p => p.style.display = "none");
+      btn.classList.add("active");
+      const pane = document.getElementById(btn.dataset.tab);
+      if (pane) pane.style.display = "block";
+    });
+  });
+
+  const btnCloseContext = document.getElementById("btnClosePromptContextModal");
+  if (btnCloseContext) {
+    btnCloseContext.addEventListener("click", () => {
+      document.getElementById("modalPromptContext").style.display = "none";
+    });
+  }
+  const btnCloseContextBottom = document.getElementById("btnClosePromptContextBottom");
+  if (btnCloseContextBottom) {
+    btnCloseContextBottom.addEventListener("click", () => {
+      document.getElementById("modalPromptContext").style.display = "none";
+    });
+  }
+
+  const modalPromptContext = document.getElementById("modalPromptContext");
+  if (modalPromptContext) {
+    modalPromptContext.addEventListener("click", (e) => {
+      if (e.target === modalPromptContext) {
+        modalPromptContext.style.display = "none";
+      }
+    });
+  }
+
+  // Copy buttons
+  function setupCopyBtn(btnId, getText) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+      const text = getText();
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "&#10004; Copied!";
+        setTimeout(() => { btn.innerHTML = originalText; }, 1500);
+      } catch (e) {
+        showToast("Failed to copy to clipboard", "error");
+      }
+    });
+  }
+
+  setupCopyBtn("btnCopySystemPrompt", () => document.getElementById("auditSystemPrompt")?.value || "");
+  setupCopyBtn("btnCopyUserPrompt", () => document.getElementById("auditUserPrompt")?.value || "");
+  setupCopyBtn("btnCopyEntirePayload", () => currentAuditContext ? JSON.stringify(currentAuditContext, null, 2) : "");
 
   // Providers & API Settings modal
   const btnOpenProviders = document.getElementById("btnOpenProvidersModal");

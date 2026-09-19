@@ -12,7 +12,7 @@ import os
 import re
 import json
 import argparse
-from typing import Dict, Any, List, Optional, Callable, Tuple
+from typing import Dict, Any, List, Optional, Callable, Tuple, Union
 from pipeline.chunker import chunk_file
 from pipeline.llm_client import (
     LMStudioClient,
@@ -21,7 +21,9 @@ from pipeline.llm_client import (
     parse_bible_response,
     parse_prompt_response,
     estimate_tokens,
-    ContextWindowExceededError
+    ContextWindowExceededError,
+    CharacterProfile,
+    normalize_character_entry
 )
 
 
@@ -72,6 +74,234 @@ def run_stage_chunk(project_dir: str, callback: Optional[Callable[[str], None]] 
     print(f"[+] {done_msg}")
     if callback: callback(done_msg)
     return data
+
+
+def chunk_num(cid: Any) -> int:
+    """Extract integer index from chunk ID (e.g. 'chunk_025' -> 25)."""
+    m = re.search(r"\d+", str(cid))
+    return int(m.group(0)) if m else 0
+
+
+def merge_character_profile(
+    existing: Union[str, Dict[str, Any]],
+    incoming: Union[str, Dict[str, Any]],
+    current_chunk_id: str = "chunk_000",
+    max_dna_chars: int = 400
+) -> CharacterProfile:
+    """
+    Merges an incoming character update into the existing profile:
+    1. Compares incoming base_dna with existing base_dna using word token overlap.
+       If overlap >= 60%, treats as redundant re-description and preserves existing base_dna.
+       If overlap < 60% and introduces new permanent traits, appends unique clauses (capped at max_dna_chars).
+    2. Ingests new timeline modifications (scars, injuries, prosthetics).
+    3. Ingests wardrobe timeline updates or alternate attires without polluting base_dna.
+    """
+    ex = normalize_character_entry(existing, current_chunk_id=current_chunk_id)
+    inc = normalize_character_entry(incoming, current_chunk_id=current_chunk_id)
+
+    # 1. Merge Base DNA
+    ex_dna = ex.get("base_dna", "").strip()
+    inc_dna = inc.get("base_dna", "").strip()
+
+    merged_dna = ex_dna
+    if not ex_dna:
+        merged_dna = inc_dna
+    elif inc_dna:
+        # If existing base_dna was very sparse, upgrade to richer incoming description
+        if len(ex_dna) < 40 and len(inc_dna) > len(ex_dna):
+            merged_dna = inc_dna
+        # Otherwise retain canonical base_dna; chronological changes are tracked in timeline_modifications
+
+    # 2. Merge Timeline Modifications (Scars, Amputations, Prosthetics)
+    merged_mods = list(ex.get("timeline_modifications", []))
+    for mod in inc.get("timeline_modifications", []):
+        trait = mod.get("trait", "").strip()
+        cid = mod.get("introduced_chunk_id", current_chunk_id)
+        if trait and not any(m.get("trait", "").lower() == trait.lower() for m in merged_mods):
+            merged_mods.append({"introduced_chunk_id": cid, "trait": trait})
+
+    # 3. Merge Wardrobe Timeline & Alternate Attires
+    merged_wardrobe = list(ex.get("wardrobe_timeline", []))
+    for w in inc.get("wardrobe_timeline", []):
+        attire = w.get("attire", "").strip()
+        cid = w.get("from_chunk_id", current_chunk_id)
+        ctx = w.get("context", "Scene")
+        if attire and not any(m.get("attire", "").lower() == attire.lower() and m.get("from_chunk_id") == cid for m in merged_wardrobe):
+            merged_wardrobe.append({"from_chunk_id": cid, "context": ctx, "attire": attire})
+
+    merged_alt = dict(ex.get("alternate_attires", {}))
+    merged_alt.update(inc.get("alternate_attires", {}))
+
+    default_attire = ex.get("default_attire") or inc.get("default_attire") or ""
+
+    return CharacterProfile({
+        "base_dna": merged_dna,
+        "timeline_modifications": merged_mods,
+        "wardrobe_timeline": merged_wardrobe,
+        "default_attire": default_attire,
+        "alternate_attires": merged_alt
+    })
+
+
+def merge_setting_profile(existing: str, incoming: str, max_chars: int = 400) -> str:
+    """
+    Dedupes and merges setting descriptions across batches without runaway string bloat.
+    """
+    if not existing:
+        return incoming
+    if not incoming:
+        return existing
+    if incoming.lower() in existing.lower():
+        return existing
+
+    ex_words = set(re.findall(r"\w+", existing.lower()))
+    in_words = set(re.findall(r"\w+", incoming.lower()))
+    if not in_words:
+        return existing
+
+    overlap = len(ex_words & in_words) / len(in_words)
+    if overlap >= 0.65:
+        if len(incoming) > len(existing) and len(incoming) <= max_chars:
+            return incoming
+        return existing
+
+    combined = f"{existing}; {incoming}"
+    if len(combined) <= max_chars:
+        return combined
+    return existing
+
+
+def resolve_character_audit_for_scene(
+    char_entry: Union[str, Dict[str, Any]],
+    chunk_id: str,
+    setting_name: str = "",
+    beat_attire_override: str = ""
+) -> Dict[str, Any]:
+    """
+    Chronologically and contextually resolves a character's appearance for a specific scene,
+    returning structured audit metadata alongside the resolved prompt description.
+    """
+    norm = normalize_character_entry(char_entry)
+    target_idx = chunk_num(chunk_id)
+
+    # 1. Base DNA
+    base_dna = norm.get("base_dna", "").strip()
+    traits = []
+    if base_dna:
+        traits.append(base_dna)
+
+    # 2. Timeline Modifications (active vs skipped)
+    active_mods = []
+    skipped_mods = []
+    for mod in norm.get("timeline_modifications", []):
+        mod_cid = mod.get("introduced_chunk_id", "chunk_000")
+        trait = mod.get("trait", "").strip()
+        if not trait:
+            continue
+        if target_idx >= chunk_num(mod_cid):
+            if trait.lower() not in base_dna.lower():
+                traits.append(trait)
+            active_mods.append({"chunk_id": mod_cid, "trait": trait})
+        else:
+            skipped_mods.append({"chunk_id": mod_cid, "trait": trait})
+
+    physical_summary = ", ".join(traits) if traits else "Figure"
+
+    # 3. Wardrobe Resolution
+    attire = beat_attire_override.strip() if beat_attire_override else ""
+    attire_source = "beat_override" if attire else "none"
+
+    if not attire and norm.get("wardrobe_timeline"):
+        active_entry = None
+        for entry in sorted(norm["wardrobe_timeline"], key=lambda x: chunk_num(x.get("from_chunk_id", "chunk_000"))):
+            if target_idx >= chunk_num(entry.get("from_chunk_id", "chunk_000")):
+                active_entry = entry
+        if active_entry and active_entry.get("attire"):
+            attire = active_entry["attire"]
+            attire_source = "wardrobe_timeline"
+
+    if not attire and setting_name and norm.get("alternate_attires"):
+        for alt_setting, alt_attire in norm["alternate_attires"].items():
+            if alt_setting.lower() in setting_name.lower() or setting_name.lower() in alt_setting.lower():
+                attire = alt_attire
+                attire_source = "setting_alternate"
+                break
+
+    if not attire and norm.get("default_attire"):
+        attire = norm["default_attire"]
+        attire_source = "default_attire"
+
+    full_desc = physical_summary
+    if attire:
+        if attire.lower() not in physical_summary.lower():
+            full_desc = f"{physical_summary}; Attire: {attire}"
+
+    return {
+        "base_dna": base_dna,
+        "active_timeline_mods": active_mods,
+        "skipped_timeline_mods": skipped_mods,
+        "resolved_attire": attire,
+        "attire_source": attire_source,
+        "full_description": full_desc
+    }
+
+
+def resolve_character_for_scene(
+    char_entry: Union[str, Dict[str, Any]],
+    chunk_id: str,
+    setting_name: str = "",
+    beat_attire_override: str = ""
+) -> str:
+    """
+    Chronologically and contextually resolves a character's appearance for a specific scene:
+    1. Base physical DNA (face, hair, build, age).
+    2. Active timeline modifications (where introduced_chunk_id <= target_chunk_id).
+    3. Active wardrobe (beat override -> wardrobe timeline -> alternate attire -> default attire).
+    """
+    audit = resolve_character_audit_for_scene(
+        char_entry=char_entry,
+        chunk_id=chunk_id,
+        setting_name=setting_name,
+        beat_attire_override=beat_attire_override
+    )
+    return audit["full_description"]
+
+
+def match_bible_entity(name: str, bible_dict: Dict[str, Any]) -> Optional[Tuple[str, Any]]:
+    """
+    Fuzzy and case-insensitive resolution of a character or setting name against the Visual Bible.
+    Handles partial matches (e.g. 'Lyra' matching 'Lyra (Mechanic)' or 'Catwalks' matching 'The Rust Catwalks').
+    """
+    if not name or not bible_dict:
+        return None
+    name_clean = name.strip().lower()
+
+    # 1. Exact match (case-insensitive)
+    for k, v in bible_dict.items():
+        if k.strip().lower() == name_clean:
+            return k, v
+
+    # 2. Key contains query or query contains key
+    for k, v in bible_dict.items():
+        k_clean = k.strip().lower()
+        if name_clean in k_clean or k_clean in name_clean:
+            return k, v
+
+    # 3. Word token overlap
+    name_words = set(re.findall(r"\w+", name_clean))
+    best_match = None
+    best_score = 0
+    for k, v in bible_dict.items():
+        k_words = set(re.findall(r"\w+", k.strip().lower()))
+        overlap = len(name_words.intersection(k_words))
+        if overlap > best_score:
+            best_score = overlap
+            best_match = (k, v)
+
+    if best_match and best_score > 0:
+        return best_match
+
+    return None
 
 
 def run_stage_bible(
@@ -218,7 +448,9 @@ STORY TEXT (PART {b_idx}/{total_batches}, chunks {first_cid} to {last_cid}):
 
 Analyze this new story section to expand and update the Visual Continuity Bible:
 1. NEW CHARACTERS: Identify any new characters introduced with exhaustive physical appearance, face, hair, clothing, and distinctive features.
-2. EXISTING CHARACTER UPDATES: If any previously established characters have new visual details, scars, costume changes, or physical transformations revealed, describe their updated appearance.
+2. EXISTING CHARACTER UPDATES: ONLY mention an established character if they undergo a new permanent physical transformation (scar, injury, amputation, haircut) or wear a new distinct costume/attire in this scene. If their physical appearance is unchanged, DO NOT output them.
+   - For costume changes: CHARACTER: <Name>: Costume Change [{first_cid}] (<Setting/Context>): <attire details>
+   - For permanent physical changes: CHARACTER: <Name>: Physical Change [{first_cid}]: <new scar or permanent modification>
 3. NEW SETTINGS: Identify any newly visited locations with architecture, materials, lighting, atmosphere, and textures.
 4. GLOBAL ART STYLE: Maintain the established cohesive global art style.
 
@@ -247,12 +479,9 @@ SETTING: <Name>: <visual environment description, materials, textures, lighting>
             matched = match_bible_entity(cname, accumulated_bible["characters"])
             if matched:
                 existing_key, existing_val = matched
-                if existing_val and cdesc.lower() not in existing_val.lower():
-                    accumulated_bible["characters"][existing_key] = f"{existing_val}; {cdesc}"
-                elif not existing_val:
-                    accumulated_bible["characters"][existing_key] = cdesc
+                accumulated_bible["characters"][existing_key] = merge_character_profile(existing_val, cdesc, first_cid)
             else:
-                accumulated_bible["characters"][cname] = cdesc
+                accumulated_bible["characters"][cname] = normalize_character_entry(cdesc, first_cid)
 
         for sname, sdesc in batch_bible.get("settings", {}).items():
             if not sdesc:
@@ -260,10 +489,7 @@ SETTING: <Name>: <visual environment description, materials, textures, lighting>
             matched = match_bible_entity(sname, accumulated_bible["settings"])
             if matched:
                 existing_key, existing_val = matched
-                if existing_val and sdesc.lower() not in existing_val.lower():
-                    accumulated_bible["settings"][existing_key] = f"{existing_val}; {sdesc}"
-                elif not existing_val:
-                    accumulated_bible["settings"][existing_key] = sdesc
+                accumulated_bible["settings"][existing_key] = merge_setting_profile(existing_val, sdesc)
             else:
                 accumulated_bible["settings"][sname] = sdesc
 
@@ -389,6 +615,7 @@ For each illustration beat, provide:
 Chunk: chunk_xxx (must match one of the target chunks)
 Scene Type: landscape, portrait, or square
 Characters: character names present (or None)
+Attire: character clothing in this specific scene (e.g. Elena: emerald gown; Vance: formal doublet), or Default
 Setting: location name
 Action: description of the visual moment
 Camera: shot angle, framing, and lighting
@@ -426,43 +653,6 @@ NONE
     return result
 
 
-def match_bible_entity(name: str, bible_dict: Dict[str, str]) -> Optional[Tuple[str, str]]:
-    """
-    Fuzzy and case-insensitive resolution of a character or setting name against the Visual Bible.
-    Handles partial matches (e.g. 'Lyra' matching 'Lyra (Mechanic)' or 'Catwalks' matching 'The Rust Catwalks').
-    """
-    if not name or not bible_dict:
-        return None
-    name_clean = name.strip().lower()
-
-    # 1. Exact match (case-insensitive)
-    for k, v in bible_dict.items():
-        if k.strip().lower() == name_clean:
-            return k, v
-
-    # 2. Key contains query or query contains key
-    for k, v in bible_dict.items():
-        k_clean = k.strip().lower()
-        if name_clean in k_clean or k_clean in name_clean:
-            return k, v
-
-    # 3. Word token overlap
-    name_words = set(re.findall(r"\w+", name_clean))
-    best_match = None
-    best_score = 0
-    for k, v in bible_dict.items():
-        k_words = set(re.findall(r"\w+", k.strip().lower()))
-        overlap = len(name_words.intersection(k_words))
-        if overlap > best_score:
-            best_score = overlap
-            best_match = (k, v)
-
-    if best_match and best_score > 0:
-        return best_match
-
-    return None
-
-
 def run_stage_manifest(
     project_dir: str,
     llm_client: LMStudioClient,
@@ -497,14 +687,28 @@ def run_stage_manifest(
 
     chunks = chunks_data.get("chunks", [])
     beats = beats_data.get("selected_beats", [])
-    active_profile_name = profiles_config.get("active_profile", "sdxl_base")
-    profile = profiles_config.get("profiles", {}).get(active_profile_name, {})
-
+def compose_prompt_context_for_beat(
+    beat: Dict[str, Any],
+    bible: Dict[str, Any],
+    chunks: List[Dict[str, Any]],
+    profile: Dict[str, Any],
+    active_profile_name: str,
+    llm_config: Dict[str, Any],
+    model_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Composes the full prompt synthesis context for a single beat, returning both
+    the structured audit breakdown and the exact system & user prompts sent to the LLM.
+    """
+    cid = beat.get("chunk_id", "chunk_000")
+    scene_type = beat.get("scene_type", "landscape")
     aspect_ratios = profile.get("aspect_ratios", {
         "landscape": {"width": 1344, "height": 768},
         "portrait": {"width": 832, "height": 1216},
         "square": {"width": 1024, "height": 1024}
     })
+    dims = aspect_ratios.get(scene_type, aspect_ratios.get("landscape", {"width": 1344, "height": 768}))
+
     profile_system_prompt = profile.get(
         "system_prompt",
         "You are an expert diffusion prompt synthesizer. You synthesize rich, cohesive image prompts "
@@ -516,61 +720,79 @@ def run_stage_manifest(
     positive_prefix = profile.get("positive_prefix", "").strip()
 
     role_cfg = llm_config.get("roles", {}).get("prompt_synthesizer", {})
-    model = role_cfg.get("model", "thedrummer_orion-26b-a4b-v1")
+    resolved_model = model_name or role_cfg.get("model", "thedrummer_orion-26b-a4b-v1")
     temperature = role_cfg.get("temperature", 0.35)
-    max_tokens = role_cfg.get("max_tokens", -1)
 
-    resolved_model = llm_client.resolve_model(model)
-    msg = f"Step 4: Synthesizing prompts for {len(beats)} beats using profile '{active_profile_name}' and model '{resolved_model}'..."
-    print(f"[*] {msg}")
-    if callback: callback(msg)
+    # 1. Setting Resolution
+    setting_name = beat.get("setting", "")
+    matched_setting = match_bible_entity(setting_name, bible.get("settings", {}))
+    if matched_setting:
+        sname, sdesc = matched_setting
+        setting_desc = f"{sname} (Environment details: {sdesc})"
+        setting_audit = {
+            "name": setting_name,
+            "matched_key": sname,
+            "description": sdesc,
+            "formatted": setting_desc
+        }
+    else:
+        setting_desc = setting_name or "Atmospheric cinematic environment"
+        setting_audit = {
+            "name": setting_name,
+            "matched_key": None,
+            "description": None,
+            "formatted": setting_desc
+        }
 
-    illustrations_by_chunk: Dict[str, Dict[str, Any]] = {}
+    # 2. Characters Resolution
+    chars_present = beat.get("characters_present", [])
+    char_attire_map = beat.get("character_attire", {})
+    resolved_chars_strings = []
+    resolved_chars_audit = []
 
-    for idx, beat in enumerate(beats, 1):
-        cid = beat["chunk_id"]
-        scene_type = beat.get("scene_type", "landscape")
-        dims = aspect_ratios.get(scene_type, aspect_ratios.get("landscape", {"width": 1344, "height": 768}))
-
-        # Resolve character descriptions using Visual Bible
-        chars_present = beat.get("characters_present", [])
-        resolved_chars = []
-        for name in chars_present:
-            matched = match_bible_entity(name, bible.get("characters", {}))
-            if matched:
-                cname, cdesc = matched
-                resolved_chars.append(f"{cname} (Visual Traits: {cdesc})")
-            else:
-                resolved_chars.append(name)
-
-        # Fallback: scan chunk text if no characters were listed
-        if not resolved_chars:
-            chunk_text = ""
-            for c in chunks:
-                if c.get("chunk_id") == cid:
-                    chunk_text = c.get("text", "")
-                    break
-            for b_name, b_desc in bible.get("characters", {}).items():
-                if b_name.lower() in chunk_text.lower():
-                    resolved_chars.append(f"{b_name} (Visual Traits: {b_desc})")
-
-        char_info = "; ".join(resolved_chars) if resolved_chars else "No prominent characters specified."
-
-        # Resolve setting description using Visual Bible
-        setting_name = beat.get("setting", "")
-        matched_setting = match_bible_entity(setting_name, bible.get("settings", {}))
-        if matched_setting:
-            sname, sdesc = matched_setting
-            setting_desc = f"{sname} (Environment details: {sdesc})"
+    for name in chars_present:
+        matched = match_bible_entity(name, bible.get("characters", {}))
+        if matched:
+            cname, cdesc = matched
+            override_attire = char_attire_map.get(name) or char_attire_map.get(cname, "")
+            audit = resolve_character_audit_for_scene(cdesc, cid, setting_name=setting_name, beat_attire_override=override_attire)
+            resolved_chars_strings.append(f"{cname} (Visual Traits: {audit['full_description']})")
+            audit["name"] = name
+            audit["matched_key"] = cname
+            resolved_chars_audit.append(audit)
         else:
-            setting_desc = setting_name or "Atmospheric cinematic environment"
+            resolved_chars_strings.append(name)
+            resolved_chars_audit.append({
+                "name": name,
+                "matched_key": None,
+                "base_dna": "",
+                "active_timeline_mods": [],
+                "skipped_timeline_mods": [],
+                "resolved_attire": char_attire_map.get(name, ""),
+                "attire_source": "beat_override" if char_attire_map.get(name) else "unmatched",
+                "full_description": name
+            })
 
-        status_msg = f"Synthesizing prompt {idx}/{len(beats)} for {cid} with model '{resolved_model}'..."
-        print(f"  -> {status_msg}")
-        if callback: callback(status_msg)
+    # Fallback: scan chunk text if no characters were explicitly listed
+    if not resolved_chars_strings:
+        chunk_text = ""
+        for c in chunks:
+            if c.get("chunk_id") == cid:
+                chunk_text = c.get("text", "")
+                break
+        for b_name, b_desc in bible.get("characters", {}).items():
+            if b_name.lower() in chunk_text.lower():
+                override_attire = char_attire_map.get(b_name, "")
+                audit = resolve_character_audit_for_scene(b_desc, cid, setting_name=setting_name, beat_attire_override=override_attire)
+                resolved_chars_strings.append(f"{b_name} (Visual Traits: {audit['full_description']})")
+                audit["name"] = b_name
+                audit["matched_key"] = b_name
+                resolved_chars_audit.append(audit)
 
-        prefix_instruction = f"- Positive Prompt Prefix (Must be included at the beginning): {positive_prefix}\n" if positive_prefix else ""
-        user_prompt = f"""SCENE COMPOSITION REQUIREMENTS:
+    char_info = "; ".join(resolved_chars_strings) if resolved_chars_strings else "No prominent characters specified."
+
+    prefix_instruction = f"- Positive Prompt Prefix (Must be included at the beginning): {positive_prefix}\n" if positive_prefix else ""
+    user_prompt = f"""SCENE COMPOSITION REQUIREMENTS:
 - Action Beat: {beat.get('action_beat', '')}
 - Camera Framing & Lighting: {beat.get('camera_framing', '')}
 - Characters Present (Explicit physical appearance from Visual Bible):
@@ -594,9 +816,101 @@ PROMPT: <positive prompt string>
 NEGATIVE: <negative prompt string>
 """
 
+    return {
+        "chunk_id": cid,
+        "scene_type": scene_type,
+        "dimensions": dims,
+        "active_profile": active_profile_name,
+        "setting": setting_audit,
+        "characters": resolved_chars_audit,
+        "action_beat": beat.get("action_beat", ""),
+        "camera_framing": beat.get("camera_framing", ""),
+        "global_art_style": bible.get("global_art_style", ""),
+        "positive_prefix": positive_prefix,
+        "default_negative": default_negative,
+        "system_prompt": profile_system_prompt,
+        "raw_user_prompt": user_prompt,
+        "model": resolved_model,
+        "temperature": temperature
+    }
+
+
+def run_stage_manifest(
+    project_dir: str,
+    llm_client: LMStudioClient,
+    llm_config: Dict[str, Any],
+    callback: Optional[Callable[[str], None]] = None
+) -> Dict[str, Any]:
+    """
+    Stage 4: Master Manifest & Prompt Synthesis.
+    Reads:
+      - 01_chunks.json
+      - 02_selected_beats.json
+      - 03_visual_bible.json
+      - diffusion_profiles.json
+    Synthesizes positive/negative prompts for each selected beat using the active profile.
+    Produces: manifest.json with full prompt context audit trail stored per illustration block.
+    """
+    chunks_file = os.path.join(project_dir, "artifacts", "01_chunks.json")
+    beats_file = os.path.join(project_dir, "artifacts", "02_selected_beats.json")
+    bible_file = os.path.join(project_dir, "artifacts", "03_visual_bible.json")
+    profiles_file = os.path.join(project_dir, "config", "diffusion_profiles.json")
+    output_file = os.path.join(project_dir, "artifacts", "manifest.json")
+
+    for fpath in [chunks_file, beats_file, bible_file, profiles_file]:
+        if not os.path.isfile(fpath):
+            raise FileNotFoundError(f"Missing prerequisite artifact: {fpath}")
+
+    with open(chunks_file, "r", encoding="utf-8") as f:
+        chunks_data = json.load(f)
+    with open(beats_file, "r", encoding="utf-8") as f:
+        beats_data = json.load(f)
+    with open(bible_file, "r", encoding="utf-8") as f:
+        bible = json.load(f)
+    with open(profiles_file, "r", encoding="utf-8") as f:
+        profiles_config = json.load(f)
+
+    chunks = chunks_data.get("chunks", [])
+    beats = beats_data.get("selected_beats", [])
+    active_profile_name = profiles_config.get("active_profile", "sdxl_base")
+    profile = profiles_config.get("profiles", {}).get(active_profile_name, {})
+
+    default_negative = profile.get("default_negative", "")
+    positive_prefix = profile.get("positive_prefix", "").strip()
+
+    role_cfg = llm_config.get("roles", {}).get("prompt_synthesizer", {})
+    model = role_cfg.get("model", "thedrummer_orion-26b-a4b-v1")
+    temperature = role_cfg.get("temperature", 0.35)
+    max_tokens = role_cfg.get("max_tokens", -1)
+
+    resolved_model = llm_client.resolve_model(model)
+    msg = f"Step 4: Synthesizing prompts for {len(beats)} beats using profile '{active_profile_name}' and model '{resolved_model}'..."
+    print(f"[*] {msg}")
+    if callback: callback(msg)
+
+    illustrations_by_chunk: Dict[str, Dict[str, Any]] = {}
+
+    for idx, beat in enumerate(beats, 1):
+        cid = beat["chunk_id"]
+
+        # Compose context with full Visual Bible and timeline resolution
+        ctx = compose_prompt_context_for_beat(
+            beat=beat,
+            bible=bible,
+            chunks=chunks,
+            profile=profile,
+            active_profile_name=active_profile_name,
+            llm_config=llm_config,
+            model_name=resolved_model
+        )
+
+        status_msg = f"Synthesizing prompt {idx}/{len(beats)} for {cid} with model '{resolved_model}'..."
+        print(f"  -> {status_msg}")
+        if callback: callback(status_msg)
+
         messages = [
-            {"role": "system", "content": profile_system_prompt},
-            {"role": "user", "content": user_prompt}
+            {"role": "system", "content": ctx["system_prompt"]},
+            {"role": "user", "content": ctx["raw_user_prompt"]}
         ]
 
         raw_resp = llm_client.chat_text(messages, model=model, temperature=temperature, max_tokens=max_tokens)
@@ -621,10 +935,11 @@ NEGATIVE: <negative prompt string>
         illustrations_by_chunk[cid] = {
             "status": "pending",
             "image_file": f"images/{cid}.png",
-            "width": dims["width"],
-            "height": dims["height"],
+            "width": ctx["dimensions"]["width"],
+            "height": ctx["dimensions"]["height"],
             "prompt": prompt_text,
-            "negative_prompt": neg_prompt
+            "negative_prompt": neg_prompt,
+            "llm_context": ctx
         }
 
     story_title = os.path.basename(os.path.abspath(project_dir)).replace("_", " ").title()

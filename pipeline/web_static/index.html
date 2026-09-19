@@ -453,11 +453,102 @@
     </div>
   </div>
 
+  <!-- LLM Prompt Context & Visual Bible Audit Modal -->
+  <div id="modalPromptContext" class="modal-backdrop" style="display: none;">
+    <div class="modal-card modal-large" style="max-width: 900px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="card-header" style="flex-shrink: 0; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <h3 style="margin: 0;">&#128269; Prompt Context &amp; Visual Bible Audit</h3>
+          <span id="promptContextChunkBadge" class="badge badge-accent"></span>
+          <span id="promptContextProfileBadge" class="badge badge-neutral"></span>
+        </div>
+        <button id="btnClosePromptContextModal" class="btn btn-icon" style="font-size: 1.5rem; line-height: 1;">&times;</button>
+      </div>
+
+      <!-- Navigation Tabs inside the Inspector Modal -->
+      <div class="modal-tabs-nav" style="display: flex; gap: 8px; border-bottom: 1px solid var(--border); padding-top: 10px; flex-shrink: 0;">
+        <button type="button" class="modal-tab-btn active" data-tab="tabAuditVisualBible">&#128214; Visual Bible Audit</button>
+        <button type="button" class="modal-tab-btn" data-tab="tabAuditRawPrompt">&#129302; Raw LLM Messages</button>
+        <button type="button" class="modal-tab-btn" data-tab="tabAuditSceneConfig">&#9881; Scene &amp; Model Specs</button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="modal-body-scrollable" style="overflow-y: auto; padding-top: 14px; flex-grow: 1;">
+        
+        <!-- Tab 1: Visual Bible Audit -->
+        <div id="tabAuditVisualBible" class="modal-tab-pane active">
+          <div style="margin-bottom: 14px;">
+            <h4 style="margin: 0 0 6px 0; color: var(--accent-light);">&#127963; Resolved Setting / Environment</h4>
+            <div id="auditSettingCard" class="card" style="background: rgba(255,255,255,0.02); border-left: 3px solid var(--accent); padding: 10px 14px;"></div>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <h4 style="margin: 0 0 6px 0; color: var(--accent-light);">&#128101; Resolved Characters &amp; Timeline Continuity</h4>
+            <div id="auditCharactersList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+          </div>
+
+          <div>
+            <h4 style="margin: 0 0 6px 0; color: var(--accent-light);">&#127912; Global Art Style &amp; Action Beat</h4>
+            <div class="card" style="background: rgba(255,255,255,0.02); padding: 10px 14px;">
+              <p style="margin: 0 0 6px 0;"><strong>Global Art Style:</strong> <span id="auditArtStyle"></span></p>
+              <p style="margin: 0 0 6px 0;"><strong>Action Beat:</strong> <span id="auditActionBeat"></span></p>
+              <p style="margin: 0;"><strong>Camera Framing &amp; Lighting:</strong> <span id="auditCameraFraming"></span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Raw LLM Messages -->
+        <div id="tabAuditRawPrompt" class="modal-tab-pane" style="display: none;">
+          <div style="margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label style="font-weight: 600; color: var(--text-dim);">System Prompt (Role Instructions):</label>
+              <button id="btnCopySystemPrompt" class="btn btn-sm btn-secondary">&#128203; Copy System Prompt</button>
+            </div>
+            <textarea id="auditSystemPrompt" class="textarea-input" rows="4" readonly style="font-family: monospace; font-size: 0.85rem;"></textarea>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label style="font-weight: 600; color: var(--text-dim);">User Prompt (Full Composition Payload sent to LLM):</label>
+              <button id="btnCopyUserPrompt" class="btn btn-sm btn-secondary">&#128203; Copy User Prompt</button>
+            </div>
+            <textarea id="auditUserPrompt" class="textarea-input" rows="12" readonly style="font-family: monospace; font-size: 0.85rem;"></textarea>
+          </div>
+        </div>
+
+        <!-- Tab 3: Scene & Model Specs -->
+        <div id="tabAuditSceneConfig" class="modal-tab-pane" style="display: none;">
+          <div class="config-grid" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="card" style="padding: 10px 14px;">
+              <p style="margin: 0 0 6px 0;"><strong>Synthesizer Model:</strong> <code id="auditModelName"></code></p>
+              <p style="margin: 0 0 6px 0;"><strong>Temperature:</strong> <code id="auditTemperature"></code></p>
+              <p style="margin: 0;"><strong>Active Profile:</strong> <code id="auditProfileName"></code></p>
+            </div>
+            <div class="card" style="padding: 10px 14px;">
+              <p style="margin: 0 0 6px 0;"><strong>Aspect Ratio:</strong> <code id="auditSceneType"></code></p>
+              <p style="margin: 0 0 6px 0;"><strong>Dimensions:</strong> <code id="auditDimensions"></code></p>
+              <p style="margin: 0;"><strong>Default Negative:</strong> <code id="auditDefaultNegative" style="font-size: 0.78rem;"></code></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="btn-group" style="justify-content: flex-end; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border); flex-shrink: 0;">
+        <button id="btnCopyEntirePayload" class="btn btn-secondary">&#128203; Copy Full Payload (JSON)</button>
+        <button id="btnClosePromptContextBottom" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Tweak & Regenerate Modal -->
   <div id="modalTweakRerun" class="modal-backdrop" style="display: none;">
     <div class="modal-card modal-large">
       <div class="card-header">
-        <h3>Tweak Prompt &amp; Regenerate Image (<span id="tweakChunkId"></span>)</h3>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h3 style="margin: 0;">Tweak Prompt &amp; Regenerate Image (<span id="tweakChunkId"></span>)</h3>
+          <button id="btnTweakContextAudit" class="btn btn-sm btn-secondary" title="Audit Visual Bible Context sent to LLM">&#128269; View Context</button>
+        </div>
         <button id="btnCloseTweakModal" class="btn btn-icon">&times;</button>
       </div>
       <div class="form-group" style="margin-top: 14px;">

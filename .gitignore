@@ -32,12 +32,15 @@ env.bak/
 .DS_Store
 Thumbs.db
 
-# User projects (keep reference sample project the_raven)
+# User projects (keep reference sample projects the_raven and the_clockwork_duel)
 projects/*
 !projects/the_raven/
 !projects/the_raven/**
+!projects/the_clockwork_duel/
+!projects/the_clockwork_duel/**
 projects/*/exports/
 projects/the_raven/exports/
+projects/the_clockwork_duel/exports/
 tests/artifacts/
 scratch/
 *.log

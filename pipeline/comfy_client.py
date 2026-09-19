@@ -10,10 +10,38 @@ import uuid
 import time
 import copy
 import random
+import threading
 import requests
 import asyncio
 import websockets
 from typing import Dict, Any, Optional, Tuple, List
+
+
+# Persistent background event loop for async WebSocket tracking.
+# Avoids creating/destroying event loops per render call and is safe
+# to call from any thread (Flask workers, ThreadPoolExecutor, etc.).
+_ws_loop: Optional[asyncio.AbstractEventLoop] = None
+_ws_loop_lock = threading.Lock()
+
+
+def _get_ws_event_loop() -> asyncio.AbstractEventLoop:
+    """Lazily initializes a persistent background event loop thread."""
+    global _ws_loop
+    if _ws_loop is not None and _ws_loop.is_running():
+        return _ws_loop
+    with _ws_loop_lock:
+        if _ws_loop is not None and _ws_loop.is_running():
+            return _ws_loop
+        loop = asyncio.new_event_loop()
+
+        def _run_loop():
+            asyncio.set_event_loop(loop)
+            loop.run_forever()
+
+        t = threading.Thread(target=_run_loop, daemon=True, name="comfy-ws-loop")
+        t.start()
+        _ws_loop = loop
+        return loop
 
 
 REQUIRED_WORKFLOW_TAGS = ["%PositivePrompt%", "%NegativePrompt%", "%Width%", "%Height%"]
@@ -347,9 +375,13 @@ class ComfyUIClient:
         if not prompt_id:
             raise RuntimeError(f"Invalid response from ComfyUI: {resp_data}")
 
-        # Await completion via WebSocket
+        # Await completion via WebSocket (uses persistent background event loop)
         try:
-            asyncio.run(self._track_websocket_execution(client_id, prompt_id))
+            loop = _get_ws_event_loop()
+            future = asyncio.run_coroutine_threadsafe(
+                self._track_websocket_execution(client_id, prompt_id), loop
+            )
+            future.result(timeout=self.timeout)
         except Exception as ws_err:
             # Fallback to polling history
             print(f"[*] WebSocket tracking notice: {ws_err}. Falling back to history polling...")

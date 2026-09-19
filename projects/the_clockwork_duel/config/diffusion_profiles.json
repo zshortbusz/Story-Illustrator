@@ -1,0 +1,74 @@
+{
+  "active_profile": "sdxl_base",
+  "backend": "comfyui",
+  "comfyui": {
+    "host": "127.0.0.1:8188",
+    "workflow": "animab.json"
+  },
+  "openai_compatible": {
+    "api_base": "https://api.openai.com/v1",
+    "api_key": "",
+    "model": "dall-e-3",
+    "quality": "standard",
+    "style": "vivid"
+  },
+  "profiles": {
+    "anime_danbooru": {
+      "aspect_ratios": {
+        "landscape": {
+          "height": 832,
+          "width": 1216
+        },
+        "portrait": {
+          "height": 1216,
+          "width": 832
+        },
+        "square": {
+          "height": 1024,
+          "width": 1024
+        }
+      },
+      "default_negative": "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality",
+      "positive_prefix": "",
+      "system_prompt": "You are a prompt generator for anime diffusion models. Convert the scene components into Danbooru-style comma-separated tags. Always start with character counts (e.g., 1boy, 1girl), character visual tags, clothing, action pose, background tags, and style tags."
+    },
+    "flux_natural": {
+      "aspect_ratios": {
+        "landscape": {
+          "height": 768,
+          "width": 1344
+        },
+        "portrait": {
+          "height": 1344,
+          "width": 768
+        },
+        "square": {
+          "height": 1024,
+          "width": 1024
+        }
+      },
+      "default_negative": "",
+      "positive_prefix": "",
+      "system_prompt": "You are an expert diffusion prompt synthesizer. Convert the provided scene beat, character appearance, setting, and style into a detailed natural-language description (2-3 complete sentences). Avoid booru tags and keyword lists."
+    },
+    "sdxl_base": {
+      "aspect_ratios": {
+        "landscape": {
+          "height": 768,
+          "width": 1344
+        },
+        "portrait": {
+          "height": 1216,
+          "width": 832
+        },
+        "square": {
+          "height": 1024,
+          "width": 1024
+        }
+      },
+      "default_negative": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+      "positive_prefix": "",
+      "system_prompt": "You are an expert SDXL prompt synthesizer. Combine the scene elements into a keyword-focused, comma-separated prompt. Place primary subjects first, followed by camera framing, lighting, environment, and art style."
+    }
+  }
+}

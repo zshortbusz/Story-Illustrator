@@ -9,7 +9,7 @@ import re
 import json
 import time
 import requests
-from typing import Dict, Any, List, Optional, Tuple, Set
+from typing import Dict, Any, List, Optional, Tuple, Set, Union
 
 
 class ContextWindowExceededError(RuntimeError):
@@ -336,6 +336,7 @@ def parse_beats_response(raw_text: str, target_chunk_ids: Optional[Set[str]] = N
                         "chunk_id": cid,
                         "scene_type": b.get("scene_type", "landscape"),
                         "characters_present": b.get("characters_present", []),
+                        "character_attire": b.get("character_attire", {}),
                         "setting": b.get("setting", ""),
                         "action_beat": b.get("action_beat", ""),
                         "camera_framing": b.get("camera_framing", "")
@@ -395,6 +396,23 @@ def parse_beats_response(raw_text: str, target_chunk_ids: Optional[Set[str]] = N
             raw_chars = re.sub(r"[\[\]\"']", "", raw_chars)
             chars = [c.strip() for c in re.split(r"[,;]", raw_chars) if c.strip() and c.strip().lower() != "none"]
 
+        # Extract character attire if present
+        char_attire = {}
+        attire_m = re.search(r"(?:characters?[_\s-]?attire|attire|clothing|wardrobe)[:\s]+([^\n]+)", block_text, re.IGNORECASE)
+        if attire_m:
+            attire_raw = attire_m.group(1).strip()
+            if attire_raw.lower() not in ["none", "default", "standard"]:
+                for part in re.split(r"[;]", attire_raw):
+                    part = part.strip()
+                    if ":" in part:
+                        c_name, c_att = part.split(":", 1)
+                        char_attire[c_name.strip()] = c_att.strip()
+                    elif " in " in part:
+                        c_name, c_att = part.split(" in ", 1)
+                        char_attire[c_name.strip()] = c_att.strip()
+                    elif part and chars:
+                        char_attire[chars[0]] = part
+
         # Extract setting
         setting = ""
         setting_m = re.search(r"(?:setting|location|environment)[:\s]+([^\n]+)", block_text, re.IGNORECASE)
@@ -414,6 +432,7 @@ def parse_beats_response(raw_text: str, target_chunk_ids: Optional[Set[str]] = N
                 "chunk_id": cid,
                 "scene_type": stype,
                 "characters_present": chars,
+                "character_attire": char_attire,
                 "setting": setting,
                 "action_beat": action,
                 "camera_framing": camera
@@ -422,13 +441,135 @@ def parse_beats_response(raw_text: str, target_chunk_ids: Optional[Set[str]] = N
     return beats
 
 
-def _clean_bible_entry(text: str) -> str:
+class CharacterProfile(dict):
+    """
+    Structured character profile tracking invariant physical traits and timeline wardrobe/modifications.
+    Inherits from dict for seamless JSON serialization and dictionary access, with enhanced __contains__
+    and string formatting for backward compatibility with string-based assertions and legacy consumers.
+    """
+    def __init__(self, data: Optional[Dict[str, Any]] = None, **kwargs):
+        super().__init__()
+        initial = dict(data or {})
+        initial.update(kwargs)
+        self["base_dna"] = str(initial.get("base_dna") or initial.get("physical_dna") or initial.get("description") or "").strip()
+        self["timeline_modifications"] = list(initial.get("timeline_modifications") or [])
+        self["wardrobe_timeline"] = list(initial.get("wardrobe_timeline") or [])
+        self["default_attire"] = str(initial.get("default_attire") or "").strip()
+        self["alternate_attires"] = dict(initial.get("alternate_attires") or {})
+
+        # Ensure timeline entry if default attire exists and timeline is empty
+        if self["default_attire"] and not self["wardrobe_timeline"]:
+            self["wardrobe_timeline"].append({
+                "from_chunk_id": "chunk_000",
+                "context": "Standard",
+                "attire": self["default_attire"]
+            })
+        elif not self["default_attire"] and self["wardrobe_timeline"]:
+            self["default_attire"] = self["wardrobe_timeline"][0].get("attire", "")
+
+    def __contains__(self, item: Any) -> bool:
+        if super().__contains__(item):
+            return True
+        if isinstance(item, str):
+            text_corpus = f"{self.get('base_dna', '')} {self.get('default_attire', '')} {self.get('timeline_modifications', '')} {self.get('alternate_attires', '')}"
+            return item.lower() in text_corpus.lower()
+        return False
+
+    def __str__(self) -> str:
+        parts = []
+        if self.get("base_dna"):
+            parts.append(self["base_dna"])
+        if self.get("default_attire"):
+            parts.append(f"Attire: {self['default_attire']}")
+        return "; ".join(parts) if parts else ""
+
+
+def _clean_bible_entry(text: Any) -> str:
     """Strips leading/trailing markdown asterisks, underscores, hyphens, colons and excessive whitespace."""
+    if not isinstance(text, str):
+        return str(text or "")
     s = text.strip()
     s = re.sub(r"^[\s\*_\-#:]+", "", s)
     s = re.sub(r"[\s\*_\-#:]+$", "", s)
     s = re.sub(r"^(?:Description|Appearance|Visual Profile)[:\s*]+", "", s, flags=re.IGNORECASE)
     return s.strip()
+
+
+def normalize_character_entry(char_val: Any, current_chunk_id: str = "chunk_000") -> CharacterProfile:
+    """Standardizes a character entry into the unified timeline schema."""
+    if isinstance(char_val, CharacterProfile):
+        return char_val
+    if isinstance(char_val, dict):
+        return CharacterProfile(char_val)
+
+    text = _clean_bible_entry(str(char_val or ""))
+    lines = [l.strip() for l in text.split("\n") if l.strip()]
+    base_dna_parts = []
+    default_attire = ""
+    timeline_mods = []
+    wardrobe_tl = []
+    alt_attires = {}
+
+    has_subtags = False
+    for line in lines:
+        # Check modifications (scars, injuries, prosthetics) first
+        m_mod = re.match(r"^[-*]?\s*(?:Physical\s*Change|Scar|Injury|Modification)(?:\s*\[?(chunk_\d+)\]?)?\s*[:=\-]\s*(.*)$", line, re.IGNORECASE)
+        if m_mod:
+            has_subtags = True
+            cid = m_mod.group(1) or current_chunk_id
+            trait_text = m_mod.group(2).strip()
+            if trait_text:
+                timeline_mods.append({"introduced_chunk_id": cid, "trait": trait_text})
+            continue
+
+        # Check costume changes second
+        m_cost = re.match(r"^[-*]?\s*(?:Costume\s*Change|Alternate\s*Attire|New\s*Attire)(?:\s*\[?(chunk_\d+)\]?)?(?:\s*\(([^)]+)\))?\s*[:=\-]\s*(.*)$", line, re.IGNORECASE)
+        if m_cost:
+            has_subtags = True
+            cid = m_cost.group(1) or current_chunk_id
+            ctx = m_cost.group(2) or "Scene"
+            outfit = m_cost.group(3).strip()
+            if outfit:
+                wardrobe_tl.append({"from_chunk_id": cid, "context": ctx, "attire": outfit})
+                alt_attires[ctx] = outfit
+            continue
+
+        # Check base physical DNA
+        m_phys = re.match(r"^[-*]?\s*(?:Physical(?:\s*DNA)?|Appearance|Traits?)\s*[:=\-]\s*(.*)$", line, re.IGNORECASE)
+        if m_phys:
+            has_subtags = True
+            base_dna_parts.append(m_phys.group(1).strip())
+            continue
+
+        # Check default attire
+        m_att = re.match(r"^[-*]?\s*(?:Default\s*Attire|Attire|Clothing|Wardrobe|Outfit)\s*[:=\-]\s*(.*)$", line, re.IGNORECASE)
+        if m_att:
+            has_subtags = True
+            default_attire = m_att.group(1).strip()
+            continue
+
+        if not has_subtags:
+            base_dna_parts.append(line)
+
+    if has_subtags:
+        base_dna = " ".join(base_dna_parts).strip()
+    else:
+        # Heuristic split on wearing / dressed in
+        m_wear = re.search(r"\b(?:wearing|dressed in|attired in|clad in)\s+([^;]+)", text, re.IGNORECASE)
+        if m_wear:
+            default_attire = m_wear.group(0).strip()
+        base_dna = text
+
+    if default_attire and not wardrobe_tl:
+        wardrobe_tl.append({"from_chunk_id": current_chunk_id, "context": "Standard", "attire": default_attire})
+
+    return CharacterProfile({
+        "base_dna": base_dna,
+        "timeline_modifications": timeline_mods,
+        "wardrobe_timeline": wardrobe_tl,
+        "default_attire": default_attire,
+        "alternate_attires": alt_attires
+    })
 
 
 def parse_bible_response(
@@ -447,10 +588,20 @@ def parse_bible_response(
     try:
         data = json.loads(extracted_json)
         if isinstance(data, dict):
+            raw_chars = data.get("characters", {})
+            chars = {}
+            if isinstance(raw_chars, dict):
+                for k, v in raw_chars.items():
+                    chars[k] = normalize_character_entry(v)
+            raw_settings = data.get("settings", {})
+            settings = {}
+            if isinstance(raw_settings, dict):
+                for k, v in raw_settings.items():
+                    settings[k] = _clean_bible_entry(str(v))
             return {
-                "global_art_style": _clean_bible_entry(data.get("global_art_style", "cinematic illustration, dramatic lighting")),
-                "characters": {k: _clean_bible_entry(v) for k, v in data.get("characters", {}).items()},
-                "settings": {k: _clean_bible_entry(v) for k, v in data.get("settings", {}).items()}
+                "global_art_style": _clean_bible_entry(str(data.get("global_art_style", "cinematic illustration, dramatic lighting"))),
+                "characters": chars,
+                "settings": settings
             }
     except Exception:
         pass
@@ -467,7 +618,7 @@ def parse_bible_response(
         if extracted_style:
             art_style = extracted_style
 
-    characters: Dict[str, str] = {}
+    characters: Dict[str, CharacterProfile] = {}
     settings: Dict[str, str] = {}
 
     # 3. Dynamic Tagged Parsing (CHARACTER: ... / SETTING: ...)
@@ -480,7 +631,7 @@ def parse_bible_response(
         name = _clean_bible_entry(m.group(1))
         desc = _clean_bible_entry(m.group(2))
         if name and desc and name.lower() not in ["none", "characters", "character"]:
-            characters[name] = desc
+            characters[name] = normalize_character_entry(desc)
 
     setting_matches = re.finditer(
         r"(?:\*\*|##)?\s*(?:SETTING|Setting|LOCATION|Location)[:\*\s]+([^\n:\*]+)(?:[:\*\s\-]+|\n)([\s\S]*?)(?=(?:\*\*|##)?\s*(?:CHARACTER|SETTING|Character|Setting|###|##|\Z))",
@@ -512,7 +663,7 @@ def parse_bible_response(
             bname = _clean_bible_entry(bullet_m.group(1))
             bdesc = _clean_bible_entry(bullet_m.group(2))
             if current_section == "char" and bname and bname not in characters:
-                characters[bname] = bdesc
+                characters[bname] = normalize_character_entry(bdesc)
             elif current_section == "setting" and bname and bname not in settings:
                 settings[bname] = bdesc
 
@@ -522,7 +673,7 @@ def parse_bible_response(
             if c not in characters:
                 m = re.search(rf"\b{re.escape(c)}\b[:\s\-]+([^\n]+)", raw_text, re.IGNORECASE)
                 if m:
-                    characters[c] = _clean_bible_entry(m.group(1))
+                    characters[c] = normalize_character_entry(m.group(1))
 
     if known_settings:
         for s in known_settings:
@@ -533,7 +684,7 @@ def parse_bible_response(
 
     return {
         "global_art_style": art_style,
-        "characters": characters,
+        "characters": {k: normalize_character_entry(v) for k, v in characters.items()},
         "settings": settings
     }
 

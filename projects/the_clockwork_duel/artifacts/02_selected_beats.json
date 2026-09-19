@@ -1,0 +1,58 @@
+{
+  "selected_beats": [
+    {
+      "chunk_id": "chunk_002",
+      "scene_type": "landscape",
+      "characters_present": [
+        "Elena",
+        "Kaelen"
+      ],
+      "character_attire": {
+        "Elena": "emerald green velvet gala gown with silver embroidery",
+        "Kaelen": "midnight-blue military dress uniform with gold epaulets"
+      },
+      "setting": "Grand Sunstone Ballroom",
+      "action_beat": "Elena stands elegantly in her emerald velvet gown while Kaelen is visible beside her in his formal midnight-blue military uniform, his brass automaton arm catching the warm light of a massive crystal chandelier.",
+      "camera_framing": "Wide shot, low angle looking up at the opulent vaulted ceiling and chandeliers to emphasize grandeur."
+    },
+    {
+      "chunk_id": "chunk_003",
+      "scene_type": "square",
+      "characters_present": [
+        "Kaelen",
+        "Masked Saboteurs (implied)"
+      ],
+      "character_attire": {},
+      "setting": "Grand Sunstone Ballroom",
+      "action_beat": "Kaelen's gleaming brass automaton arm is raised in a defensive posture, deflecting the first volley of humming voltaic rapiers from masked figures emerging from deep balcony shadows.",
+      "camera_framing": "Medium shot, high contrast lighting emphasizing the sparks and mechanical detail against the dark background."
+    },
+    {
+      "chunk_id": "chunk_004",
+      "scene_type": "landscape",
+      "characters_present": [
+        "Elena",
+        "Rogue Duelist (implied)"
+      ],
+      "character_attire": {},
+      "setting": "Obsidian Skybridge",
+      "action_beat": "During a fierce clash on the slippery metal grating, Elena is seen reacting to an energy blade grazing her cheek; she fiercely disarms the attacker as rain pours down around them.",
+      "camera_framing": "Cinematic wide shot from above, emphasizing the height and misty city abyss below during the stormy twilight."
+    },
+    {
+      "chunk_id": "chunk_005",
+      "scene_type": "square",
+      "characters_present": [
+        "Elena",
+        "Kaelen"
+      ],
+      "character_attire": {
+        "Elena": "reinforced black tactical combat armor with padded pauldrons and utility belts",
+        "Kaelen": "charcoal wool duster coat"
+      },
+      "setting": "Obsidian Skybridge",
+      "action_beat": "Elena stands in reinforced black tactical combat armor with a prominent new jagged crimson scar across her left cheek; Kaelen stands steadfast beside her in his rain-drenched charcoal duster, his brass prosthetic gleaming. They look out over the liberated city as daybreak breaks through the mist.",
+      "camera_framing": "Medium shot, cinematic framing emphasizing the contrast between Elena's dark armor and Kaelen's polished brass against the soft morning light of dawn."
+    }
+  ]
+}

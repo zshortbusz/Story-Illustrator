@@ -775,3 +775,108 @@ input[type="range"] {
   cursor: pointer;
   z-index: 10;
 }
+
+/* Modal Tabs Navigation */
+.modal-tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  padding: 8px 14px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.modal-tab-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px 4px 0 0;
+}
+.modal-tab-btn.active {
+  color: var(--accent-light, #60a5fa);
+  border-bottom-color: var(--accent, #3b82f6);
+  font-weight: 600;
+}
+
+/* Continuity & Audit Badges */
+.continuity-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.audit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.badge-char {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+.badge-setting {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.badge-mod {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.badge-attire {
+  background: rgba(168, 85, 247, 0.15);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+.badge-skipped {
+  background: rgba(107, 114, 128, 0.18);
+  color: #9ca3af;
+  border: 1px dashed rgba(156, 163, 175, 0.3);
+  text-decoration: line-through;
+}
+
+/* Pre-Generation Review Matrix */
+.pregen-review-banner {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.pregen-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.pregen-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  transition: border-color 0.2s ease;
+}
+.pregen-card:hover {
+  border-color: rgba(59, 130, 246, 0.5);
+}
+.pregen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}

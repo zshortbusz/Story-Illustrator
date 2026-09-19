@@ -1,0 +1,392 @@
+{
+  "active_profile": "sdxl_base",
+  "blocks": [
+    {
+      "chunk_id": "chunk_000",
+      "illustration": null,
+      "text": "In the heart of the Clockwork Workshop, steam hissed softly from overhead copper conduits as giant brass gears turned in rhythmic harmony. Elena, a spirited engineer with vibrant auburn hair and bright hazel eyes, adjusted her brass goggles over her forehead. She wore a worn brown leather flight jacket with shearling lining, rugged canvas work pants, and sturdy leather boots. Across the workbench, Kaelen, the stoic sentinel with cropped silver hair and piercing blue eyes, calibrated his gleaming brass automaton arm. He was clad in a heavy charcoal wool duster coat draped over a tailored dark navy tunic."
+    },
+    {
+      "chunk_id": "chunk_001",
+      "illustration": null,
+      "text": "\"The celestial key is aligned,\" Elena declared, holding up a shimmering crystal cog amidst the cluttered workbenches covered with schematics and ticking clockwork mechanisms. Kaelen nodded quietly, testing the grip of his mechanical fingers. Outside the arched workshop windows, the evening bell chimed across the smoky skyline of New Aethelgard. \"Tonight's gala at the Sunstone Palace will be treacherous,\" Kaelen warned, his mechanical joint humming softly. \"We cannot enter looking like grease-stained mechanics.\""
+    },
+    {
+      "chunk_id": "chunk_002",
+      "illustration": {
+        "height": 768,
+        "image_file": "images/animab/chunk_002.png",
+        "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+        "prompt": "A wide shot, low angle looking up at the opulent vaulted stained-glass ceiling of the Grand Sunstone Ballroom, featuring massive gilded pillars and radiant crystal chandeliers. Primary subjects are Elena, an agile engineer with vibrant auburn hair swept into an updo and smooth unblemished skin, wearing an elegant emerald green velvet gala gown with intricate silver floral embroidery; standing beside her is Kaelen, a stoic sentinel in a formal midnight-blue military dress uniform adorned with polished brass buttons and braided gold epaulets. Kaelen's gleaming brass automaton prosthetic arm catches the warm light of the chandelier. The setting features highly polished black marble floors and ornate fencing displays. Victorian Steampunk Industrial Fantasy style, high contrast lighting emphasizing polished brass against deep shadows and rich velvet textures, cinematic rendering, intricate mechanical detail, atmospheric mist and steam effects.",
+        "status": "completed",
+        "width": 1344,
+        "seed": 822727183158552,
+        "workflow": "animab.json",
+        "llm_context": {
+          "chunk_id": "chunk_002",
+          "scene_type": "landscape",
+          "dimensions": {
+            "height": 768,
+            "width": 1344
+          },
+          "active_profile": "sdxl_base",
+          "setting": {
+            "name": "Grand Sunstone Ballroom",
+            "matched_key": "Grand Sunstone Ballroom",
+            "description": "Architecture:** Lavish ballroom featuring vaulted stained-glass ceilings and massive gilded pillars.\n*   **Materials/Textures:** Highly polished black marble floors; radiant crystal chandeliers; ornate fencing display on walls.\n*   **Lighting/Atmosphere:** Opulent, warm light emanating from the chandeliers; atmosphere shifts abruptly from lavish celebration to panicked chaos during the attack.",
+            "formatted": "Grand Sunstone Ballroom (Environment details: Architecture:** Lavish ballroom featuring vaulted stained-glass ceilings and massive gilded pillars.\n*   **Materials/Textures:** Highly polished black marble floors; radiant crystal chandeliers; ornate fencing display on walls.\n*   **Lighting/Atmosphere:** Opulent, warm light emanating from the chandeliers; atmosphere shifts abruptly from lavish celebration to panicked chaos during the attack.)"
+          },
+          "characters": [
+            {
+              "base_dna": "Physical Base DNA: Spirited agile engineer with bright hazel eyes and vibrant auburn hair. Smooth unblemished face.",
+              "active_timeline_mods": [],
+              "skipped_timeline_mods": [
+                {
+                  "chunk_id": "chunk_004",
+                  "trait": "permanent jagged crimson scar across her left cheek"
+                }
+              ],
+              "resolved_attire": "emerald green velvet gala gown with silver embroidery",
+              "attire_source": "beat_override",
+              "full_description": "Physical Base DNA: Spirited agile engineer with bright hazel eyes and vibrant auburn hair. Smooth unblemished face.; Attire: emerald green velvet gala gown with silver embroidery",
+              "name": "Elena",
+              "matched_key": "Elena"
+            },
+            {
+              "base_dna": "Physical Base DNA: Stoic disciplined sentinel with cropped silver hair and piercing blue eyes. Gleaming brass automaton prosthetic arm that emits a soft mechanical hum.",
+              "active_timeline_mods": [],
+              "skipped_timeline_mods": [],
+              "resolved_attire": "midnight-blue military dress uniform with gold epaulets",
+              "attire_source": "beat_override",
+              "full_description": "Physical Base DNA: Stoic disciplined sentinel with cropped silver hair and piercing blue eyes. Gleaming brass automaton prosthetic arm that emits a soft mechanical hum.; Attire: midnight-blue military dress uniform with gold epaulets",
+              "name": "Kaelen",
+              "matched_key": "Kaelen"
+            }
+          ],
+          "action_beat": "Elena stands elegantly in her emerald velvet gown while Kaelen is visible beside her in his formal midnight-blue military uniform, his brass automaton arm catching the warm light of a massive crystal chandelier.",
+          "camera_framing": "Wide shot, low angle looking up at the opulent vaulted ceiling and chandeliers to emphasize grandeur.",
+          "global_art_style": "Victorian Steampunk Industrial Fantasy. High contrast lighting emphasizing polished brass against deep shadows and rich textures (velvet, worn leather, oxidized copper). Cinematic rendering with intricate mechanical detail and atmospheric mist/steam effects.",
+          "positive_prefix": "",
+          "default_negative": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "system_prompt": "You are an expert SDXL prompt synthesizer. Combine the scene elements into a keyword-focused, comma-separated prompt. Place primary subjects first, followed by camera framing, lighting, environment, and art style.",
+          "raw_user_prompt": "SCENE COMPOSITION REQUIREMENTS:\n- Action Beat: Elena stands elegantly in her emerald velvet gown while Kaelen is visible beside her in his formal midnight-blue military uniform, his brass automaton arm catching the warm light of a massive crystal chandelier.\n- Camera Framing & Lighting: Wide shot, low angle looking up at the opulent vaulted ceiling and chandeliers to emphasize grandeur.\n- Characters Present (Explicit physical appearance from Visual Bible):\n  Elena (Visual Traits: Physical Base DNA: Spirited agile engineer with bright hazel eyes and vibrant auburn hair. Smooth unblemished face.; Attire: emerald green velvet gala gown with silver embroidery); Kaelen (Visual Traits: Physical Base DNA: Stoic disciplined sentinel with cropped silver hair and piercing blue eyes. Gleaming brass automaton prosthetic arm that emits a soft mechanical hum.; Attire: midnight-blue military dress uniform with gold epaulets)\n- Setting / Environment (Architectural details & textures from Visual Bible):\n  Grand Sunstone Ballroom (Environment details: Architecture:** Lavish ballroom featuring vaulted stained-glass ceilings and massive gilded pillars.\n*   **Materials/Textures:** Highly polished black marble floors; radiant crystal chandeliers; ornate fencing display on walls.\n*   **Lighting/Atmosphere:** Opulent, warm light emanating from the chandeliers; atmosphere shifts abruptly from lavish celebration to panicked chaos during the attack.)\n- Global Art Style & Medium: Victorian Steampunk Industrial Fantasy. High contrast lighting emphasizing polished brass against deep shadows and rich textures (velvet, worn leather, oxidized copper). Cinematic rendering with intricate mechanical detail and atmospheric mist/steam effects.\n- Target Aspect Ratio: landscape (1344x768)\n- Default Negative Prompt: blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo\n\nSYNTHESIZE THE DIFFUSION PROMPT:\nConstruct a high-quality positive diffusion prompt that seamlessly combines:\n1. The character's specific physical traits (face, hair, build, distinctive prosthetic limbs/features, clothing).\n2. The exact scene action beat.\n3. The setting architecture, textures, and atmosphere.\n4. The camera framing, angle, and lighting.\n5. The global art style.\n\nFormat your output simply as:\nPROMPT: <positive prompt string>\nNEGATIVE: <negative prompt string>\n",
+          "model": "gemma-4-e4b-it-qat",
+          "temperature": 0.35
+        }
+      },
+      "text": "An hour later, they arrived at the Grand Sunstone Ballroom beneath radiant crystal chandeliers and vaulted stained-glass ceilings. Polished gilded pillars mirrored the opulent crowd strolling across the shining black marble floors. Elena had traded her mechanic gear for an elegant emerald green velvet gala gown featuring intricate silver floral embroidery, her auburn hair now swept into a graceful updo. Beside her stood Kaelen, now dressed in a formal midnight-blue military dress uniform adorned with polished brass buttons and braided gold epaulets, his brass arm catching the warm chandelier light.",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 768,
+          "image_file": "images/chunk_002.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A wide shot, low angle looking up at the opulent vaulted stained-glass ceiling of the Grand Sunstone Ballroom, featuring massive gilded pillars and radiant crystal chandeliers. Primary subjects are Elena, an agile engineer with vibrant auburn hair swept into an updo and smooth unblemished skin, wearing an elegant emerald green velvet gala gown with intricate silver floral embroidery; standing beside her is Kaelen, a stoic sentinel in a formal midnight-blue military dress uniform adorned with polished brass buttons and braided gold epaulets. Kaelen's gleaming brass automaton prosthetic arm catches the warm light of the chandelier. The setting features highly polished black marble floors and ornate fencing displays. Victorian Steampunk Industrial Fantasy style, high contrast lighting emphasizing polished brass against deep shadows and rich velvet textures, cinematic rendering, intricate mechanical detail, atmospheric mist and steam effects.",
+          "status": "pending",
+          "width": 1344
+        },
+        "animab.json": {
+          "height": 768,
+          "image_file": "images/animab/chunk_002.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A wide shot, low angle looking up at the opulent vaulted stained-glass ceiling of the Grand Sunstone Ballroom, featuring massive gilded pillars and radiant crystal chandeliers. Primary subjects are Elena, an agile engineer with vibrant auburn hair swept into an updo and smooth unblemished skin, wearing an elegant emerald green velvet gala gown with intricate silver floral embroidery; standing beside her is Kaelen, a stoic sentinel in a formal midnight-blue military dress uniform adorned with polished brass buttons and braided gold epaulets. Kaelen's gleaming brass automaton prosthetic arm catches the warm light of the chandelier. The setting features highly polished black marble floors and ornate fencing displays. Victorian Steampunk Industrial Fantasy style, high contrast lighting emphasizing polished brass against deep shadows and rich velvet textures, cinematic rendering, intricate mechanical detail, atmospheric mist and steam effects.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 822727183158552,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 768,
+          "image_file": "images/animab/chunk_002.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "A wide shot, low angle looking up at the opulent vaulted stained-glass ceiling of the Grand Sunstone Ballroom, featuring massive gilded pillars and radiant crystal chandeliers. Primary subjects are Elena, an agile engineer with vibrant auburn hair swept into an updo and smooth unblemished skin, wearing an elegant emerald green velvet gala gown with intricate silver floral embroidery; standing beside her is Kaelen, a stoic sentinel in a formal midnight-blue military dress uniform adorned with polished brass buttons and braided gold epaulets. Kaelen's gleaming brass automaton prosthetic arm catches the warm light of the chandelier. The setting features highly polished black marble floors and ornate fencing displays. Victorian Steampunk Industrial Fantasy style, high contrast lighting emphasizing polished brass against deep shadows and rich velvet textures, cinematic rendering, intricate mechanical detail, atmospheric mist and steam effects.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 822727183158552,
+          "workflow": "animab.json"
+        }
+      }
+    },
+    {
+      "chunk_id": "chunk_003",
+      "illustration": {
+        "height": 1024,
+        "image_file": "images/animab/chunk_003.png",
+        "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+        "prompt": "Stoic sentinel Kaelen, cropped silver hair, piercing blue eyes, wearing a heavy charcoal wool duster coat, raising his gleaming brass automaton prosthetic arm in a defensive posture, deflecting humming voltaic rapiers from masked saboteurs emerging from deep balcony shadows, dynamic action pose, medium shot, high contrast lighting emphasizing sparks and mechanical detail against dark background, Grand Sunstone Ballroom environment, massive gilded pillars, vaulted stained-glass ceilings, highly polished black marble floors, radiant crystal chandeliers, opulent warm light contrasting with dramatic shadows, intricate Victorian Steampunk Industrial Fantasy style, cinematic rendering, atmospheric mist and steam effects, detailed brass and oxidized copper textures.",
+        "status": "completed",
+        "width": 1024,
+        "seed": 425360242998356,
+        "workflow": "animab.json",
+        "llm_context": {
+          "chunk_id": "chunk_003",
+          "scene_type": "square",
+          "dimensions": {
+            "height": 1024,
+            "width": 1024
+          },
+          "active_profile": "sdxl_base",
+          "setting": {
+            "name": "Grand Sunstone Ballroom",
+            "matched_key": "Grand Sunstone Ballroom",
+            "description": "Architecture:** Lavish ballroom featuring vaulted stained-glass ceilings and massive gilded pillars.\n*   **Materials/Textures:** Highly polished black marble floors; radiant crystal chandeliers; ornate fencing display on walls.\n*   **Lighting/Atmosphere:** Opulent, warm light emanating from the chandeliers; atmosphere shifts abruptly from lavish celebration to panicked chaos during the attack.",
+            "formatted": "Grand Sunstone Ballroom (Environment details: Architecture:** Lavish ballroom featuring vaulted stained-glass ceilings and massive gilded pillars.\n*   **Materials/Textures:** Highly polished black marble floors; radiant crystal chandeliers; ornate fencing display on walls.\n*   **Lighting/Atmosphere:** Opulent, warm light emanating from the chandeliers; atmosphere shifts abruptly from lavish celebration to panicked chaos during the attack.)"
+          },
+          "characters": [
+            {
+              "base_dna": "Physical Base DNA: Stoic disciplined sentinel with cropped silver hair and piercing blue eyes. Gleaming brass automaton prosthetic arm that emits a soft mechanical hum.",
+              "active_timeline_mods": [],
+              "skipped_timeline_mods": [],
+              "resolved_attire": "formal midnight-blue military dress uniform adorned with polished brass buttons and braided gold epaulets",
+              "attire_source": "wardrobe_timeline",
+              "full_description": "Physical Base DNA: Stoic disciplined sentinel with cropped silver hair and piercing blue eyes. Gleaming brass automaton prosthetic arm that emits a soft mechanical hum.; Attire: formal midnight-blue military dress uniform adorned with polished brass buttons and braided gold epaulets",
+              "name": "Kaelen",
+              "matched_key": "Kaelen"
+            },
+            {
+              "name": "Masked Saboteurs (implied)",
+              "matched_key": null,
+              "base_dna": "",
+              "active_timeline_mods": [],
+              "skipped_timeline_mods": [],
+              "resolved_attire": "",
+              "attire_source": "unmatched",
+              "full_description": "Masked Saboteurs (implied)"
+            }
+          ],
+          "action_beat": "Kaelen's gleaming brass automaton arm is raised in a defensive posture, deflecting the first volley of humming voltaic rapiers from masked figures emerging from deep balcony shadows.",
+          "camera_framing": "Medium shot, high contrast lighting emphasizing the sparks and mechanical detail against the dark background.",
+          "global_art_style": "Victorian Steampunk Industrial Fantasy. High contrast lighting emphasizing polished brass against deep shadows and rich textures (velvet, worn leather, oxidized copper). Cinematic rendering with intricate mechanical detail and atmospheric mist/steam effects.",
+          "positive_prefix": "",
+          "default_negative": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "system_prompt": "You are an expert SDXL prompt synthesizer. Combine the scene elements into a keyword-focused, comma-separated prompt. Place primary subjects first, followed by camera framing, lighting, environment, and art style.",
+          "raw_user_prompt": "SCENE COMPOSITION REQUIREMENTS:\n- Action Beat: Kaelen's gleaming brass automaton arm is raised in a defensive posture, deflecting the first volley of humming voltaic rapiers from masked figures emerging from deep balcony shadows.\n- Camera Framing & Lighting: Medium shot, high contrast lighting emphasizing the sparks and mechanical detail against the dark background.\n- Characters Present (Explicit physical appearance from Visual Bible):\n  Kaelen (Visual Traits: Physical Base DNA: Stoic disciplined sentinel with cropped silver hair and piercing blue eyes. Gleaming brass automaton prosthetic arm that emits a soft mechanical hum.; Attire: formal midnight-blue military dress uniform adorned with polished brass buttons and braided gold epaulets); Masked Saboteurs (implied)\n- Setting / Environment (Architectural details & textures from Visual Bible):\n  Grand Sunstone Ballroom (Environment details: Architecture:** Lavish ballroom featuring vaulted stained-glass ceilings and massive gilded pillars.\n*   **Materials/Textures:** Highly polished black marble floors; radiant crystal chandeliers; ornate fencing display on walls.\n*   **Lighting/Atmosphere:** Opulent, warm light emanating from the chandeliers; atmosphere shifts abruptly from lavish celebration to panicked chaos during the attack.)\n- Global Art Style & Medium: Victorian Steampunk Industrial Fantasy. High contrast lighting emphasizing polished brass against deep shadows and rich textures (velvet, worn leather, oxidized copper). Cinematic rendering with intricate mechanical detail and atmospheric mist/steam effects.\n- Target Aspect Ratio: square (1024x1024)\n- Default Negative Prompt: blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo\n\nSYNTHESIZE THE DIFFUSION PROMPT:\nConstruct a high-quality positive diffusion prompt that seamlessly combines:\n1. The character's specific physical traits (face, hair, build, distinctive prosthetic limbs/features, clothing).\n2. The exact scene action beat.\n3. The setting architecture, textures, and atmosphere.\n4. The camera framing, angle, and lighting.\n5. The global art style.\n\nFormat your output simply as:\nPROMPT: <positive prompt string>\nNEGATIVE: <negative prompt string>\n",
+          "model": "gemma-4-e4b-it-qat",
+          "temperature": 0.35
+        }
+      },
+      "text": "The lavish celebration abruptly shattered when masked saboteurs emerged from the balcony shadows, drawing humming voltaic rapiers. Gasps echoed throughout the Grand Sunstone Ballroom as panic seized the aristocratic guests. Kaelen immediately stepped forward, his brass automaton arm deflecting the first volley of electric sparks, while Elena reached behind the gilded pillars to seize an ornate fencing blade from the wall display.",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 1024,
+          "image_file": "images/chunk_003.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Stoic sentinel Kaelen, cropped silver hair, piercing blue eyes, wearing a heavy charcoal wool duster coat, raising his gleaming brass automaton prosthetic arm in a defensive posture, deflecting humming voltaic rapiers from masked saboteurs emerging from deep balcony shadows, dynamic action pose, medium shot, high contrast lighting emphasizing sparks and mechanical detail against dark background, Grand Sunstone Ballroom environment, massive gilded pillars, vaulted stained-glass ceilings, highly polished black marble floors, radiant crystal chandeliers, opulent warm light contrasting with dramatic shadows, intricate Victorian Steampunk Industrial Fantasy style, cinematic rendering, atmospheric mist and steam effects, detailed brass and oxidized copper textures.",
+          "status": "pending",
+          "width": 1024
+        },
+        "animab.json": {
+          "height": 1024,
+          "image_file": "images/animab/chunk_003.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Stoic sentinel Kaelen, cropped silver hair, piercing blue eyes, wearing a heavy charcoal wool duster coat, raising his gleaming brass automaton prosthetic arm in a defensive posture, deflecting humming voltaic rapiers from masked saboteurs emerging from deep balcony shadows, dynamic action pose, medium shot, high contrast lighting emphasizing sparks and mechanical detail against dark background, Grand Sunstone Ballroom environment, massive gilded pillars, vaulted stained-glass ceilings, highly polished black marble floors, radiant crystal chandeliers, opulent warm light contrasting with dramatic shadows, intricate Victorian Steampunk Industrial Fantasy style, cinematic rendering, atmospheric mist and steam effects, detailed brass and oxidized copper textures.",
+          "status": "completed",
+          "width": 1024,
+          "seed": 425360242998356,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 1024,
+          "image_file": "images/animab/chunk_003.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Stoic sentinel Kaelen, cropped silver hair, piercing blue eyes, wearing a heavy charcoal wool duster coat, raising his gleaming brass automaton prosthetic arm in a defensive posture, deflecting humming voltaic rapiers from masked saboteurs emerging from deep balcony shadows, dynamic action pose, medium shot, high contrast lighting emphasizing sparks and mechanical detail against dark background, Grand Sunstone Ballroom environment, massive gilded pillars, vaulted stained-glass ceilings, highly polished black marble floors, radiant crystal chandeliers, opulent warm light contrasting with dramatic shadows, intricate Victorian Steampunk Industrial Fantasy style, cinematic rendering, atmospheric mist and steam effects, detailed brass and oxidized copper textures.",
+          "status": "completed",
+          "width": 1024,
+          "seed": 425360242998356,
+          "workflow": "animab.json"
+        }
+      }
+    },
+    {
+      "chunk_id": "chunk_004",
+      "illustration": {
+        "height": 768,
+        "image_file": "images/animab/chunk_004.png",
+        "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+        "prompt": "Cinematic wide shot from above, Elena in an elegant emerald green velvet gala gown with intricate silver floral embroidery, auburn hair, fiercely disarming the Rogue Duelist on a slippery iron catwalk as an energy blade grazes her left cheek leaving a thin line of blood. Stormy twilight atmosphere, heavy rain pouring down through mist-laden air, Obsidian Skybridge architecture high above the city abyss between towering spire rooftops, dramatic contrast lighting emphasizing polished brass and deep shadows, Victorian Steampunk Industrial Fantasy, hyperdetailed mechanical elements, rich textures of velvet and wet stone, cinematic rendering.",
+        "status": "completed",
+        "width": 1344,
+        "seed": 263177362972297,
+        "workflow": "animab.json",
+        "llm_context": {
+          "chunk_id": "chunk_004",
+          "scene_type": "landscape",
+          "dimensions": {
+            "height": 768,
+            "width": 1344
+          },
+          "active_profile": "sdxl_base",
+          "setting": {
+            "name": "Obsidian Skybridge",
+            "matched_key": "Obsidian Skybridge",
+            "description": "Architecture:** Iron catwalk suspended high above the city abyss between towering spire rooftops. Features metal grating and guardrails.\n*   **Materials/Textures:** Slippery iron grating, mist-laden air, wet stone of surrounding spires.\n*   **Lighting/Atmosphere:** Stormy twilight; dramatic contrast between the dark iron structure and the misty, foggy depths below; heavy rain pouring through the air.",
+            "formatted": "Obsidian Skybridge (Environment details: Architecture:** Iron catwalk suspended high above the city abyss between towering spire rooftops. Features metal grating and guardrails.\n*   **Materials/Textures:** Slippery iron grating, mist-laden air, wet stone of surrounding spires.\n*   **Lighting/Atmosphere:** Stormy twilight; dramatic contrast between the dark iron structure and the misty, foggy depths below; heavy rain pouring through the air.)"
+          },
+          "characters": [
+            {
+              "base_dna": "Physical Base DNA: Spirited agile engineer with bright hazel eyes and vibrant auburn hair. Smooth unblemished face.",
+              "active_timeline_mods": [
+                {
+                  "chunk_id": "chunk_004",
+                  "trait": "permanent jagged crimson scar across her left cheek"
+                }
+              ],
+              "skipped_timeline_mods": [],
+              "resolved_attire": "elegant emerald green velvet gala gown featuring intricate silver floral embroidery, auburn hair swept in updo",
+              "attire_source": "wardrobe_timeline",
+              "full_description": "Physical Base DNA: Spirited agile engineer with bright hazel eyes and vibrant auburn hair. Smooth unblemished face., permanent jagged crimson scar across her left cheek; Attire: elegant emerald green velvet gala gown featuring intricate silver floral embroidery, auburn hair swept in updo",
+              "name": "Elena",
+              "matched_key": "Elena"
+            },
+            {
+              "name": "Rogue Duelist (implied)",
+              "matched_key": null,
+              "base_dna": "",
+              "active_timeline_mods": [],
+              "skipped_timeline_mods": [],
+              "resolved_attire": "",
+              "attire_source": "unmatched",
+              "full_description": "Rogue Duelist (implied)"
+            }
+          ],
+          "action_beat": "During a fierce clash on the slippery metal grating, Elena is seen reacting to an energy blade grazing her cheek; she fiercely disarms the attacker as rain pours down around them.",
+          "camera_framing": "Cinematic wide shot from above, emphasizing the height and misty city abyss below during the stormy twilight.",
+          "global_art_style": "Victorian Steampunk Industrial Fantasy. High contrast lighting emphasizing polished brass against deep shadows and rich textures (velvet, worn leather, oxidized copper). Cinematic rendering with intricate mechanical detail and atmospheric mist/steam effects.",
+          "positive_prefix": "",
+          "default_negative": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "system_prompt": "You are an expert SDXL prompt synthesizer. Combine the scene elements into a keyword-focused, comma-separated prompt. Place primary subjects first, followed by camera framing, lighting, environment, and art style.",
+          "raw_user_prompt": "SCENE COMPOSITION REQUIREMENTS:\n- Action Beat: During a fierce clash on the slippery metal grating, Elena is seen reacting to an energy blade grazing her cheek; she fiercely disarms the attacker as rain pours down around them.\n- Camera Framing & Lighting: Cinematic wide shot from above, emphasizing the height and misty city abyss below during the stormy twilight.\n- Characters Present (Explicit physical appearance from Visual Bible):\n  Elena (Visual Traits: Physical Base DNA: Spirited agile engineer with bright hazel eyes and vibrant auburn hair. Smooth unblemished face., permanent jagged crimson scar across her left cheek; Attire: elegant emerald green velvet gala gown featuring intricate silver floral embroidery, auburn hair swept in updo); Rogue Duelist (implied)\n- Setting / Environment (Architectural details & textures from Visual Bible):\n  Obsidian Skybridge (Environment details: Architecture:** Iron catwalk suspended high above the city abyss between towering spire rooftops. Features metal grating and guardrails.\n*   **Materials/Textures:** Slippery iron grating, mist-laden air, wet stone of surrounding spires.\n*   **Lighting/Atmosphere:** Stormy twilight; dramatic contrast between the dark iron structure and the misty, foggy depths below; heavy rain pouring through the air.)\n- Global Art Style & Medium: Victorian Steampunk Industrial Fantasy. High contrast lighting emphasizing polished brass against deep shadows and rich textures (velvet, worn leather, oxidized copper). Cinematic rendering with intricate mechanical detail and atmospheric mist/steam effects.\n- Target Aspect Ratio: landscape (1344x768)\n- Default Negative Prompt: blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo\n\nSYNTHESIZE THE DIFFUSION PROMPT:\nConstruct a high-quality positive diffusion prompt that seamlessly combines:\n1. The character's specific physical traits (face, hair, build, distinctive prosthetic limbs/features, clothing).\n2. The exact scene action beat.\n3. The setting architecture, textures, and atmosphere.\n4. The camera framing, angle, and lighting.\n5. The global art style.\n\nFormat your output simply as:\nPROMPT: <positive prompt string>\nNEGATIVE: <negative prompt string>\n",
+          "model": "gemma-4-e4b-it-qat",
+          "temperature": 0.35
+        }
+      },
+      "text": "The skirmish spilled out onto the Obsidian Skybridge, an iron catwalk suspended between towering spire rooftops high above the misty city abyss. Rain began to pour through the stormy twilight air. During a ferocious clash on the slippery metal grating, a rogue duelist's energy blade grazed Elena's cheek. Blood welled, leaving a permanent jagged scar across her left cheek. With a fierce cry, Elena disarmed the attacker, sending the weapon tumbling into the foggy depths below.",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 768,
+          "image_file": "images/chunk_004.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Cinematic wide shot from above, Elena in an elegant emerald green velvet gala gown with intricate silver floral embroidery, auburn hair, fiercely disarming the Rogue Duelist on a slippery iron catwalk as an energy blade grazes her left cheek leaving a thin line of blood. Stormy twilight atmosphere, heavy rain pouring down through mist-laden air, Obsidian Skybridge architecture high above the city abyss between towering spire rooftops, dramatic contrast lighting emphasizing polished brass and deep shadows, Victorian Steampunk Industrial Fantasy, hyperdetailed mechanical elements, rich textures of velvet and wet stone, cinematic rendering.",
+          "status": "pending",
+          "width": 1344
+        },
+        "animab.json": {
+          "height": 768,
+          "image_file": "images/animab/chunk_004.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Cinematic wide shot from above, Elena in an elegant emerald green velvet gala gown with intricate silver floral embroidery, auburn hair, fiercely disarming the Rogue Duelist on a slippery iron catwalk as an energy blade grazes her left cheek leaving a thin line of blood. Stormy twilight atmosphere, heavy rain pouring down through mist-laden air, Obsidian Skybridge architecture high above the city abyss between towering spire rooftops, dramatic contrast lighting emphasizing polished brass and deep shadows, Victorian Steampunk Industrial Fantasy, hyperdetailed mechanical elements, rich textures of velvet and wet stone, cinematic rendering.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 263177362972297,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 768,
+          "image_file": "images/animab/chunk_004.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Cinematic wide shot from above, Elena in an elegant emerald green velvet gala gown with intricate silver floral embroidery, auburn hair, fiercely disarming the Rogue Duelist on a slippery iron catwalk as an energy blade grazes her left cheek leaving a thin line of blood. Stormy twilight atmosphere, heavy rain pouring down through mist-laden air, Obsidian Skybridge architecture high above the city abyss between towering spire rooftops, dramatic contrast lighting emphasizing polished brass and deep shadows, Victorian Steampunk Industrial Fantasy, hyperdetailed mechanical elements, rich textures of velvet and wet stone, cinematic rendering.",
+          "status": "completed",
+          "width": 1344,
+          "seed": 263177362972297,
+          "workflow": "animab.json"
+        }
+      }
+    },
+    {
+      "chunk_id": "chunk_005",
+      "illustration": {
+        "height": 1024,
+        "image_file": "images/animab/chunk_005.png",
+        "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+        "prompt": "Elena in reinforced black tactical combat armor with a jagged crimson scar across her left cheek, vibrant auburn hair, standing beside Kaelen in a rain-drenched heavy charcoal wool duster coat, gleaming brass automaton prosthetic arm, both looking out over a liberated city at daybreak. Medium shot, cinematic framing, dramatic contrast between dark armor and polished brass against soft morning light of dawn. Setting is an Obsidian Skybridge iron catwalk suspended high above the city abyss, slippery metal grating, mist-laden air, wet stone spires. Victorian Steampunk Industrial Fantasy style, intricate mechanical detail, high contrast lighting, rich textures (padded pauldrons, charcoal wool, oxidized copper), atmospheric mist and steam effects, cinematic rendering.",
+        "status": "completed",
+        "width": 1024,
+        "seed": 1072715526079668,
+        "workflow": "animab.json",
+        "llm_context": {
+          "chunk_id": "chunk_005",
+          "scene_type": "square",
+          "dimensions": {
+            "height": 1024,
+            "width": 1024
+          },
+          "active_profile": "sdxl_base",
+          "setting": {
+            "name": "Obsidian Skybridge",
+            "matched_key": "Obsidian Skybridge",
+            "description": "Architecture:** Iron catwalk suspended high above the city abyss between towering spire rooftops. Features metal grating and guardrails.\n*   **Materials/Textures:** Slippery iron grating, mist-laden air, wet stone of surrounding spires.\n*   **Lighting/Atmosphere:** Stormy twilight; dramatic contrast between the dark iron structure and the misty, foggy depths below; heavy rain pouring through the air.",
+            "formatted": "Obsidian Skybridge (Environment details: Architecture:** Iron catwalk suspended high above the city abyss between towering spire rooftops. Features metal grating and guardrails.\n*   **Materials/Textures:** Slippery iron grating, mist-laden air, wet stone of surrounding spires.\n*   **Lighting/Atmosphere:** Stormy twilight; dramatic contrast between the dark iron structure and the misty, foggy depths below; heavy rain pouring through the air.)"
+          },
+          "characters": [
+            {
+              "base_dna": "Physical Base DNA: Spirited agile engineer with bright hazel eyes and vibrant auburn hair. Smooth unblemished face.",
+              "active_timeline_mods": [
+                {
+                  "chunk_id": "chunk_004",
+                  "trait": "permanent jagged crimson scar across her left cheek"
+                }
+              ],
+              "skipped_timeline_mods": [],
+              "resolved_attire": "reinforced black tactical combat armor with padded pauldrons and utility belts",
+              "attire_source": "beat_override",
+              "full_description": "Physical Base DNA: Spirited agile engineer with bright hazel eyes and vibrant auburn hair. Smooth unblemished face., permanent jagged crimson scar across her left cheek; Attire: reinforced black tactical combat armor with padded pauldrons and utility belts",
+              "name": "Elena",
+              "matched_key": "Elena"
+            },
+            {
+              "base_dna": "Physical Base DNA: Stoic disciplined sentinel with cropped silver hair and piercing blue eyes. Gleaming brass automaton prosthetic arm that emits a soft mechanical hum.",
+              "active_timeline_mods": [],
+              "skipped_timeline_mods": [],
+              "resolved_attire": "charcoal wool duster coat",
+              "attire_source": "beat_override",
+              "full_description": "Physical Base DNA: Stoic disciplined sentinel with cropped silver hair and piercing blue eyes. Gleaming brass automaton prosthetic arm that emits a soft mechanical hum.; Attire: charcoal wool duster coat",
+              "name": "Kaelen",
+              "matched_key": "Kaelen"
+            }
+          ],
+          "action_beat": "Elena stands in reinforced black tactical combat armor with a prominent new jagged crimson scar across her left cheek; Kaelen stands steadfast beside her in his rain-drenched charcoal duster, his brass prosthetic gleaming. They look out over the liberated city as daybreak breaks through the mist.",
+          "camera_framing": "Medium shot, cinematic framing emphasizing the contrast between Elena's dark armor and Kaelen's polished brass against the soft morning light of dawn.",
+          "global_art_style": "Victorian Steampunk Industrial Fantasy. High contrast lighting emphasizing polished brass against deep shadows and rich textures (velvet, worn leather, oxidized copper). Cinematic rendering with intricate mechanical detail and atmospheric mist/steam effects.",
+          "positive_prefix": "",
+          "default_negative": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "system_prompt": "You are an expert SDXL prompt synthesizer. Combine the scene elements into a keyword-focused, comma-separated prompt. Place primary subjects first, followed by camera framing, lighting, environment, and art style.",
+          "raw_user_prompt": "SCENE COMPOSITION REQUIREMENTS:\n- Action Beat: Elena stands in reinforced black tactical combat armor with a prominent new jagged crimson scar across her left cheek; Kaelen stands steadfast beside her in his rain-drenched charcoal duster, his brass prosthetic gleaming. They look out over the liberated city as daybreak breaks through the mist.\n- Camera Framing & Lighting: Medium shot, cinematic framing emphasizing the contrast between Elena's dark armor and Kaelen's polished brass against the soft morning light of dawn.\n- Characters Present (Explicit physical appearance from Visual Bible):\n  Elena (Visual Traits: Physical Base DNA: Spirited agile engineer with bright hazel eyes and vibrant auburn hair. Smooth unblemished face., permanent jagged crimson scar across her left cheek; Attire: reinforced black tactical combat armor with padded pauldrons and utility belts); Kaelen (Visual Traits: Physical Base DNA: Stoic disciplined sentinel with cropped silver hair and piercing blue eyes. Gleaming brass automaton prosthetic arm that emits a soft mechanical hum.; Attire: charcoal wool duster coat)\n- Setting / Environment (Architectural details & textures from Visual Bible):\n  Obsidian Skybridge (Environment details: Architecture:** Iron catwalk suspended high above the city abyss between towering spire rooftops. Features metal grating and guardrails.\n*   **Materials/Textures:** Slippery iron grating, mist-laden air, wet stone of surrounding spires.\n*   **Lighting/Atmosphere:** Stormy twilight; dramatic contrast between the dark iron structure and the misty, foggy depths below; heavy rain pouring through the air.)\n- Global Art Style & Medium: Victorian Steampunk Industrial Fantasy. High contrast lighting emphasizing polished brass against deep shadows and rich textures (velvet, worn leather, oxidized copper). Cinematic rendering with intricate mechanical detail and atmospheric mist/steam effects.\n- Target Aspect Ratio: square (1024x1024)\n- Default Negative Prompt: blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo\n\nSYNTHESIZE THE DIFFUSION PROMPT:\nConstruct a high-quality positive diffusion prompt that seamlessly combines:\n1. The character's specific physical traits (face, hair, build, distinctive prosthetic limbs/features, clothing).\n2. The exact scene action beat.\n3. The setting architecture, textures, and atmosphere.\n4. The camera framing, angle, and lighting.\n5. The global art style.\n\nFormat your output simply as:\nPROMPT: <positive prompt string>\nNEGATIVE: <negative prompt string>\n",
+          "model": "gemma-4-e4b-it-qat",
+          "temperature": 0.35
+        }
+      },
+      "text": "By daybreak, the rain had cleared above the windswept Obsidian Skybridge. Elena stood victoriously near the guardrails, now wearing reinforced black tactical combat armor with padded pauldrons and utility belts, the prominent new jagged scar across her left cheek marked by a sharp crimson line that hardened her gaze. Kaelen stood steadfast beside her in his rain-drenched charcoal duster, his brass prosthetic gleaming in the morning dawn as they looked out over the liberated city.",
+      "illustrations": {
+        "sdxl_base.json": {
+          "height": 1024,
+          "image_file": "images/chunk_005.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Elena in reinforced black tactical combat armor with a jagged crimson scar across her left cheek, vibrant auburn hair, standing beside Kaelen in a rain-drenched heavy charcoal wool duster coat, gleaming brass automaton prosthetic arm, both looking out over a liberated city at daybreak. Medium shot, cinematic framing, dramatic contrast between dark armor and polished brass against soft morning light of dawn. Setting is an Obsidian Skybridge iron catwalk suspended high above the city abyss, slippery metal grating, mist-laden air, wet stone spires. Victorian Steampunk Industrial Fantasy style, intricate mechanical detail, high contrast lighting, rich textures (padded pauldrons, charcoal wool, oxidized copper), atmospheric mist and steam effects, cinematic rendering.",
+          "status": "pending",
+          "width": 1024
+        },
+        "animab.json": {
+          "height": 1024,
+          "image_file": "images/animab/chunk_005.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Elena in reinforced black tactical combat armor with a jagged crimson scar across her left cheek, vibrant auburn hair, standing beside Kaelen in a rain-drenched heavy charcoal wool duster coat, gleaming brass automaton prosthetic arm, both looking out over a liberated city at daybreak. Medium shot, cinematic framing, dramatic contrast between dark armor and polished brass against soft morning light of dawn. Setting is an Obsidian Skybridge iron catwalk suspended high above the city abyss, slippery metal grating, mist-laden air, wet stone spires. Victorian Steampunk Industrial Fantasy style, intricate mechanical detail, high contrast lighting, rich textures (padded pauldrons, charcoal wool, oxidized copper), atmospheric mist and steam effects, cinematic rendering.",
+          "status": "completed",
+          "width": 1024,
+          "seed": 1072715526079668,
+          "workflow": "animab.json"
+        },
+        "animab": {
+          "height": 1024,
+          "image_file": "images/animab/chunk_005.png",
+          "negative_prompt": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
+          "prompt": "Elena in reinforced black tactical combat armor with a jagged crimson scar across her left cheek, vibrant auburn hair, standing beside Kaelen in a rain-drenched heavy charcoal wool duster coat, gleaming brass automaton prosthetic arm, both looking out over a liberated city at daybreak. Medium shot, cinematic framing, dramatic contrast between dark armor and polished brass against soft morning light of dawn. Setting is an Obsidian Skybridge iron catwalk suspended high above the city abyss, slippery metal grating, mist-laden air, wet stone spires. Victorian Steampunk Industrial Fantasy style, intricate mechanical detail, high contrast lighting, rich textures (padded pauldrons, charcoal wool, oxidized copper), atmospheric mist and steam effects, cinematic rendering.",
+          "status": "completed",
+          "width": 1024,
+          "seed": 1072715526079668,
+          "workflow": "animab.json"
+        }
+      }
+    }
+  ],
+  "story_title": "The Clockwork Duel",
+  "active_workflow": "animab.json"
+}

@@ -5,10 +5,15 @@ Provides interactive inspection, editing, and execution endpoints for all three 
 
 import os
 import json
+import logging
 import random
+import time
+import uuid
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, List, Optional
 from flask import Flask, request, jsonify, send_file, send_from_directory, render_template_string
+from werkzeug.utils import secure_filename
 
 from pipeline.project_manager import (
     get_base_dir,
@@ -26,7 +31,8 @@ from pipeline.build_manifest import (
     run_stage_chunk,
     run_stage_beats,
     run_stage_bible,
-    run_stage_manifest
+    run_stage_manifest,
+    compose_prompt_context_for_beat
 )
 from pipeline.render_images import run_phase_2, save_manifest_atomic, resolve_workflow
 from pipeline.compile_html import compile_html, compile_manifest_to_html
@@ -39,15 +45,31 @@ def create_app() -> Flask:
 
     app = Flask(__name__, static_folder=static_dir, static_url_path="/static")
     app.config["JSON_AS_ASCII"] = False
+    logger = logging.getLogger(__name__)
+
+    # Background executor for long-running AI operations (LLM calls, image rendering).
+    # Keeps Flask request threads free to serve UI polling and other API calls.
+    _executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="asi-worker")
 
     # Job tracking for background stage runs
     jobs: Dict[str, Dict[str, Any]] = {}
 
     def get_project_dir(slug: str) -> str:
-        pdir = os.path.join(base_dir, "projects", slug)
+        safe_slug = secure_filename(slug)
+        if not safe_slug:
+            raise ValueError(f"Invalid project slug: '{slug}'")
+        pdir = os.path.join(base_dir, "projects", safe_slug)
         if not os.path.isdir(pdir):
-            raise FileNotFoundError(f"Project '{slug}' not found.")
+            raise FileNotFoundError(f"Project '{safe_slug}' not found.")
         return pdir
+
+    @app.errorhandler(FileNotFoundError)
+    def handle_not_found(err):
+        return jsonify({"error": str(err)}), 404
+
+    @app.errorhandler(ValueError)
+    def handle_bad_request(err):
+        return jsonify({"error": str(err)}), 400
 
     @app.route("/")
     def index():
@@ -74,8 +96,8 @@ def create_app() -> Flask:
                 if os.path.isfile(d_path):
                     with open(d_path, "r", encoding="utf-8") as f:
                         diff_cfg = json.load(f)
-            except Exception:
-                pass
+            except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
+                logger.warning("Failed to load project config for slug '%s': %s", slug, e)
 
         llm_client = LMStudioClient(
             api_base=llm_cfg.get("api_base", "http://localhost:1234/v1"),
@@ -103,6 +125,32 @@ def create_app() -> Flask:
     # -------------------------------------------------------------------------
     # Projects & Workflows
     # -------------------------------------------------------------------------
+    # Image count cache with TTL to avoid re-scanning the filesystem on every request
+    _img_count_cache: Dict[str, Any] = {}  # {slug: {"count": int, "expires": float}}
+    _IMG_CACHE_TTL = 10.0  # seconds
+
+    def _count_images_cached(slug: str, images_dir: str) -> int:
+        """Counts .png files using os.scandir (non-recursive per subfolder), with a TTL cache."""
+        now = time.time()
+        cached = _img_count_cache.get(slug)
+        if cached and cached["expires"] > now:
+            return cached["count"]
+        count = 0
+        if os.path.isdir(images_dir):
+            try:
+                for entry in os.scandir(images_dir):
+                    if entry.is_file() and entry.name.endswith(".png"):
+                        count += 1
+                    elif entry.is_dir():
+                        # Count images in workflow subfolders (e.g. images/sdxl_base/)
+                        for sub_entry in os.scandir(entry.path):
+                            if sub_entry.is_file() and sub_entry.name.endswith(".png"):
+                                count += 1
+            except OSError:
+                pass
+        _img_count_cache[slug] = {"count": count, "expires": now + _IMG_CACHE_TTL}
+        return count
+
     @app.route("/api/projects", methods=["GET"])
     def list_all_projects():
         slugs = list_projects()
@@ -113,7 +161,7 @@ def create_app() -> Flask:
             chunks_exists = os.path.isfile(os.path.join(pdir, "artifacts", "01_chunks.json"))
             source_exists = os.path.isfile(os.path.join(pdir, "source", "input_story.txt"))
             images_dir = os.path.join(pdir, "images")
-            img_count = sum(len([f for f in files if f.endswith(".png")]) for _, _, files in os.walk(images_dir)) if os.path.isdir(images_dir) else 0
+            img_count = _count_images_cached(s, images_dir)
 
             results.append({
                 "slug": s,
@@ -198,8 +246,8 @@ def create_app() -> Flask:
             try:
                 with open(diff_path, "r", encoding="utf-8") as f:
                     diff_cfg = json.load(f)
-            except Exception:
-                pass
+            except (json.JSONDecodeError, OSError) as e:
+                logger.warning("Failed to load diffusion config: %s", e)
 
         comfy_cfg = diff_cfg.get("comfyui", {})
         openai_img_cfg = diff_cfg.get("openai_compatible", {})
@@ -257,8 +305,8 @@ def create_app() -> Flask:
                 try:
                     with open(diff_path, "r", encoding="utf-8") as f:
                         current_diff = json.load(f)
-                except Exception:
-                    pass
+                except (json.JSONDecodeError, OSError) as e:
+                    logger.warning("Failed to load diffusion config for update: %s", e)
 
             if "backend" in img_data:
                 current_diff["backend"] = img_data["backend"]
@@ -336,6 +384,96 @@ def create_app() -> Flask:
             json.dump(data, f, indent=2, ensure_ascii=False)
         return jsonify({"success": True})
 
+    @app.route("/api/project/<slug>/prompt_context_preview", methods=["GET", "POST"])
+    def preview_prompt_context(slug):
+        pdir = get_project_dir(slug)
+        data = request.json or {} if request.is_json else {}
+        cid_filter = request.args.get("chunk_id") or data.get("chunk_id")
+        beat_override = data.get("beat")
+
+        bible_path = os.path.join(pdir, "artifacts", "03_visual_bible.json")
+        chunks_path = os.path.join(pdir, "artifacts", "01_chunks.json")
+        beats_path = os.path.join(pdir, "artifacts", "02_selected_beats.json")
+        profiles_path = os.path.join(pdir, "config", "diffusion_profiles.json")
+        llm_cfg_path = os.path.join(pdir, "config", "llm_models.json")
+
+        bible = {}
+        if os.path.isfile(bible_path):
+            with open(bible_path, "r", encoding="utf-8") as f:
+                bible = json.load(f)
+
+        chunks = []
+        if os.path.isfile(chunks_path):
+            with open(chunks_path, "r", encoding="utf-8") as f:
+                chunks = json.load(f).get("chunks", [])
+
+        beats = []
+        if os.path.isfile(beats_path):
+            with open(beats_path, "r", encoding="utf-8") as f:
+                beats = json.load(f).get("selected_beats", [])
+
+        diff_cfg = dict(DEFAULT_DIFFUSION_PROFILES)
+        if os.path.isfile(profiles_path):
+            with open(profiles_path, "r", encoding="utf-8") as f:
+                diff_cfg = json.load(f)
+
+        llm_cfg = dict(DEFAULT_LLM_CONFIG)
+        if os.path.isfile(llm_cfg_path):
+            llm_cfg = load_llm_config(llm_cfg_path)
+
+        active_profile_name = diff_cfg.get("active_profile", "sdxl_base")
+        profile = diff_cfg.get("profiles", {}).get(active_profile_name, {})
+
+        # If a specific beat object was supplied directly (e.g. from unsaved form in Tab 3)
+        if beat_override:
+            ctx = compose_prompt_context_for_beat(
+                beat=beat_override,
+                bible=bible,
+                chunks=chunks,
+                profile=profile,
+                active_profile_name=active_profile_name,
+                llm_config=llm_cfg
+            )
+            return jsonify({"success": True, "preview": ctx})
+
+        # If a specific chunk_id was requested
+        if cid_filter:
+            matched_beat = next((b for b in beats if b.get("chunk_id") == cid_filter), None)
+            if not matched_beat:
+                matched_beat = {
+                    "chunk_id": cid_filter,
+                    "scene_type": "landscape",
+                    "setting": "",
+                    "characters_present": [],
+                    "character_attire": {},
+                    "action_beat": "",
+                    "camera_framing": ""
+                }
+            ctx = compose_prompt_context_for_beat(
+                beat=matched_beat,
+                bible=bible,
+                chunks=chunks,
+                profile=profile,
+                active_profile_name=active_profile_name,
+                llm_config=llm_cfg
+            )
+            return jsonify({"success": True, "preview": ctx})
+
+        # Otherwise, compose previews for all beats (for Tab 4 pre-generation review grid)
+        previews = []
+        for beat in beats:
+            ctx = compose_prompt_context_for_beat(
+                beat=beat,
+                bible=bible,
+                chunks=chunks,
+                profile=profile,
+                active_profile_name=active_profile_name,
+                llm_config=llm_cfg
+            )
+            previews.append(ctx)
+
+        return jsonify({"success": True, "previews": previews})
+
     # Active stage tracking for live UI feedback
     stage_progress_map: Dict[str, Dict[str, Any]] = {}
 
@@ -344,8 +482,61 @@ def create_app() -> Flask:
         return jsonify(stage_progress_map.get(slug, {"running": False, "message": "Idle"}))
 
     # -------------------------------------------------------------------------
-    # Stage Runner & Image Generation
+    # Stage Runner & Image Generation (Offloaded to ThreadPoolExecutor)
     # -------------------------------------------------------------------------
+    def _execute_stage_task(job_id: str, slug: str, pdir: str, stage: str, client: LMStudioClient, llm_cfg: Dict[str, Any], role: Optional[str]) -> Dict[str, Any]:
+        def cb(msg: str):
+            stage_progress_map[slug] = {
+                "running": True,
+                "stage": stage,
+                "message": msg
+            }
+            if job_id in jobs:
+                jobs[job_id]["message"] = msg
+
+        try:
+            chosen_model = client.resolve_model(llm_cfg.get("roles", {}).get(role, {}).get("model", "")) if role else ""
+            cb(f"Starting {stage}" + (f" with model '{chosen_model}'" if chosen_model else "") + "...")
+            if stage == "chunk":
+                result = run_stage_chunk(pdir, callback=cb)
+            elif stage == "bible":
+                result = run_stage_bible(pdir, client, llm_cfg, callback=cb)
+            elif stage == "beats":
+                result = run_stage_beats(pdir, client, llm_cfg, callback=cb)
+            elif stage == "manifest":
+                result = run_stage_manifest(pdir, client, llm_cfg, callback=cb)
+            elif stage == "all_phase_1":
+                r_chunk = run_stage_chunk(pdir, callback=cb)
+                r_bible = run_stage_bible(pdir, client, llm_cfg, callback=cb)
+                r_beats = run_stage_beats(pdir, client, llm_cfg, callback=cb)
+                r_manifest = run_stage_manifest(pdir, client, llm_cfg, callback=cb)
+                result = {"chunks": r_chunk, "bible": r_bible, "beats": r_beats, "manifest": r_manifest}
+            else:
+                raise ValueError(f"Unknown stage: {stage}")
+
+            stage_progress_map[slug] = {"running": False, "stage": stage, "message": "Completed successfully."}
+            res = {"success": True, "stage": stage, "result": result}
+            if job_id in jobs:
+                jobs[job_id]["status"] = "completed"
+                jobs[job_id]["result"] = res
+                jobs[job_id]["message"] = "Completed successfully."
+            return res
+        except Exception as e:
+            stage_progress_map[slug] = {"running": False, "stage": stage, "error": str(e), "message": f"Error: {str(e)}"}
+            if job_id in jobs:
+                jobs[job_id]["status"] = "failed"
+                jobs[job_id]["error"] = str(e)
+                jobs[job_id]["message"] = f"Error: {str(e)}"
+            raise
+
+    @app.route("/api/project/<slug>/job/<job_id>", methods=["GET"])
+    @app.route("/api/job/<job_id>", methods=["GET"])
+    def get_job_status(job_id: str, slug: Optional[str] = None):
+        job = jobs.get(job_id)
+        if not job:
+            return jsonify({"error": f"Job '{job_id}' not found."}), 404
+        return jsonify(job)
+
     @app.route("/api/project/<slug>/run_stage", methods=["POST"])
     def run_stage_endpoint(slug):
         pdir = get_project_dir(slug)
@@ -395,39 +586,61 @@ def create_app() -> Flask:
                 except Exception as ex:
                     print(f"[!] Warning: failed to persist updated llm config: {ex}")
 
-        def cb(msg: str):
-            stage_progress_map[slug] = {
-                "running": True,
-                "stage": stage,
-                "message": msg
-            }
+        job_id = f"job_stage_{slug}_{int(time.time())}_{uuid.uuid4().hex[:6]}"
+        jobs[job_id] = {
+            "job_id": job_id,
+            "type": "stage",
+            "slug": slug,
+            "stage": stage,
+            "status": "running",
+            "message": f"Starting {stage}...",
+            "started_at": time.time(),
+            "result": None,
+            "error": None
+        }
+
+        future = _executor.submit(
+            _execute_stage_task,
+            job_id=job_id,
+            slug=slug,
+            pdir=pdir,
+            stage=stage,
+            client=client,
+            llm_cfg=llm_cfg,
+            role=role
+        )
+
+        is_async = bool(data.get("background") or data.get("async") or request.args.get("async"))
+        if is_async:
+            return jsonify({"success": True, "job_id": job_id, "status": "running"}), 202
 
         try:
-            chosen_model = client.resolve_model(llm_cfg.get("roles", {}).get(role, {}).get("model", "")) if role else ""
-            cb(f"Starting {stage}" + (f" with model '{chosen_model}'" if chosen_model else "") + "...")
-            if stage == "chunk":
-                result = run_stage_chunk(pdir, callback=cb)
-            elif stage == "bible":
-                result = run_stage_bible(pdir, client, llm_cfg, callback=cb)
-            elif stage == "beats":
-                result = run_stage_beats(pdir, client, llm_cfg, callback=cb)
-            elif stage == "manifest":
-                result = run_stage_manifest(pdir, client, llm_cfg, callback=cb)
-            elif stage == "all_phase_1":
-                r_chunk = run_stage_chunk(pdir, callback=cb)
-                r_bible = run_stage_bible(pdir, client, llm_cfg, callback=cb)
-                r_beats = run_stage_beats(pdir, client, llm_cfg, callback=cb)
-                r_manifest = run_stage_manifest(pdir, client, llm_cfg, callback=cb)
-                result = {"chunks": r_chunk, "bible": r_bible, "beats": r_beats, "manifest": r_manifest}
-            else:
-                stage_progress_map[slug] = {"running": False, "message": f"Unknown stage: {stage}"}
-                return jsonify({"error": f"Unknown stage: {stage}"}), 400
-
-            stage_progress_map[slug] = {"running": False, "stage": stage, "message": "Completed successfully."}
-            return jsonify({"success": True, "stage": stage, "result": result})
+            res = future.result()
+            return jsonify(res)
+        except ValueError as ve:
+            stage_progress_map[slug] = {"running": False, "message": str(ve)}
+            return jsonify({"error": str(ve)}), 400
         except Exception as e:
-            stage_progress_map[slug] = {"running": False, "stage": stage, "error": str(e), "message": f"Error: {str(e)}"}
             return jsonify({"success": False, "error": str(e)}), 500
+
+    def _execute_render_task(job_id: str, pdir: str, wf_path: Optional[str], chunk_ids: Optional[List[str]], force_all: bool) -> Dict[str, Any]:
+        try:
+            manifest = run_phase_2(
+                project_dir=pdir,
+                workflow_path=wf_path,
+                rerun_chunk_ids=chunk_ids,
+                force_all=force_all
+            )
+            res = {"success": True, "manifest": manifest}
+            if job_id in jobs:
+                jobs[job_id]["status"] = "completed"
+                jobs[job_id]["result"] = res
+            return res
+        except Exception as e:
+            if job_id in jobs:
+                jobs[job_id]["status"] = "failed"
+                jobs[job_id]["error"] = str(e)
+            raise
 
     @app.route("/api/project/<slug>/render", methods=["POST"])
     def run_render_endpoint(slug):
@@ -456,17 +669,36 @@ def create_app() -> Flask:
                     diff_cfg.setdefault("comfyui", {})["workflow"] = workflow_name
                     with open(diff_path, "w", encoding="utf-8") as f:
                         json.dump(diff_cfg, f, indent=2, ensure_ascii=False)
-                except Exception:
-                    pass
+                except (json.JSONDecodeError, OSError) as e:
+                    logger.warning("Failed to update workflow in diffusion config: %s", e)
+
+        job_id = f"job_render_{slug}_{int(time.time())}_{uuid.uuid4().hex[:6]}"
+        jobs[job_id] = {
+            "job_id": job_id,
+            "type": "render",
+            "slug": slug,
+            "status": "running",
+            "started_at": time.time(),
+            "result": None,
+            "error": None
+        }
+
+        future = _executor.submit(
+            _execute_render_task,
+            job_id=job_id,
+            pdir=pdir,
+            wf_path=wf_path,
+            chunk_ids=chunk_ids,
+            force_all=force_all
+        )
+
+        is_async = bool(data.get("background") or data.get("async") or request.args.get("async"))
+        if is_async:
+            return jsonify({"success": True, "job_id": job_id, "status": "running"}), 202
 
         try:
-            manifest = run_phase_2(
-                project_dir=pdir,
-                workflow_path=wf_path,
-                rerun_chunk_ids=chunk_ids,
-                force_all=force_all
-            )
-            return jsonify({"success": True, "manifest": manifest})
+            res = future.result()
+            return jsonify(res)
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
 
@@ -633,4 +865,4 @@ def create_app() -> Flask:
 if __name__ == "__main__":
     app = create_app()
     print("Starting Automated Story Illustrator WebUI on http://localhost:5000 ...")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=False)
