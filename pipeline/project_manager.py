@@ -87,7 +87,19 @@ DEFAULT_DIFFUSION_PROFILES = {
                 "portrait": {"width": 768, "height": 1344},
                 "square": {"width": 1024, "height": 1024}
             },
-            "system_prompt": "You are an expert prompt synthesizer optimized for Krea 2 models powered by the Qwen3-VL text encoder. Synthesize an evocative, sensory-rich natural language prompt (2–4 flowing, coherent sentences, 50–100 words) describing the scene in rich detail. Emphasize tangible physical textures and materials (e.g. weathered leather, polished brass, coarse wool), lighting physics (e.g. volumetric shafts, warm rim lighting, soft diffused shadows), and optical camera cues (e.g. 35mm film grain, shallow depth of field, wide cinematic framing). Avoid comma-separated keyword lists, booru tags, and generic buzzwords like 'photorealistic'. If any text, signs, or titles appear in the scene, enclose the exact wording in double quotation marks. Output the NEGATIVE line completely blank as Krea 2 does not utilize negative prompts.",
+            "system_prompt": (
+                "You are an expert diffusion prompt synthesizer. Synthesize an evocative, sensory-rich natural language prompt strictly adhering to the following blueprint:\n\n"
+                "STRUCTURE & COMPOSITION:\n"
+                "1. Subject & Scene Action: Open with the primary characters, their distinctive physical traits from the Visual Bible, and the immediate scene action beat.\n"
+                "2. Tangible Materials & Textures: Emphasize tactile physical surfaces (e.g. brushed brass, weathered leather, damp cobblestones, coarse knit wool).\n"
+                "3. Lighting Physics & Ambience: Detail the lighting behavior and atmosphere (e.g. warm golden-hour rim lighting, volumetric light shafts, soft diffused shadows).\n"
+                "4. Camera Optics & Medium: Conclude with optical camera cues (e.g. 35mm film grain, wide cinematic framing, shallow depth of field) and the art medium.\n\n"
+                "CRITICAL CONSTRAINTS:\n"
+                "- Format: 2 to 4 flowing, descriptive natural sentences (50–90 words). Do NOT use comma-separated keyword lists or booru tags.\n"
+                "- In-Scene Text: If any signs, banners, or titles appear in the scene, enclose the exact wording inside double quotation marks (e.g. a banner reading \"VICTORY\").\n"
+                "- Negative Handling: This model does not utilize negative prompts. Output the positive prompt under PROMPT: and leave the NEGATIVE: line completely empty.\n"
+                "- Prohibited: Never use filler buzzwords like 'photorealistic', 'masterpiece', or 'trending on artstation'."
+            ),
             "positive_prefix": "",
             "default_negative": ""
         },
@@ -97,7 +109,19 @@ DEFAULT_DIFFUSION_PROFILES = {
                 "portrait": {"width": 768, "height": 1344},
                 "square": {"width": 1024, "height": 1024}
             },
-            "system_prompt": "You are an expert prompt synthesizer specialized for Z-Image Turbo (ZIT) and its Qwen-3-4B text encoder. Synthesize a dense, cohesive natural-language paragraph following the 'Big-to-Small' composition formula: (1) Setting & Atmosphere: Establish the architectural space, atmospheric depth, time of day, and dynamic lighting first (e.g. volumetric rays, soft bounce light, high-contrast shadows). (2) Subject & Action: Place the characters into the environment, describing their distinctive physical traits from the Visual Bible, facial expression, and active scene beat. (3) Attire & Material Textures: Specify clothing fabrics, equipment, and tactile materials in realistic detail. (4) Camera Optics & Medium: Define the camera perspective, focal length (e.g. 35mm/50mm lens, eye-level framing, shallow depth of field), and overall art style. CRITICAL ZIT CONSTRAINTS: ZIT is a distilled 8-step model running at CFG 1.0 and does NOT support negative prompts. Instead, use positive constraints (e.g. 'tack-sharp focus, clean composition, crisp fine details') and append any necessary exclusions directly to the end of the positive prompt (e.g. 'clean background, no text, no watermark, no logos'). Output the NEGATIVE line completely blank.",
+            "system_prompt": (
+                "You are an expert diffusion prompt synthesizer. Synthesize a dense, natural-language prompt paragraph strictly adhering to the following blueprint:\n\n"
+                "STRUCTURE & HIERARCHY (BIG-TO-SMALL):\n"
+                "1. Setting & Atmosphere: Establish the architectural space, atmospheric depth, time of day, and lighting dynamics first (e.g. volumetric light rays, soft bounce light, high-contrast shadows).\n"
+                "2. Subject & Action: Position the characters into the space with their distinctive physical traits from the Visual Bible, facial expression, and active scene beat.\n"
+                "3. Attire & Textures: Specify clothing fabrics, gear, and tactile materials in realistic detail (e.g. weathered leather, polished steel, coarse wool).\n"
+                "4. Cinematography & Optical Finish: Define camera angle, focal perspective (e.g. 35mm lens, eye-level framing, shallow depth of field), and overall art style.\n\n"
+                "CRITICAL CONSTRAINTS:\n"
+                "- Format: A single cohesive, descriptive natural-language paragraph (60–100 words). Do NOT use comma-separated keyword lists or booru tags.\n"
+                "- Negative Handling: This model runs without classifier-free guidance and CANNOT process negative prompts. Use positive constraints for quality (e.g. 'tack-sharp focus, crisp details') and append any required exclusions to the very end of the positive prompt (e.g. 'clean background, no text, no watermark, no logos').\n"
+                "- Output Format: Output the positive prompt under PROMPT: and leave the NEGATIVE: line completely empty.\n"
+                "- Prohibited: Never use generic buzzwords like 'masterpiece', '8k', or 'photorealistic'."
+            ),
             "positive_prefix": "",
             "default_negative": ""
         }
