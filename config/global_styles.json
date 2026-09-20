@@ -3,7 +3,7 @@
     {
       "id": "charcoal_noir",
       "name": "Charcoal & Carbon Noir",
-      "description": "expressive charcoal drawing, velvety carbon black shadows, dramatic chiaroscuro contrast, textured cold-press paper tooth, powdery smudge gradients, gestural hatch marks",
+      "description": "Expressive charcoal drawing, velvety carbon black shadows, dramatic chiaroscuro contrast, textured cold-press paper tooth, powdery smudge gradients, gestural hatch marks, deep spiritual gloom.",
       "category": "art",
       "source_project": "global"
     },
@@ -17,7 +17,7 @@
     {
       "id": "storybook_watercolor",
       "name": "Storybook Watercolor & Ink",
-      "description": "storybook illustration, delicate translucent watercolor washes, wet-on-wet pigment blooming, precise fountain pen and ink linework, warm archival paper grain, soft luminous vignettes",
+      "description": "Delicate translucent watercolor washes, wet-on-wet pigment blooming, precise fountain pen and sepia ink linework, warm archival paper grain, soft luminous vignettes, pale lapis and ochre tones.",
       "category": "art",
       "source_project": "global"
     },
@@ -60,6 +60,20 @@
       "id": "egg_tempera_gold",
       "name": "Egg Tempera & Gold Leaf on Gesso",
       "description": "Precise cross-hatched egg tempera strokes for jewel-toned emerald and lapis pigments, applied to a gessoed wood panel with delicate gold leaf accents catching dramatic chiaroscuro light, early Renaissance devotional icon aesthetic.",
+      "category": "art",
+      "source_project": "ash_wednesday"
+    },
+    {
+      "id": "linocut_woodblock",
+      "name": "Linocut & Woodblock Relief Print",
+      "description": "Bold relief printmaking, hand-carved woodblock and linocut gouge marks, stark high-contrast black ink on cream handmade mulberry paper, rhythmic expressive contours, artisanal wood grain texture.",
+      "category": "art",
+      "source_project": "ash_wednesday"
+    },
+    {
+      "id": "silver_gelatin_noir",
+      "name": "1950s High-Contrast Silver Gelatin Noir",
+      "description": "1950s medium format black-and-white analog photography, Kodak Tri-X 400 silver gelatin print, deep velvety shadows, sharp optical contrast, Hasselblad 80mm lens rendering, fine natural film grain, moody chiaroscuro lighting.",
       "category": "art",
       "source_project": "ash_wednesday"
     }

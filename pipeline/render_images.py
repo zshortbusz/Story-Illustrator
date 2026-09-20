@@ -312,7 +312,8 @@ def run_phase_2(
             )
             save_manifest_atomic(manifest_path, manifest)
         except Exception as err:
-            print(f"[ERROR] Rendering failed for {cid}: {err}")
+            safe_err = str(err).encode("ascii", "replace").decode("ascii")
+            print(f"[ERROR] Rendering failed for {cid}: {safe_err}")
             raise
 
     print(f"\n[+] Phase 2 diffusion batch for '{target_key}' completed successfully! All images saved to {os.path.join(project_dir, 'images', target_slug)}")
