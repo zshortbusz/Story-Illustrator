@@ -1,0 +1,69 @@
+{
+  "art": [
+    {
+      "id": "charcoal_noir",
+      "name": "Charcoal & Carbon Noir",
+      "description": "expressive charcoal drawing, velvety carbon black shadows, dramatic chiaroscuro contrast, textured cold-press paper tooth, powdery smudge gradients, gestural hatch marks",
+      "category": "art",
+      "source_project": "global"
+    },
+    {
+      "id": "impasto_oil",
+      "name": "Impasto Oil & Palette Knife",
+      "description": "heavy textured oil painting, visible palette knife strokes, thick raised impasto ridges, rich layered oil pigments, tactile linen canvas weave, dramatic lighting on paint ridges",
+      "category": "art",
+      "source_project": "global"
+    },
+    {
+      "id": "storybook_watercolor",
+      "name": "Storybook Watercolor & Ink",
+      "description": "storybook illustration, delicate translucent watercolor washes, wet-on-wet pigment blooming, precise fountain pen and ink linework, warm archival paper grain, soft luminous vignettes",
+      "category": "art",
+      "source_project": "global"
+    },
+    {
+      "id": "etching_engraving",
+      "name": "Copperplate Etching & Crosshatch",
+      "description": "fine antique copperplate etching, intaglio engraving, dense rhythmic crosshatching, crisp dark line art on cream paper, atmospheric cross-hatch shading, archival printmaking aesthetic",
+      "category": "art",
+      "source_project": "global"
+    },
+    {
+      "id": "matte_gouache",
+      "name": "Matte Gouache & Graphic Cel",
+      "description": "matte opaque gouache painting, bold graphic shapes, flat velvety pigment blocks, subtle paper texture, stylized editorial illustration, crisp silhouettes",
+      "category": "art",
+      "source_project": "global"
+    },
+    {
+      "id": "colored_pencil_pastel",
+      "name": "Colored Pencil & Soft Pastel",
+      "description": "layered colored pencil shading, soft dry pastel blending, visible tooth and paper grain, warm luminous highlights, velvety blended shadows, handcrafted illustrative feel",
+      "category": "art",
+      "source_project": "global"
+    }
+  ],
+  "photography": [
+    {
+      "id": "kodachrome_1970s",
+      "name": "1970s 35mm Kodachrome",
+      "description": "vintage 1970s color photography, 35mm analog film capture, authentic Kodachrome color science, warm saturated reds and yellows, fine film grain, natural optical lens flare, period documentary aesthetic",
+      "category": "photography",
+      "source_project": "global"
+    },
+    {
+      "id": "wet_plate_collodion",
+      "name": "1890s Wet Plate Collodion Tintype",
+      "description": "19th century tintype photograph, wet plate collodion process, silver gelatin emulsion swirls, sepia and graphite tones, chemical plate imperfections, heavy edge vignetting, eerie period stillness",
+      "category": "photography",
+      "source_project": "global"
+    },
+    {
+      "id": "medium_format_editorial",
+      "name": "Modern Medium Format Editorial",
+      "description": "tack-sharp medium format studio photograph, Hasselblad optical clarity, cinematic studio softbox lighting, ultra-clean shadow detail, shallow depth of field, natural skin micro-textures",
+      "category": "photography",
+      "source_project": "global"
+    }
+  ]
+}

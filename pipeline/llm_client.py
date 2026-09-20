@@ -301,8 +301,17 @@ class LMStudioClient:
         match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text, re.IGNORECASE)
         if match:
             return match.group(1).strip()
+        first_bracket = text.find("[")
+        last_bracket = text.rfind("]")
         first_brace = text.find("{")
         last_brace = text.rfind("}")
+
+        # If it looks like a JSON array
+        if first_bracket != -1 and last_bracket != -1 and last_bracket > first_bracket:
+            if first_brace == -1 or first_bracket < first_brace:
+                return text[first_bracket:last_bracket + 1].strip()
+
+        # If it looks like a JSON object
         if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
             return text[first_brace:last_brace + 1].strip()
         return text
@@ -779,3 +788,230 @@ def load_llm_config(config_path: str) -> Dict[str, Any]:
 
 # Generalized alias for backend-agnostic usage
 LLMClient = LMStudioClient
+
+
+def _slugify_style_local(name: str) -> str:
+    cleaned = re.sub(r'[^a-zA-Z0-9]+', '_', name.strip().lower()).strip('_')
+    return cleaned or "style"
+
+
+def parse_styles_response(raw_text: str, category: str = "art", requested_count: int = 3) -> List[Dict[str, str]]:
+    """
+    Robustly parses LLM response into a list of style dictionaries containing id, name, description, category.
+    Handles JSON arrays, JSON wrapped in objects, and markdown bulleted lists.
+    """
+    cat_key = "photography" if category.lower() in ("photography", "photo") else "art"
+    styles: List[Dict[str, str]] = []
+
+    # 1. Attempt JSON block extraction
+    client = LMStudioClient()
+    extracted_json = client._extract_json_block(raw_text)
+    if extracted_json:
+        try:
+            parsed = json.loads(extracted_json)
+        except json.JSONDecodeError:
+            try:
+                parsed = json.loads(client._clean_json_syntax(extracted_json))
+            except Exception:
+                parsed = None
+        except Exception:
+            parsed = None
+
+        if parsed is not None:
+            raw_list = []
+            if isinstance(parsed, list):
+                raw_list = parsed
+            elif isinstance(parsed, dict):
+                for k in ("styles", "presets", "mediums", "results", "items", cat_key):
+                    if k in parsed and isinstance(parsed[k], list):
+                        raw_list = parsed[k]
+                        break
+
+            for item in raw_list:
+                if isinstance(item, dict):
+                    name = _clean_prompt_entry(str(item.get("name", "")))
+                    desc = _clean_prompt_entry(str(item.get("description", "")))
+                    sid = _clean_prompt_entry(str(item.get("id", ""))) or _slugify_style_local(name)
+                    if name and desc:
+                        styles.append({
+                            "id": sid,
+                            "name": name,
+                            "description": desc,
+                            "category": cat_key
+                        })
+
+    # 2. If JSON failed or yielded nothing, parse bulleted/tagged markdown
+    if not styles:
+        lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
+        cur_name = ""
+        cur_desc = ""
+
+        for line in lines:
+            # Match "Name: Foo" or "**Name**: Foo" or "1. **Foo**"
+            name_m = re.match(r"^(?:\d+\.|\*|-)?\s*(?:\*\*)?(?:Name|Style|Medium|Photographic Style)?(?:\*\*)?[:\s\-]+(?:\*\*)?([^*\n]+?)(?:\*\*)?$", line, re.IGNORECASE)
+            desc_m = re.match(r"^(?:\d+\.|\*|-)?\s*(?:\*\*)?(?:Description|Prompt|Keywords)?(?:\*\*)?[:\s\-]+(.*)$", line, re.IGNORECASE)
+
+            # Check for inline format: "1. **Style Name**: Description here..."
+            inline_m = re.match(r"^(?:\d+\.|\*|-)?\s*\*\*([^*]+)\*\*[:\s\-]+(.*)$", line)
+
+            if inline_m:
+                cand_name = _clean_prompt_entry(inline_m.group(1))
+                cand_desc = _clean_prompt_entry(inline_m.group(2))
+                if cand_name.lower() not in ("name", "description", "note", "style"):
+                    styles.append({
+                        "id": _slugify_style_local(cand_name),
+                        "name": cand_name,
+                        "description": cand_desc,
+                        "category": cat_key
+                    })
+                    continue
+
+            if name_m and not inline_m:
+                cand_name = _clean_prompt_entry(name_m.group(1))
+                if cand_name.lower() not in ("name", "description", "note"):
+                    if cur_name and cur_desc:
+                        styles.append({
+                            "id": _slugify_style_local(cur_name),
+                            "name": cur_name,
+                            "description": cur_desc,
+                            "category": cat_key
+                        })
+                    cur_name = cand_name
+                    cur_desc = ""
+            elif desc_m and cur_name:
+                cur_desc = _clean_prompt_entry(desc_m.group(1))
+
+        if cur_name and cur_desc:
+            styles.append({
+                "id": _slugify_style_local(cur_name),
+                "name": cur_name,
+                "description": cur_desc,
+                "category": cat_key
+            })
+
+    # Return parsed items capped at requested count if we got enough
+    if len(styles) >= requested_count:
+        return styles[:requested_count]
+
+    # Fallback curated starter styles if LLM returned incomplete list or failed
+    curated_fallbacks = {
+        "art": [
+            {"id": "charcoal_noir", "name": "Charcoal & Carbon Noir", "description": "expressive charcoal drawing, velvety carbon black shadows, dramatic chiaroscuro contrast, textured cold-press paper tooth, powdery smudge gradients", "category": "art"},
+            {"id": "impasto_oil", "name": "Impasto Oil & Palette Knife", "description": "heavy textured oil painting, visible palette knife strokes, thick raised impasto ridges, rich layered pigments, tactile linen canvas weave", "category": "art"},
+            {"id": "storybook_watercolor", "name": "Storybook Watercolor & Ink", "description": "storybook illustration, delicate translucent watercolor washes, wet-on-wet pigment blooming, precise fountain pen and ink linework, warm archival paper grain", "category": "art"},
+            {"id": "etching_engraving", "name": "Copperplate Etching & Crosshatch", "description": "fine antique copperplate etching, intaglio engraving, dense rhythmic crosshatching, crisp dark line art on cream paper, atmospheric cross-hatch shading", "category": "art"},
+            {"id": "matte_gouache", "name": "Matte Gouache & Graphic Cel", "description": "matte opaque gouache painting, bold graphic shapes, flat velvety pigment blocks, subtle paper texture, stylized editorial illustration", "category": "art"},
+            {"id": "colored_pencil_pastel", "name": "Colored Pencil & Soft Pastel", "description": "layered colored pencil shading, soft dry pastel blending, visible tooth and paper grain, warm luminous highlights, velvety blended shadows", "category": "art"},
+            {"id": "linocut_blockprint", "name": "Linocut Relief Print", "description": "hand-carved linocut print, bold carved relief lines, stark black and white contrast, subtle ink press grain, organic printmaker textures", "category": "art"}
+        ],
+        "photography": [
+            {"id": "kodachrome_1970s", "name": "1970s 35mm Kodachrome", "description": "vintage 1970s color photography, 35mm analog film capture, authentic Kodachrome color science, warm saturated reds and yellows, fine film grain, natural optical lens flare", "category": "photography"},
+            {"id": "wet_plate_collodion", "name": "1890s Wet Plate Collodion Tintype", "description": "19th century tintype photograph, wet plate collodion process, silver gelatin emulsion swirls, sepia and graphite tones, chemical plate imperfections, heavy edge vignetting", "category": "photography"},
+            {"id": "medium_format_editorial", "name": "Modern Medium Format Editorial", "description": "tack-sharp medium format studio photograph, Hasselblad optical clarity, cinematic studio softbox lighting, ultra-clean shadow detail, shallow depth of field", "category": "photography"},
+            {"id": "noir_tri_x_1950s", "name": "1950s Noir 35mm Tri-X", "description": "1950s documentary black-and-white film, Kodak Tri-X 400 grain, high-contrast monochrome, dramatic street lamp shadows, moody atmospheric silver-halide grain", "category": "photography"}
+        ]
+    }
+
+    existing_ids = {s["id"] for s in styles}
+    for fb in curated_fallbacks.get(cat_key, []):
+        if len(styles) >= requested_count:
+            break
+        if fb["id"] not in existing_ids:
+            styles.append(dict(fb))
+            existing_ids.add(fb["id"])
+
+    return styles[:requested_count]
+
+
+def infer_styles(
+    llm_client: LMStudioClient,
+    model: str,
+    theme_text: str,
+    category: str = "art",
+    count: int = 3,
+    existing_styles: Optional[List[str]] = None,
+    temperature: float = 0.5
+) -> List[Dict[str, str]]:
+    """
+    Infers thematic style presets (Art Mediums or Photography Eras) based on the story's visual tone.
+    Uses category-specific fine art or photographic domain instructions.
+    """
+    cat_key = "photography" if category.lower() in ("photography", "photo") else "art"
+
+    avoid_clause = ""
+    if existing_styles and len(existing_styles) > 0:
+        names_str = ", ".join([f"'{s}'" for s in existing_styles if s])
+        if names_str:
+            avoid_clause = f"\nIMPORTANT: The user already has the following styles: {names_str}. Propose DIFFERENT, distinctly unique options that do not duplicate these.\n"
+
+    if cat_key == "art":
+        system_prompt = (
+            "You are an expert art director and fine art print historian. "
+            "Your task is to recommend physical, tangible artistic mediums and illustration styles "
+            "(e.g. charcoal, oil, watercolor, gouache, intaglio etching, pastel, fresco, woodblock) "
+            "that would elevate and suit the story's visual atmosphere. "
+            "Avoid generic buzzwords like 'digital art' or 'hyperrealistic'; focus on genuine artist tools, "
+            "pigments, binders, mark-making techniques, and paper/canvas textures."
+        )
+        user_prompt = f"""STORY VISUAL THEME & TONE:
+{theme_text or 'Dramatic narrative story with rich atmosphere'}
+
+{avoid_clause}
+TASK:
+Propose exactly {count} distinctly different ARTISTIC ILLUSTRATION MEDIUMS tailored to this story.
+For each medium, provide:
+1. "name": An evocative, concise medium name (e.g. "Charcoal & Carbon Noir", "Impasto Oil & Palette Knife", "Storybook Watercolor & Ink").
+2. "description": A rich diffusion prompt descriptor (20-40 words) specifying the physical pigments, mark-making tools, surface tooth, and lighting interplay.
+
+Format your output strictly as a JSON array of objects:
+[
+  {{
+    "name": "Medium Name",
+    "description": "expressive physical medium keywords..."
+  }}
+]
+"""
+    else:
+        system_prompt = (
+            "You are an expert cinematic still photographer, camera technician, and film historian. "
+            "Your task is to recommend photographic eras, vintage film stocks, period camera systems, "
+            "and optical photographic aesthetics (e.g. 1970s Kodachrome, 1890s tintype, 1950s Tri-X noir, "
+            "medium format studio editorial, Polaroid transfer) that capture the story's dramatic mood. "
+            "Focus on authentic film chemistry, optical lens properties, grain structure, and lighting physics."
+        )
+        user_prompt = f"""STORY VISUAL THEME & TONE:
+{theme_text or 'Dramatic narrative story with rich atmosphere'}
+
+{avoid_clause}
+TASK:
+Propose exactly {count} distinctly different PHOTOGRAPHIC ERAS OR CAMERA/FILM AESTHETICS tailored to this story.
+For each style, provide:
+1. "name": An evocative, concise photographic style name (e.g. "1970s 35mm Kodachrome", "1890s Wet Plate Collodion Tintype", "1950s Noir Silver Gelatin").
+2. "description": A rich diffusion prompt descriptor (20-40 words) specifying camera optics, film stock/chemistry, grain, color palette, and lighting physics.
+
+Format your output strictly as a JSON array of objects:
+[
+  {{
+    "name": "Photographic Style Name",
+    "description": "optical film keywords..."
+  }}
+]
+"""
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt}
+    ]
+
+    try:
+        raw_output = llm_client.chat_text(
+            messages=messages,
+            model=model,
+            temperature=temperature,
+            max_tokens=1024
+        )
+        parsed = parse_styles_response(raw_output, category=cat_key, requested_count=count)
+        return parsed
+    except Exception as e:
+        # Graceful fallback: return curated starter presets if endpoint is offline or times out
+        return parse_styles_response("", category=cat_key, requested_count=count)

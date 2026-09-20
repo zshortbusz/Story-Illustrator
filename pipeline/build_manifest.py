@@ -23,8 +23,10 @@ from pipeline.llm_client import (
     estimate_tokens,
     ContextWindowExceededError,
     CharacterProfile,
-    normalize_character_entry
+    normalize_character_entry,
+    infer_styles
 )
+from pipeline.project_manager import merge_into_global_styles
 
 
 def print_banner(stage_name: str = "ALL"):
@@ -493,11 +495,38 @@ SETTING: <Name>: <visual environment description, materials, textures, lighting>
             else:
                 accumulated_bible["settings"][sname] = sdesc
 
+    # Infer story-tailored style presets (6 Art Mediums + 3 Photography Eras)
+    infer_notice = "Inferring story-tailored style presets (6 Art Mediums, 3 Photography Eras)..."
+    print(f"[*] {infer_notice}", flush=True)
+    if callback: callback(infer_notice)
+
+    theme_text = accumulated_bible.get("global_art_style", "")
+    art_styles = infer_styles(llm_client, model=model, theme_text=theme_text, category="art", count=6)
+    photo_styles = infer_styles(llm_client, model=model, theme_text=theme_text, category="photography", count=3)
+
+    accumulated_bible["style_presets"] = {
+        "art": art_styles,
+        "photography": photo_styles
+    }
+
+    if not accumulated_bible.get("active_style") and art_styles:
+        accumulated_bible["active_style"] = art_styles[0]
+        if not accumulated_bible.get("global_art_style"):
+            accumulated_bible["global_art_style"] = art_styles[0].get("description", "")
+
+    # Merge into universal global library
+    try:
+        proj_slug = os.path.basename(os.path.normpath(project_dir))
+        merge_into_global_styles(art_styles, category="art", source_project=proj_slug)
+        merge_into_global_styles(photo_styles, category="photography", source_project=proj_slug)
+    except Exception as ge:
+        print(f"[!] Note: Could not merge into global styles: {ge}")
+
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(accumulated_bible, f, indent=2, ensure_ascii=False)
 
-    done_msg = f"Visual Bible completed across {total_batches} batch(es): {len(accumulated_bible.get('characters', {}))} characters, {len(accumulated_bible.get('settings', {}))} settings -> 03_visual_bible.json"
+    done_msg = f"Visual Bible completed across {total_batches} batch(es): {len(accumulated_bible.get('characters', {}))} characters, {len(accumulated_bible.get('settings', {}))} settings, {len(art_styles)} art presets, {len(photo_styles)} photo presets -> 03_visual_bible.json"
     print(f"[+] {done_msg}", flush=True)
     if callback: callback(done_msg)
     return accumulated_bible
@@ -932,6 +961,13 @@ def run_stage_manifest(
         if not neg_prompt or not neg_prompt.strip():
             neg_prompt = default_negative
 
+        active_style = bible.get("active_style") or {
+            "id": "custom",
+            "name": "Default Style",
+            "description": bible.get("global_art_style", ""),
+            "category": "art"
+        }
+
         illustrations_by_chunk[cid] = {
             "status": "pending",
             "image_file": f"images/{cid}.png",
@@ -939,23 +975,51 @@ def run_stage_manifest(
             "height": ctx["dimensions"]["height"],
             "prompt": prompt_text,
             "negative_prompt": neg_prompt,
+            "style": active_style,
             "llm_context": ctx
         }
 
     story_title = os.path.basename(os.path.abspath(project_dir)).replace("_", " ").title()
 
+    # Load existing manifest to preserve past multi-workflow/multi-style illustrations
+    existing_blocks_by_cid = {}
+    if os.path.isfile(output_file):
+        try:
+            with open(output_file, "r", encoding="utf-8") as f:
+                old_m = json.load(f)
+                for b in old_m.get("blocks", []):
+                    existing_blocks_by_cid[b.get("chunk_id")] = b
+        except Exception:
+            pass
+
     blocks = []
     for chunk in chunks:
         cid = chunk["chunk_id"]
-        blocks.append({
+        illus = illustrations_by_chunk.get(cid, None)
+        old_b = existing_blocks_by_cid.get(cid, {})
+        old_illustrations = old_b.get("illustrations", {})
+
+        block_data = {
             "chunk_id": cid,
             "text": chunk["text"],
-            "illustration": illustrations_by_chunk.get(cid, None)
-        })
+            "illustration": illus
+        }
+        if old_illustrations:
+            block_data["illustrations"] = old_illustrations
+
+        blocks.append(block_data)
+
+    active_style = bible.get("active_style") or {
+        "id": "custom",
+        "name": "Default Style",
+        "description": bible.get("global_art_style", ""),
+        "category": "art"
+    }
 
     manifest = {
         "story_title": story_title,
         "active_profile": active_profile_name,
+        "active_style": active_style,
         "blocks": blocks
     }
 

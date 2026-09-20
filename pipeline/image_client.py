@@ -236,6 +236,37 @@ class OpenAIImageClient(BaseImageClient):
         }
 
 
+class MockImageClient(BaseImageClient):
+    """Mock image generation client for unit testing, offline simulation, and dry runs."""
+
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+    def check_health(self) -> Dict[str, Any]:
+        return {"status": "ok", "backend": "mock"}
+
+    def render(
+        self,
+        prompt: str,
+        negative_prompt: str = "",
+        width: int = 1024,
+        height: int = 1024,
+        seed: Optional[int] = None,
+        output_filepath: Optional[str] = None
+    ) -> Dict[str, Any]:
+        img_bytes = b"MOCK_PNG_IMAGE_CONTENT"
+        if output_filepath:
+            os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
+            with open(output_filepath, "wb") as f:
+                f.write(img_bytes)
+        return {
+            "bytes_length": len(img_bytes),
+            "filepath": output_filepath,
+            "seed": seed or 42,
+            "backend": "mock"
+        }
+
+
 def create_image_client(
     config: Optional[Dict[str, Any]] = None,
     workflow: Optional[Dict[str, Any]] = None,
@@ -248,6 +279,9 @@ def create_image_client(
     """
     config = config or {}
     backend = config.get("backend", "comfyui").lower()
+
+    if backend in ["mock", "dummy", "test"]:
+        return MockImageClient(**config)
 
     if backend in ["openai_compatible", "openai", "dalle", "flux"]:
         openai_cfg = config.get("openai_compatible", {})

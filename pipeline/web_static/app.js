@@ -257,7 +257,8 @@ async function loadProjectData(slug) {
     loadChunks(),
     loadBible(),
     loadBeats(),
-    loadManifest()
+    loadManifest(),
+    loadProjectStyles()
   ]);
   loadReaderPreview();
 }
@@ -1050,6 +1051,193 @@ async function loadPreGenReviewMatrix(container) {
 }
 
 // ----------------------------------------------------------------------------
+// Style Presets & Universal Library Management (Tab 4 & Tab 5)
+// ----------------------------------------------------------------------------
+let currentProjectStyles = null;
+let activeStyleSelection = null;
+
+async function loadProjectStyles() {
+  if (!currentSlug) return;
+  try {
+    const res = await fetch(`/api/project/${currentSlug}/styles`);
+    if (!res.ok) return;
+    const data = await res.json();
+    currentProjectStyles = data;
+
+    activeStyleSelection = data.active_style || null;
+
+    // Update Tab 4 Header Badge & Active display
+    const activeBadge = document.getElementById("activeStyleBadge");
+    const activeCatLabel = document.getElementById("activeStyleCatLabel");
+    const activeDescInput = document.getElementById("activeStyleDescriptionInput");
+    const renderActiveStyleLabel = document.getElementById("renderActiveStyleLabel");
+
+    if (activeStyleSelection) {
+      if (activeBadge) activeBadge.textContent = activeStyleSelection.name || "Custom Style";
+      if (activeCatLabel) activeCatLabel.textContent = activeStyleSelection.category === "photography" ? "Photography Era" : "Art Medium";
+      if (activeDescInput) activeDescInput.value = activeStyleSelection.description || "";
+      if (renderActiveStyleLabel) renderActiveStyleLabel.textContent = activeStyleSelection.name || "Custom Style";
+    }
+
+    const activeId = activeStyleSelection?.id || "";
+
+    // Render Inferred Art Chips
+    const artContainer = document.getElementById("artStyleChips");
+    if (artContainer) {
+      const artList = data.presets?.art || [];
+      renderStyleChips(artContainer, artList, activeId, "art");
+    }
+
+    // Render Inferred Photo Chips
+    const photoContainer = document.getElementById("photoStyleChips");
+    if (photoContainer) {
+      const photoList = data.presets?.photography || [];
+      renderStyleChips(photoContainer, photoList, activeId, "photography");
+    }
+
+    // Render Global Library Chips
+    const globalLib = data.global_library || { art: [], photography: [] };
+    const globalCountEl = document.getElementById("globalLibraryCount");
+    const totalGlobal = (globalLib.art || []).length + (globalLib.photography || []).length;
+    if (globalCountEl) globalCountEl.textContent = `${totalGlobal} styles`;
+
+    const globalArtContainer = document.getElementById("globalArtChips");
+    if (globalArtContainer) {
+      renderStyleChips(globalArtContainer, globalLib.art || [], activeId, "art");
+    }
+
+    const globalPhotoContainer = document.getElementById("globalPhotoChips");
+    if (globalPhotoContainer) {
+      renderStyleChips(globalPhotoContainer, globalLib.photography || [], activeId, "photography");
+    }
+
+  } catch (err) {
+    console.error("Styles load error:", err);
+  }
+}
+
+function renderStyleChips(container, styles, activeId, defaultCat = "art") {
+  container.innerHTML = "";
+  if (!styles || styles.length === 0) {
+    container.innerHTML = `<span style="font-size: 0.78rem; color: var(--text-dim); padding: 4px;">No presets yet. Click [+ Infer More] to generate.</span>`;
+    return;
+  }
+
+  styles.forEach(s => {
+    const chip = document.createElement("div");
+    const isActive = s.id === activeId || (activeStyleSelection && activeStyleSelection.name === s.name);
+    chip.className = `style-chip ${isActive ? "active" : ""}`;
+    chip.dataset.styleId = s.id || "";
+    chip.title = s.description || "";
+
+    const previewText = (s.description || "").length > 40
+      ? (s.description || "").slice(0, 37) + "..."
+      : (s.description || "");
+
+    chip.innerHTML = `
+      <div class="style-chip-name">${escapeHtml(s.name)}</div>
+      <div class="style-chip-preview">${escapeHtml(previewText)}</div>
+    `;
+
+    chip.addEventListener("click", () => {
+      selectActiveStyle({
+        id: s.id || s.name.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+        name: s.name,
+        description: s.description || "",
+        category: s.category || defaultCat
+      });
+    });
+
+    container.appendChild(chip);
+  });
+}
+
+async function selectActiveStyle(styleObj) {
+  if (!currentSlug || !styleObj) return;
+  activeStyleSelection = styleObj;
+
+  // Update UI indicators
+  const activeBadge = document.getElementById("activeStyleBadge");
+  const activeCatLabel = document.getElementById("activeStyleCatLabel");
+  const activeDescInput = document.getElementById("activeStyleDescriptionInput");
+  const renderActiveStyleLabel = document.getElementById("renderActiveStyleLabel");
+
+  if (activeBadge) activeBadge.textContent = styleObj.name;
+  if (activeCatLabel) activeCatLabel.textContent = styleObj.category === "photography" ? "Photography Era" : "Art Medium";
+  if (activeDescInput) activeDescInput.value = styleObj.description || "";
+  if (renderActiveStyleLabel) renderActiveStyleLabel.textContent = styleObj.name;
+
+  // Update active class on chips across containers
+  document.querySelectorAll(".style-chip").forEach(chip => {
+    if (chip.dataset.styleId === styleObj.id || chip.querySelector(".style-chip-name")?.textContent.trim() === styleObj.name) {
+      chip.classList.add("active");
+    } else {
+      chip.classList.remove("active");
+    }
+  });
+
+  // Sync with Tab 2 Visual Bible field if present
+  const bibleArtInput = document.getElementById("bibleArtStyle");
+  if (bibleArtInput && styleObj.description) {
+    bibleArtInput.value = styleObj.description;
+  }
+
+  // Persist to backend
+  try {
+    const res = await fetch(`/api/project/${currentSlug}/styles/select`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        style_id: styleObj.id,
+        style_name: styleObj.name,
+        description: styleObj.description,
+        category: styleObj.category
+      })
+    });
+    if (res.ok) {
+      showToast(`Active Style set to: ${styleObj.name}`);
+    }
+  } catch (err) {
+    console.error("Select style error:", err);
+  }
+}
+
+async function inferMoreStyles(category) {
+  if (!currentSlug) return;
+  const btn = category === "photography"
+    ? document.getElementById("btnInferMorePhoto")
+    : document.getElementById("btnInferMoreArt");
+
+  const originalHtml = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Inferring...`;
+  }
+
+  try {
+    const res = await fetch(`/api/project/${currentSlug}/styles/infer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category: category, count: 3 })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(`Inferred 3 new ${category} styles!`);
+      await loadProjectStyles();
+    } else {
+      showToast("Inference error: " + (data.error || "Unknown error"), "error");
+    }
+  } catch (err) {
+    showToast("Network error: " + err, "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  }
+}
+
+// ----------------------------------------------------------------------------
 // Tab 4: Manifest & Prompts
 // ----------------------------------------------------------------------------
 function renderManifestBlocks() {
@@ -1336,7 +1524,12 @@ async function startBatchRender() {
     const res = await fetch(`/api/project/${currentSlug}/render`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workflow: wf, force_all: forceAll })
+      body: JSON.stringify({
+        workflow: wf,
+        force_all: forceAll,
+        style_name: activeStyleSelection?.name,
+        style_slug: activeStyleSelection?.id
+      })
     });
     const data = await res.json();
     if (data.success) {
@@ -1371,7 +1564,12 @@ async function regenerateSelectedImages() {
     const res = await fetch(`/api/project/${currentSlug}/render`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workflow: wf, chunk_ids: chunkIds })
+      body: JSON.stringify({
+        workflow: wf,
+        chunk_ids: chunkIds,
+        style_name: activeStyleSelection?.name,
+        style_slug: activeStyleSelection?.id
+      })
     });
     const data = await res.json();
     if (data.success) {
@@ -1419,7 +1617,18 @@ function loadReaderPreview(targetWf = null) {
   if (wfSelect) {
     const currentVal = targetWf || wfSelect.value || currentManifest?.active_workflow || "sdxl_base.json";
     wfSelect.innerHTML = "";
-    Array.from(availableWorkflows).sort().forEach(wf => {
+
+    const rawWorkflows = Array.from(availableWorkflows);
+    const friendlyNames = rawWorkflows.filter(k => k.includes(" (") && k.endsWith(")"));
+    const friendlySlugs = new Set(friendlyNames.map(k => {
+      const parts = k.slice(0, -1).split(" (");
+      const wf = parts[0].replace(/\.json$/i, "").toLowerCase();
+      const st = parts[1].toLowerCase().replace(/[^a-z0-9]+/g, "_");
+      return `${wf}__${st}`;
+    }));
+    const displayWorkflows = rawWorkflows.filter(k => !friendlySlugs.has(k.toLowerCase()));
+
+    displayWorkflows.sort().forEach(wf => {
       const opt = document.createElement("option");
       opt.value = wf;
       const count = (currentManifest?.blocks || []).filter(b => {
@@ -2145,6 +2354,36 @@ function setupEventListeners() {
   const selImageBackend = document.getElementById("providerImageBackend");
   if (selImageBackend) {
     selImageBackend.addEventListener("change", e => toggleImageBackendSettings(e.target.value));
+  }
+
+  // Style Selection Console (Tab 4 & Tab 5)
+  const btnMoreArt = document.getElementById("btnInferMoreArt");
+  if (btnMoreArt) {
+    btnMoreArt.addEventListener("click", () => inferMoreStyles("art"));
+  }
+  const btnMorePhoto = document.getElementById("btnInferMorePhoto");
+  if (btnMorePhoto) {
+    btnMorePhoto.addEventListener("click", () => inferMoreStyles("photography"));
+  }
+  const styleDescInput = document.getElementById("activeStyleDescriptionInput");
+  if (styleDescInput) {
+    styleDescInput.addEventListener("change", () => {
+      if (activeStyleSelection) {
+        activeStyleSelection.description = styleDescInput.value.trim();
+        selectActiveStyle(activeStyleSelection);
+      }
+    });
+  }
+  const renderStyleLabel = document.getElementById("renderActiveStyleLabel");
+  if (renderStyleLabel) {
+    renderStyleLabel.addEventListener("click", () => {
+      const tabBtn = document.querySelector('[data-tab="tab-manifest"]');
+      if (tabBtn) tabBtn.click();
+    });
+  }
+  const readerWfSelect = document.getElementById("readerWorkflowSelect");
+  if (readerWfSelect) {
+    readerWfSelect.addEventListener("change", e => loadReaderPreview(e.target.value));
   }
 }
 

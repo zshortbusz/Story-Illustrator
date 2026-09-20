@@ -880,3 +880,125 @@ input[type="range"] {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
+
+/* Style Selection Console (Tab 4) */
+.style-selection-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.style-category-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.style-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.style-category-title {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-main);
+}
+
+.style-category-hint {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.style-chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.style-chip {
+  background: var(--bg-darkest);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: all 0.2s ease;
+  user-select: none;
+  max-width: 240px;
+  text-align: left;
+}
+
+.style-chip:hover {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.08);
+  transform: translateY(-1px);
+}
+
+.style-chip.active {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.style-chip-name {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.style-chip.active .style-chip-name::after {
+  content: " ✓";
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.style-chip-preview {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 210px;
+}
+
+.active-style-detail-box {
+  background: var(--bg-darkest);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+
+.global-library-drawer {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.global-library-summary {
+  cursor: pointer;
+  font-size: 0.84rem;
+  color: var(--text-dim);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  padding: 4px 0;
+}
+
+.global-library-summary:hover {
+  color: var(--text-main);
+}
+
+.global-library-content {
+  padding-top: 10px;
+}

@@ -167,11 +167,48 @@ def resolve_block_illustration(
     """
     illus = None
     if workflow and "illustrations" in block and isinstance(block["illustrations"], dict):
-        candidates = [workflow, f"{workflow}.json", os.path.splitext(workflow)[0]]
-        for cand in candidates:
-            if cand in block["illustrations"]:
-                illus = block["illustrations"][cand]
-                break
+        illustrations = block["illustrations"]
+        if workflow in illustrations:
+            illus = illustrations[workflow]
+        else:
+            candidates = [workflow]
+            if workflow.endswith(".json"):
+                candidates.append(workflow[:-5])
+            else:
+                candidates.append(f"{workflow}.json")
+
+            if "__" in workflow:
+                wf_part, style_part = workflow.split("__", 1)
+                candidates.extend([
+                    f"{wf_part} ({style_part})",
+                    f"{wf_part}.json ({style_part})",
+                    f"{wf_part} ({style_part.replace('_', ' ').title()})",
+                    f"{wf_part}.json ({style_part.replace('_', ' ').title()})"
+                ])
+            elif " (" in workflow and workflow.endswith(")"):
+                wf_part, style_part = workflow[:-1].split(" (", 1)
+                style_slug = style_part.lower().replace(" ", "_")
+                alt_wf = wf_part[:-5] if wf_part.endswith(".json") else f"{wf_part}.json"
+                candidates.extend([
+                    f"{alt_wf} ({style_part})",
+                    f"{wf_part}__{style_slug}",
+                    f"{alt_wf}__{style_slug}",
+                    wf_part,
+                    alt_wf
+                ])
+
+            for cand in candidates:
+                if cand in illustrations:
+                    illus = illustrations[cand]
+                    break
+
+            if not illus:
+                target_norm = re.sub(r'[^a-z0-9]', '', workflow.lower().replace('.json', ''))
+                for k, val in illustrations.items():
+                    k_norm = re.sub(r'[^a-z0-9]', '', k.lower().replace('.json', ''))
+                    if target_norm == k_norm or target_norm in k_norm or k_norm in target_norm:
+                        illus = val
+                        break
 
     if not illus and block.get("illustration"):
         illus = block["illustration"]

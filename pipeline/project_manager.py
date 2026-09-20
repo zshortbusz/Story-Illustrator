@@ -151,14 +151,17 @@ def slugify(text: str) -> str:
     return re.sub(r'[^a-z0-9]+', '_', text.lower()).strip('_')
 
 
-def init_project(story_slug: str, input_text: Optional[str] = None, workflow_name: str = "sdxl_base.json") -> str:
+def init_project(story_slug: str, input_text: Optional[str] = None, workflow_name: str = "sdxl_base.json", base_dir: Optional[str] = None) -> str:
     """
     Scaffolds /projects/{story_slug}/ with source, config, artifacts, images directories,
     default configs, and optionally initial input_story.txt.
     """
     story_slug = slugify(story_slug)
-    base_dir = get_base_dir()
-    project_dir = os.path.join(base_dir, "projects", story_slug)
+    repo_base = get_base_dir()
+    if base_dir is None:
+        project_dir = os.path.join(repo_base, "projects", story_slug)
+    else:
+        project_dir = os.path.join(base_dir, story_slug)
 
     for subdir in ["source", "config", "artifacts", "images"]:
         os.makedirs(os.path.join(project_dir, subdir), exist_ok=True)
@@ -177,7 +180,7 @@ def init_project(story_slug: str, input_text: Optional[str] = None, workflow_nam
     # Copy workflow
     target_wf = os.path.join(project_dir, "config", "workflow_api.json")
     if not os.path.exists(target_wf):
-        src_wf = os.path.join(base_dir, "workflows", workflow_name)
+        src_wf = os.path.join(repo_base, "workflows", workflow_name)
         if os.path.isfile(src_wf):
             shutil.copyfile(src_wf, target_wf)
 
@@ -221,3 +224,191 @@ def update_project_diffusion_profile(project_dir: str, profile_name: str, update
     with open(diff_path, "w", encoding="utf-8") as f:
         json.dump(cfg, f, indent=2)
     return cfg["profiles"]
+
+
+def get_global_styles_path() -> str:
+    """Returns absolute path to root config/global_styles.json or environment override."""
+    if "GLOBAL_STYLES_PATH" in os.environ and os.environ["GLOBAL_STYLES_PATH"]:
+        return os.environ["GLOBAL_STYLES_PATH"]
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_dir, "config", "global_styles.json")
+
+
+def load_global_styles() -> Dict[str, List[Dict[str, Any]]]:
+    """Loads the universal style presets library, creating it if missing."""
+    path = get_global_styles_path()
+    if os.path.isfile(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    data.setdefault("art", [])
+                    data.setdefault("photography", [])
+                    return data
+        except Exception:
+            pass
+    return {"art": [], "photography": []}
+
+
+def save_global_styles(data: Dict[str, List[Dict[str, Any]]]) -> None:
+    """Persists the universal style presets library."""
+    path = get_global_styles_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def slugify_style(name: str) -> str:
+    """Converts a style name into a clean alphanumeric slug."""
+    import re
+    cleaned = re.sub(r'[^a-zA-Z0-9]+', '_', name.strip().lower()).strip('_')
+    return cleaned or "style"
+
+
+def merge_into_global_styles(
+    styles: List[Dict[str, Any]],
+    category: str = "art",
+    source_project: str = "project"
+) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Merges newly inferred or saved styles into the universal library.
+    Prevents duplicate entries based on normalized name and id.
+    """
+    cat_key = "photography" if category.lower() in ("photography", "photo") else "art"
+    global_data = load_global_styles()
+    existing_items = global_data.get(cat_key, [])
+
+    existing_slugs = {item.get("id"): idx for idx, item in enumerate(existing_items) if item.get("id")}
+    existing_names = {item.get("name", "").strip().lower(): idx for idx, item in enumerate(existing_items) if item.get("name")}
+
+    for s in styles:
+        name = s.get("name", "").strip()
+        if not name:
+            continue
+        sid = s.get("id") or slugify_style(name)
+        desc = s.get("description", "").strip()
+        entry = {
+            "id": sid,
+            "name": name,
+            "description": desc,
+            "category": cat_key,
+            "source_project": s.get("source_project") or source_project
+        }
+
+        norm_name = name.lower()
+        if norm_name in existing_names:
+            # Update if incoming description is more detailed
+            idx = existing_names[norm_name]
+            if len(desc) > len(existing_items[idx].get("description", "")):
+                existing_items[idx]["description"] = desc
+        elif sid in existing_slugs:
+            idx = existing_slugs[sid]
+            if len(desc) > len(existing_items[idx].get("description", "")):
+                existing_items[idx]["description"] = desc
+        else:
+            existing_items.append(entry)
+            existing_names[norm_name] = len(existing_items) - 1
+            existing_slugs[sid] = len(existing_items) - 1
+
+    global_data[cat_key] = existing_items
+    save_global_styles(global_data)
+    return global_data
+
+
+def get_project_styles(project_dir: str) -> Dict[str, Any]:
+    """
+    Loads project-level inferred styles and active style selection from 03_visual_bible.json.
+    Falls back to global style library if project styles are not yet generated.
+    """
+    bible_path = os.path.join(project_dir, "artifacts", "03_visual_bible.json")
+    project_presets = {"art": [], "photography": []}
+    active_style = None
+
+    if os.path.isfile(bible_path):
+        try:
+            with open(bible_path, "r", encoding="utf-8") as f:
+                bible = json.load(f)
+                if "style_presets" in bible and isinstance(bible["style_presets"], dict):
+                    project_presets["art"] = bible["style_presets"].get("art", [])
+                    project_presets["photography"] = bible["style_presets"].get("photography", [])
+                active_style = bible.get("active_style")
+                if not active_style and bible.get("global_art_style"):
+                    active_style = {
+                        "id": "custom",
+                        "name": "Custom / Inferred Style",
+                        "description": bible.get("global_art_style"),
+                        "category": "art"
+                    }
+        except Exception:
+            pass
+
+    global_styles = load_global_styles()
+
+    # If project has no presets yet, populate from global styles as starters
+    effective_art = project_presets["art"] if project_presets["art"] else global_styles.get("art", [])
+    effective_photo = project_presets["photography"] if project_presets["photography"] else global_styles.get("photography", [])
+
+    if not active_style and effective_art:
+        active_style = effective_art[0]
+
+    return {
+        "presets": {
+            "art": effective_art,
+            "photography": effective_photo
+        },
+        "active_style": active_style,
+        "global_library": global_styles
+    }
+
+
+def update_project_active_style(
+    project_dir: str,
+    style_id: str,
+    style_name: Optional[str] = None,
+    description: Optional[str] = None,
+    category: str = "art"
+) -> Dict[str, Any]:
+    """
+    Sets the active style in 03_visual_bible.json and synchronizes global_art_style.
+    """
+    bible_path = os.path.join(project_dir, "artifacts", "03_visual_bible.json")
+    if not os.path.isfile(bible_path):
+        bible = {"global_art_style": "", "characters": {}, "settings": {}, "style_presets": {"art": [], "photography": []}}
+    else:
+        with open(bible_path, "r", encoding="utf-8") as f:
+            bible = json.load(f)
+
+    # Find style details if not fully provided
+    if not style_name or not description:
+        all_styles = []
+        if "style_presets" in bible:
+            all_styles.extend(bible["style_presets"].get("art", []))
+            all_styles.extend(bible["style_presets"].get("photography", []))
+        global_lib = load_global_styles()
+        all_styles.extend(global_lib.get("art", []))
+        all_styles.extend(global_lib.get("photography", []))
+
+        for s in all_styles:
+            if s.get("id") == style_id:
+                style_name = style_name or s.get("name")
+                description = description or s.get("description")
+                category = s.get("category", category)
+                break
+
+    style_obj = {
+        "id": style_id,
+        "name": style_name or style_id,
+        "description": description or "",
+        "category": category
+    }
+
+    bible["active_style"] = style_obj
+    if description:
+        bible["global_art_style"] = description
+
+    os.makedirs(os.path.dirname(bible_path), exist_ok=True)
+    with open(bible_path, "w", encoding="utf-8") as f:
+        json.dump(bible, f, indent=2, ensure_ascii=False)
+
+    return bible
+

@@ -232,6 +232,65 @@
         </div>
       </div>
 
+      <!-- Tab 4 Style Selection Console -->
+      <div class="card style-selection-card" style="margin-bottom: 20px;">
+        <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <h3 style="margin: 0;">Visual Style Direction</h3>
+            <span id="activeStyleBadge" class="badge badge-accent">Loading Styles...</span>
+          </div>
+          <div class="btn-group" style="gap: 8px;">
+            <button id="btnInferMoreArt" class="btn btn-sm btn-secondary" title="Infer 3 more fine art and illustration mediums tailored to this story">&#10024; + Infer More Art</button>
+            <button id="btnInferMorePhoto" class="btn btn-sm btn-secondary" title="Infer 3 more photography eras and film stocks tailored to this story">&#128247; + Infer More Photography</button>
+          </div>
+        </div>
+
+        <!-- Inferred Art Styles Section -->
+        <div class="style-category-block" style="margin-top: 12px;">
+          <div class="style-category-header">
+            <span class="style-category-title">&#127912; Story Art Mediums</span>
+            <span class="style-category-hint">Drawings, paintings, printmaking &amp; illustration</span>
+          </div>
+          <div id="artStyleChips" class="style-chips-grid"></div>
+        </div>
+
+        <!-- Inferred Photography Styles Section -->
+        <div class="style-category-block" style="margin-top: 14px;">
+          <div class="style-category-header">
+            <span class="style-category-title">&#128247; Story Photography Eras</span>
+            <span class="style-category-hint">Analog film stocks, period cameras &amp; optics</span>
+          </div>
+          <div id="photoStyleChips" class="style-chips-grid"></div>
+        </div>
+
+        <!-- Active Style Details & Editable Description -->
+        <div class="active-style-detail-box" style="margin-top: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="font-weight: 600; font-size: 0.88rem;">Active Style Prompt Descriptor:</label>
+            <span id="activeStyleCatLabel" class="badge" style="font-size: 0.75rem;">Art Medium</span>
+          </div>
+          <input type="text" id="activeStyleDescriptionInput" class="text-input" placeholder="Style prompt description (applied to prompts during synthesis)...">
+        </div>
+
+        <!-- Secondary Collapsible Global Library Drawer -->
+        <details class="global-library-drawer" style="margin-top: 14px;">
+          <summary class="global-library-summary">
+            <span>&#128194; Browse Universal Global Library (Saved across stories)</span>
+            <span id="globalLibraryCount" class="badge">0 styles</span>
+          </summary>
+          <div class="global-library-content">
+            <div style="margin-top: 8px;">
+              <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); margin-bottom: 4px;">&#127912; Global Art Mediums</div>
+              <div id="globalArtChips" class="style-chips-grid"></div>
+            </div>
+            <div style="margin-top: 10px;">
+              <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-dim); margin-bottom: 4px;">&#128247; Global Photography Eras</div>
+              <div id="globalPhotoChips" class="style-chips-grid"></div>
+            </div>
+          </div>
+        </details>
+      </div>
+
       <!-- In-Tab Model & Prompt Configuration -->
       <details class="card in-tab-config" style="margin-bottom: 20px;">
         <summary class="config-summary">
@@ -292,7 +351,11 @@
         </div>
         <div class="render-controls-group" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <label for="selectWorkflow">Workflow:</label>
-          <select id="selectWorkflow" class="select-input" style="width: 180px;"></select>
+          <select id="selectWorkflow" class="select-input" style="width: 170px;"></select>
+          <span class="render-style-display" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; color: var(--text-dim); margin-left: 4px; margin-right: 4px;">
+            <span>Style:</span>
+            <strong id="renderActiveStyleLabel" class="badge badge-accent" style="cursor: pointer;" title="Active style set in Tab 4">Default Style</strong>
+          </span>
           <button id="btnToggleSelectAll" class="btn btn-secondary" title="Select or deselect all scene illustrations">Select All</button>
           <button id="btnRegenerateSelected" class="btn btn-primary" disabled title="Regenerate checked scenes">&#8635; Regenerate Selected (0)</button>
           <button id="btnStartBatchRender" class="btn btn-success">&#9654; Start Batch Render</button>

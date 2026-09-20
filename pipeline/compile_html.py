@@ -236,6 +236,59 @@ footer.story-footer {
 """
 
 
+def find_illustration_in_block(block: Dict[str, Any], workflow: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """Resolves illustration matching workflow, style, or composite keys with fallbacks."""
+    if not block:
+        return None
+    illustrations = block.get("illustrations")
+    if workflow and isinstance(illustrations, dict) and illustrations:
+        # 1. Exact match
+        if workflow in illustrations:
+            return illustrations[workflow]
+
+        # 2. Derive candidate keys
+        candidates = [workflow]
+        if workflow.endswith(".json"):
+            candidates.append(workflow[:-5])
+        else:
+            candidates.append(f"{workflow}.json")
+
+        if "__" in workflow:
+            wf_part, style_part = workflow.split("__", 1)
+            candidates.extend([
+                f"{wf_part} ({style_part})",
+                f"{wf_part}.json ({style_part})",
+                f"{wf_part} ({style_part.replace('_', ' ').title()})",
+                f"{wf_part}.json ({style_part.replace('_', ' ').title()})"
+            ])
+        elif " (" in workflow and workflow.endswith(")"):
+            wf_part, style_part = workflow[:-1].split(" (", 1)
+            style_slug = style_part.lower().replace(" ", "_")
+            alt_wf = wf_part[:-5] if wf_part.endswith(".json") else f"{wf_part}.json"
+            candidates.extend([
+                f"{alt_wf} ({style_part})",
+                f"{wf_part}__{style_slug}",
+                f"{alt_wf}__{style_slug}",
+                wf_part,
+                alt_wf
+            ])
+
+        for c in candidates:
+            if c in illustrations:
+                return illustrations[c]
+
+        # 3. Normalized / case-insensitive check
+        target_norm = re.sub(r'[^a-z0-9]', '', workflow.lower().replace('.json', ''))
+        for k, val in illustrations.items():
+            k_norm = re.sub(r'[^a-z0-9]', '', k.lower().replace('.json', ''))
+            if target_norm == k_norm or target_norm in k_norm or k_norm in target_norm:
+                return val
+
+    if block.get("illustration"):
+        return block["illustration"]
+    return None
+
+
 def compile_manifest_to_html(
     manifest: Dict[str, Any],
     project_dir: str,
@@ -266,15 +319,7 @@ def compile_manifest_to_html(
         body_html_parts.append(f'<p class="story-paragraph">{rendered_p}</p>')
 
         # Resolve illustration for specified workflow or fallback to active illustration
-        illus = None
-        if workflow and "illustrations" in block and isinstance(block["illustrations"], dict):
-            wf_candidates = [workflow, f"{workflow}.json", os.path.splitext(workflow)[0]]
-            for cand in wf_candidates:
-                if cand in block["illustrations"]:
-                    illus = block["illustrations"][cand]
-                    break
-        elif block.get("illustration"):
-            illus = block["illustration"]
+        illus = find_illustration_in_block(block, workflow)
 
         if illus and illus.get("image_file"):
             img_rel_path = illus["image_file"]

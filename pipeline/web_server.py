@@ -21,9 +21,14 @@ from pipeline.project_manager import (
     init_project,
     slugify,
     DEFAULT_LLM_CONFIG,
-    DEFAULT_DIFFUSION_PROFILES
+    DEFAULT_DIFFUSION_PROFILES,
+    load_global_styles,
+    save_global_styles,
+    merge_into_global_styles,
+    get_project_styles,
+    update_project_active_style
 )
-from pipeline.llm_client import LMStudioClient, load_llm_config
+from pipeline.llm_client import LMStudioClient, load_llm_config, infer_styles
 from pipeline.comfy_client import ComfyUIClient
 from pipeline.image_client import create_image_client
 from pipeline.chunker import chunk_file
@@ -384,6 +389,128 @@ def create_app() -> Flask:
             json.dump(data, f, indent=2, ensure_ascii=False)
         return jsonify({"success": True})
 
+    # -------------------------------------------------------------------------
+    # Style Presets & Universal Global Style Library
+    # -------------------------------------------------------------------------
+    @app.route("/api/styles/global", methods=["GET", "POST"])
+    def global_styles_endpoint():
+        if request.method == "POST":
+            data = request.json or {}
+            styles = data.get("styles", [])
+            cat = data.get("category", "art")
+            source = data.get("source_project", "custom")
+            updated = merge_into_global_styles(styles, category=cat, source_project=source)
+            return jsonify({"success": True, "library": updated})
+        return jsonify(load_global_styles())
+
+    @app.route("/api/project/<slug>/styles", methods=["GET"])
+    def get_project_styles_endpoint(slug):
+        pdir = get_project_dir(slug)
+        styles_data = get_project_styles(pdir)
+        return jsonify(styles_data)
+
+    @app.route("/api/project/<slug>/styles/infer", methods=["POST"])
+    def infer_project_styles_endpoint(slug):
+        pdir = get_project_dir(slug)
+        data = request.json or {}
+        category = data.get("category", "art")
+        count = int(data.get("count", 3))
+
+        bible_path = os.path.join(pdir, "artifacts", "03_visual_bible.json")
+        bible = {}
+        if os.path.isfile(bible_path):
+            try:
+                with open(bible_path, "r", encoding="utf-8") as f:
+                    bible = json.load(f)
+            except Exception:
+                pass
+
+        theme_text = bible.get("global_art_style", "")
+        cat_key = "photography" if category.lower() in ("photography", "photo") else "art"
+        existing_styles = []
+        if "style_presets" in bible and isinstance(bible["style_presets"], dict):
+            existing_styles = [s.get("name", "") for s in bible["style_presets"].get(cat_key, []) if s.get("name")]
+
+        llm_cfg = dict(DEFAULT_LLM_CONFIG)
+        l_path = os.path.join(pdir, "config", "llm_models.json")
+        if os.path.isfile(l_path):
+            try:
+                llm_cfg = load_llm_config(l_path)
+            except Exception:
+                pass
+
+        role_cfg = llm_cfg.get("roles", {}).get("structured_analyst", {})
+        model = role_cfg.get("model", "thedrummer_orion-26b-a4b-v1")
+        llm_client = LMStudioClient(
+            api_base=llm_cfg.get("api_base", "http://localhost:1234/v1"),
+            api_key=llm_cfg.get("api_key"),
+            backend=llm_cfg.get("backend", "lm_studio"),
+            context_window=llm_cfg.get("context_window")
+        )
+
+        new_styles = infer_styles(
+            llm_client=llm_client,
+            model=model,
+            theme_text=theme_text,
+            category=cat_key,
+            count=count,
+            existing_styles=existing_styles
+        )
+
+        bible.setdefault("style_presets", {"art": [], "photography": []})
+        bible["style_presets"].setdefault(cat_key, [])
+
+        # Append new styles additively
+        existing_ids = {s.get("id") for s in bible["style_presets"][cat_key]}
+        added = []
+        for ns in new_styles:
+            if ns.get("id") not in existing_ids:
+                bible["style_presets"][cat_key].append(ns)
+                existing_ids.add(ns.get("id"))
+                added.append(ns)
+
+        # Merge to global library
+        try:
+            merge_into_global_styles(added, category=cat_key, source_project=slug)
+        except Exception as ge:
+            logger.warning("Could not merge new styles into global library: %s", ge)
+
+        os.makedirs(os.path.dirname(bible_path), exist_ok=True)
+        with open(bible_path, "w", encoding="utf-8") as f:
+            json.dump(bible, f, indent=2, ensure_ascii=False)
+
+        return jsonify({
+            "success": True,
+            "new_styles": added,
+            "presets": bible["style_presets"],
+            "active_style": bible.get("active_style")
+        })
+
+    @app.route("/api/project/<slug>/styles/select", methods=["POST"])
+    def select_project_style_endpoint(slug):
+        pdir = get_project_dir(slug)
+        data = request.json or {}
+        style_id = data.get("style_id")
+        style_name = data.get("style_name")
+        description = data.get("description")
+        category = data.get("category", "art")
+
+        if not style_id:
+            return jsonify({"error": "Missing style_id"}), 400
+
+        updated_bible = update_project_active_style(
+            project_dir=pdir,
+            style_id=style_id,
+            style_name=style_name,
+            description=description,
+            category=category
+        )
+        return jsonify({
+            "success": True,
+            "active_style": updated_bible.get("active_style"),
+            "global_art_style": updated_bible.get("global_art_style")
+        })
+
     @app.route("/api/project/<slug>/prompt_context_preview", methods=["GET", "POST"])
     def preview_prompt_context(slug):
         pdir = get_project_dir(slug)
@@ -623,13 +750,23 @@ def create_app() -> Flask:
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
 
-    def _execute_render_task(job_id: str, pdir: str, wf_path: Optional[str], chunk_ids: Optional[List[str]], force_all: bool) -> Dict[str, Any]:
+    def _execute_render_task(
+        job_id: str,
+        pdir: str,
+        wf_path: Optional[str],
+        chunk_ids: Optional[List[str]],
+        force_all: bool,
+        style_name: Optional[str] = None,
+        style_slug: Optional[str] = None
+    ) -> Dict[str, Any]:
         try:
             manifest = run_phase_2(
                 project_dir=pdir,
                 workflow_path=wf_path,
                 rerun_chunk_ids=chunk_ids,
-                force_all=force_all
+                force_all=force_all,
+                style_name=style_name,
+                style_slug=style_slug
             )
             res = {"success": True, "manifest": manifest}
             if job_id in jobs:
@@ -649,6 +786,8 @@ def create_app() -> Flask:
         workflow_name = data.get("workflow")
         chunk_ids = data.get("chunk_ids")
         force_all = bool(data.get("force_all", False))
+        style_name = data.get("style_name")
+        style_slug = data.get("style_slug")
         wf_path = None
         if workflow_name:
             wf_path = os.path.join(base_dir, "workflows", workflow_name)
@@ -689,7 +828,9 @@ def create_app() -> Flask:
             pdir=pdir,
             wf_path=wf_path,
             chunk_ids=chunk_ids,
-            force_all=force_all
+            force_all=force_all,
+            style_name=style_name,
+            style_slug=style_slug
         )
 
         is_async = bool(data.get("background") or data.get("async") or request.args.get("async"))
