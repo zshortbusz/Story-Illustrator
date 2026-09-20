@@ -41,6 +41,27 @@
       "description": "layered colored pencil shading, soft dry pastel blending, visible tooth and paper grain, warm luminous highlights, velvety blended shadows, handcrafted illustrative feel",
       "category": "art",
       "source_project": "global"
+    },
+    {
+      "id": "pre_raphaelite_oil",
+      "name": "Pre-Raphaelite Impasto & Glaze Oil",
+      "description": "Layered linseed oil glazes over thick impasto strokes, fine sable brushwork for Pre-Raphaelite detail, set against deep umber shadows and luminous, translucent skin tones on heavy linen canvas, dramatic chiaroscuro lighting.",
+      "category": "art",
+      "source_project": "ash_wednesday"
+    },
+    {
+      "id": "copperplate_etching",
+      "name": "Copperplate Etching & Aquatint",
+      "description": "Fine-line copperplate etching with deep aquatint tonal washes, sharp needle-etched details of organic decay contrasting with velvety ink-soaked shadows on heavy cream-colored cotton rag paper, antique intaglio printmaking.",
+      "category": "art",
+      "source_project": "ash_wednesday"
+    },
+    {
+      "id": "egg_tempera_gold",
+      "name": "Egg Tempera & Gold Leaf on Gesso",
+      "description": "Precise cross-hatched egg tempera strokes for jewel-toned emerald and lapis pigments, applied to a gessoed wood panel with delicate gold leaf accents catching dramatic chiaroscuro light, early Renaissance devotional icon aesthetic.",
+      "category": "art",
+      "source_project": "ash_wednesday"
     }
   ],
   "photography": [
@@ -64,6 +85,13 @@
       "description": "tack-sharp medium format studio photograph, Hasselblad optical clarity, cinematic studio softbox lighting, ultra-clean shadow detail, shallow depth of field, natural skin micro-textures",
       "category": "photography",
       "source_project": "global"
+    },
+    {
+      "id": "hand_tinted_wet_plate",
+      "name": "19th-Century Hand-Tinted Wet Plate",
+      "description": "19th century antique large format wet plate collodion photograph, subtle hand-tinted lapis and emerald dyes, silver gelatin emulsion swirls, sepia and graphite tones, delicate chemical plate imperfections, heavy edge vignetting.",
+      "category": "photography",
+      "source_project": "ash_wednesday"
     }
   ]
 }

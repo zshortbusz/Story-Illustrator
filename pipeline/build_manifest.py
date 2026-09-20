@@ -840,7 +840,7 @@ Construct a high-quality positive diffusion prompt that seamlessly combines:
 4. The camera framing, angle, and lighting.
 5. The global art style.
 
-Format your output simply as:
+CRITICAL INSTRUCTION: Do NOT output thinking steps, scratchpad, or markdown explanations. Start immediately with:
 PROMPT: <positive prompt string>
 NEGATIVE: <negative prompt string>
 """
