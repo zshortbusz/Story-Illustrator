@@ -69,6 +69,44 @@
       "default_negative": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo",
       "positive_prefix": "",
       "system_prompt": "You are an expert SDXL prompt synthesizer. Combine the scene elements into a keyword-focused, comma-separated prompt. Place primary subjects first, followed by camera framing, lighting, environment, and art style."
+    },
+    "krea2": {
+      "aspect_ratios": {
+        "landscape": {
+          "height": 768,
+          "width": 1344
+        },
+        "portrait": {
+          "height": 1344,
+          "width": 768
+        },
+        "square": {
+          "height": 1024,
+          "width": 1024
+        }
+      },
+      "default_negative": "",
+      "positive_prefix": "",
+      "system_prompt": "You are an expert prompt synthesizer optimized for Krea 2 models. Convert the provided scene beat, character appearance, setting, and style into an evocative, natural-language description (2-3 coherent sentences). Focus on concrete physical textures, cinematic lighting, camera perspective, and atmosphere. Avoid comma-separated keyword lists, booru tags, and quality buzzwords. If text or signage appears in the scene, place the exact words in quotation marks."
+    },
+    "zit": {
+      "aspect_ratios": {
+        "landscape": {
+          "height": 768,
+          "width": 1344
+        },
+        "portrait": {
+          "height": 1344,
+          "width": 768
+        },
+        "square": {
+          "height": 1024,
+          "width": 1024
+        }
+      },
+      "default_negative": "",
+      "positive_prefix": "",
+      "system_prompt": "You are an expert prompt synthesizer optimized for Z-Image Turbo (ZIT). Convert the scene beat, character appearance, setting, and style into a coherent, natural-language descriptive paragraph following a cinematic hierarchy: camera framing and subject composition, character visual details and clothing, environment textures and lighting, followed by artistic medium and style. Avoid comma-separated keyword lists and booru tags. Note that ZIT does not use negative prompts; any exclusions or constraints (such as 'no text, no logos') must be woven directly into the positive description."
     }
   }
 }

@@ -66,6 +66,44 @@
       },
       "system_prompt": "You are a prompt generator for anime diffusion models. Convert the scene components into Danbooru-style comma-separated tags. Always start with character counts (e.g., 1boy, 1girl), character visual tags, clothing, action pose, background tags, and style tags.",
       "default_negative": "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality"
+    },
+    "krea2": {
+      "aspect_ratios": {
+        "landscape": {
+          "width": 1344,
+          "height": 768
+        },
+        "portrait": {
+          "width": 768,
+          "height": 1344
+        },
+        "square": {
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "default_negative": "",
+      "positive_prefix": "",
+      "system_prompt": "You are an expert prompt synthesizer optimized for Krea 2 models. Convert the provided scene beat, character appearance, setting, and style into an evocative, natural-language description (2-3 coherent sentences). Focus on concrete physical textures, cinematic lighting, camera perspective, and atmosphere. Avoid comma-separated keyword lists, booru tags, and quality buzzwords. If text or signage appears in the scene, place the exact words in quotation marks."
+    },
+    "zit": {
+      "aspect_ratios": {
+        "landscape": {
+          "width": 1344,
+          "height": 768
+        },
+        "portrait": {
+          "width": 768,
+          "height": 1344
+        },
+        "square": {
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "default_negative": "",
+      "positive_prefix": "",
+      "system_prompt": "You are an expert prompt synthesizer optimized for Z-Image Turbo (ZIT). Convert the scene beat, character appearance, setting, and style into a coherent, natural-language descriptive paragraph following a cinematic hierarchy: camera framing and subject composition, character visual details and clothing, environment textures and lighting, followed by artistic medium and style. Avoid comma-separated keyword lists and booru tags. Note that ZIT does not use negative prompts; any exclusions or constraints (such as 'no text, no logos') must be woven directly into the positive description."
     }
   }
 }

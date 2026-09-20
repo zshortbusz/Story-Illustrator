@@ -39,6 +39,22 @@ class TestEnhancements(unittest.TestCase):
         for name, profile in DEFAULT_DIFFUSION_PROFILES.get("profiles", {}).items():
             self.assertIn("positive_prefix", profile, f"Profile '{name}' missing 'positive_prefix'")
 
+    def test_krea2_and_zit_profiles_exist_and_configured(self):
+        profiles = DEFAULT_DIFFUSION_PROFILES.get("profiles", {})
+        self.assertIn("krea2", profiles)
+        self.assertIn("zit", profiles)
+
+        for name in ["krea2", "zit"]:
+            prof = profiles[name]
+            self.assertIn("aspect_ratios", prof)
+            self.assertIn("landscape", prof["aspect_ratios"])
+            self.assertIn("portrait", prof["aspect_ratios"])
+            self.assertIn("square", prof["aspect_ratios"])
+            self.assertIn("system_prompt", prof)
+            self.assertTrue(len(prof["system_prompt"]) > 20)
+            self.assertIn("positive_prefix", prof)
+            self.assertIn("default_negative", prof)
+
     def test_update_and_get_diffusion_profile_positive_prefix(self):
         profiles = get_project_diffusion_profiles(self.pdir)
         self.assertIn("positive_prefix", profiles["sdxl_base"])
