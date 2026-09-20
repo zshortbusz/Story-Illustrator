@@ -51,7 +51,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Workflows (publish only reference sdxl_base workflow to GitHub; keep other models local)
+# Workflows (publish reference workflows to GitHub; keep other models local)
 workflows/*
 !workflows/sdxl_base.json
+!workflows/krea2_turbo.json
+!workflows/ZIT.json
+!workflows/zit_moody_promix_v13.json
 

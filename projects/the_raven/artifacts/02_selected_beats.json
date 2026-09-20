@@ -6,58 +6,64 @@
       "characters_present": [
         "The Narrator"
       ],
+      "character_attire": {},
       "setting": "The Scholar's Chamber",
-      "action_beat": "The Narrator sits hunched and weary at a heavy desk, surrounded by a chaotic pile of ancient, leather-bound volumes of forgotten lore. A single, flickering candle provides the only light, casting long, trembling shadows across the room.",
-      "camera_framing": "Medium shot, side profile, heavy chiaroscuro lighting."
+      "action_beat": "The Narrator sits hunched over a desk cluttered with ancient, leather-bound volumes of forgotten lore, his eyes heavy with exhaustion under the dim, flickering light of a single candle.",
+      "camera_framing": "Medium shot, eye-level, heavy chiaroscuro lighting with deep ebony shadows."
     },
     {
       "chunk_id": "chunk_001",
       "scene_type": "landscape",
       "characters_present": [],
+      "character_attire": {},
       "setting": "The Scholar's Chamber",
-      "action_beat": "A close-up of a dying fire in the hearth; the last glowing embers pulse with a deep amber light, casting \"ghostly\" shadows that dance erratically across the dark floorboards.",
-      "camera_framing": "Low angle, close-up, high contrast."
+      "action_beat": "Dying orange embers in a hearth cast long, ghostly, dancing shadows across the dark floorboards.",
+      "camera_framing": "Low angle, close-up on the floor, high contrast between the warm orange glow and the deep shadows."
     },
     {
       "chunk_id": "chunk_002",
-      "scene_type": "portrait",
-      "characters_present": [
-        "The Narrator"
-      ],
-      "setting": "The Scholar's Chamber",
-      "action_beat": "The Narrator stands in a state of sudden tension, his eyes wide with fear. In the background, heavy purple silk curtains rustle unnaturally in the gloom, their rich texture catching the dim, flickering light.",
-      "camera_framing": "Medium close-up, dramatic side-lighting."
-    },
-    {
-      "chunk_id": "chunk_004",
       "scene_type": "landscape",
       "characters_present": [
         "The Narrator"
       ],
+      "character_attire": {},
       "setting": "The Scholar's Chamber",
-      "action_beat": "The Narrator stands at the threshold of the open door, peering into a void of absolute, impenetrable darkness. His silhouette is sharply defined against the warm, dim light of the chamber, facing the terrifying emptiness of the night.",
-      "camera_framing": "Wide shot, silhouette, extreme tenebrism."
+      "action_beat": "The Narrator stands frozen in fear, eyes wide, as heavy, silken purple curtains ripple and rustle in the dim light.",
+      "camera_framing": "Wide shot, focusing on the texture of the violet fabric against the dark, moody atmosphere of the room."
+    },
+    {
+      "chunk_id": "chunk_003",
+      "scene_type": "landscape",
+      "characters_present": [
+        "The Narrator"
+      ],
+      "character_attire": {},
+      "setting": "The Scholar's Chamber",
+      "action_beat": "The Narrator stands in the open doorway, a dark silhouette against the dim light of the chamber, staring into a void of absolute, impenetrable blackness.",
+      "camera_framing": "Long shot, extreme chiaroscuro, emphasizing the stark contrast between the lit room and the darkness of the hallway."
     },
     {
       "chunk_id": "chunk_006",
-      "scene_type": "landscape",
+      "scene_type": "portrait",
       "characters_present": [
-        "The Narrator",
         "The Raven"
       ],
+      "character_attire": {},
       "setting": "The Scholar's Chamber",
-      "action_beat": "The Narrator flings open the window shutter to reveal a stately, ebony Raven that has stepped inside; the bird perches with a lordly, commanding presence atop a pale marble bust of Pallas Athena situated above the chamber door.",
-      "camera_framing": "Low angle, wide shot. High-contrast moonlight streaming through the open shutter, creating a stark silhouette of the bird against the white marble."
+      "action_beat": "A stately, ebony Raven with a grim and ancient countenance perches atop a pale, sickly white marble bust of Pallas Athena, situated above the heavy chamber door.",
+      "camera_framing": "Low angle, looking up at the bird and the bust; heavy chiaroscuro lighting with deep shadows and a sharp light source from the newly opened window."
     },
     {
       "chunk_id": "chunk_007",
       "scene_type": "portrait",
       "characters_present": [
+        "The Narrator",
         "The Raven"
       ],
+      "character_attire": {},
       "setting": "The Scholar's Chamber",
-      "action_beat": "A close-up of the Raven's countenance, revealing a grim, ancient, and stern expression; the bird's feathers are highly textured and dark, appearing almost sculptural in the gloom.",
-      "camera_framing": "Close-up. Tenebrism lighting, with intense highlights on the bird's beak and eye, leaving the rest of the frame in deep, velvety shadow."
+      "action_beat": "The Narrator, looking weary and intense, stares up at the Raven. The bird sits with a stern, lordly decorum, its dark feathers contrasting sharply against the pale marble of the bust.",
+      "camera_framing": "Medium shot, over-the-shoulder of the Narrator, focusing on the bird's \"ghastly grim\" expression under dramatic, high-contrast lighting."
     },
     {
       "chunk_id": "chunk_009",
@@ -65,48 +71,47 @@
       "characters_present": [
         "The Raven"
       ],
+      "character_attire": {},
       "setting": "The Scholar's Chamber",
-      "action_beat": "The Raven sits in absolute, lonely stillness upon the placid, pale bust of Pallas, a dark and motionless figure set against the deep midnight blue and ebony shadows of the chamber.",
-      "camera_framing": "Medium shot, centered on the bust. Moody, low-key lighting with faint, flickering amber light catching the edge of the marble."
-    },
-    {
-      "chunk_id": "chunk_011",
-      "scene_type": "square",
-      "characters_present": [
-        "The Narrator"
-      ],
-      "setting": "The Scholar's Chamber",
-      "action_beat": "The Narrator wheels a plush, violet velvet chair into the center of the room, sitting heavily upon it. He is positioned directly in front of the grim, gaunt Raven perched upon the pale marble bust, his silhouette framed by deep ebony shadows.",
-      "camera_framing": "Medium shot, side profile, high-contrast Chiaroscuro."
+      "action_beat": "The Raven sits in profound, lonely stillness upon the placid, white marble bust of Pallas, a dark silhouette against the deep violet and ebony shadows of the chamber.",
+      "camera_framing": "Wide shot, emphasizing the isolation of the bird and the heavy, moody atmosphere of the dark academia setting."
     },
     {
       "chunk_id": "chunk_012",
-      "scene_type": "portrait",
+      "scene_type": "square",
       "characters_present": [
         "The Narrator",
         "The Raven"
       ],
+      "character_attire": {},
       "setting": "The Scholar's Chamber",
-      "action_beat": "An extreme close-up of the Raven's eyes, which burn with an unnatural, fiery amber light. Below, the lamp-light glints off the rich, tactile texture of the violet velvet lining of the chair, creating a sense of heavy, suffocating luxury.",
-      "camera_framing": "Close-up, shallow depth of field, heavy Tenebrism."
+      "action_beat": "The Narrator reclines heavily in a velvet-violet chair, his gaze locked onto the Raven. The bird's eyes burn with an unnatural, fiery intensity that seems to pierce the Narrator. The lamp-light catches the rich, deep texture of the violet velvet lining of the chair.",
+      "camera_framing": "Medium close-up, low angle. Extreme chiaroscuro lighting with the lamp-light creating a sharp highlight on the Narrator's face and the texture of the velvet, while the rest of the chamber falls into deep ebony shadow."
     },
     {
       "chunk_id": "chunk_013",
       "scene_type": "landscape",
-      "characters_present": [],
+      "characters_present": [
+        "The Narrator",
+        "The Raven",
+        "Seraphim (ethereal/shadowy)"
+      ],
+      "character_attire": {},
       "setting": "The Scholar's Chamber",
-      "action_beat": "The air in the chamber becomes thick and heavy with swirling plumes of incense smoke. The smoke catches the flickering amber light, forming ghostly, ethereal shapes that suggest the movement of unseen Seraphim through the darkness.",
-      "camera_framing": "Wide shot, low angle, looking through a haze of smoke and shadow."
+      "action_beat": "The atmosphere of the room shifts into a surreal, dreamlike state. Thick, swirling plumes of perfumed incense smoke rise from an unseen source, and the faint, ghostly silhouettes of Seraphim appear within the haze, their feet appearing to hover just above the tufted floor.",
+      "camera_framing": "Wide shot. The lighting is hazy and atmospheric, with the light struggling to penetrate the dense, swirling smoke, creating a sense of heavy, claustrophobic divinity."
     },
     {
       "chunk_id": "chunk_014",
       "scene_type": "portrait",
       "characters_present": [
-        "The Narrator"
+        "The Narrator",
+        "The Raven"
       ],
+      "character_attire": {},
       "setting": "The Scholar's Chamber",
-      "action_beat": "The Narrator, looking haggard and desperate, leans forward into the light. His face is a mask of anguish and madness, half-submerged in deep shadow, as he cries out toward the darkness in a moment of profound spiritual desperation.",
-      "camera_framing": "Close-up, dramatic low angle, high-contrast lighting."
+      "action_beat": "A moment of desperate, manic confrontation. The Narrator leans forward, his face etched with anguish and frantic hope, pleading with the bird. The Raven sits motionless and grim, a dark silhouette against the pale marble bust, looking down like a judge.",
+      "camera_framing": "Close-up on the Narrator's face. High-contrast lighting (Rembrandt style) emphasizes the deep lines of despair and the moisture in his eyes, with the Raven's dark form framing the top of the shot."
     },
     {
       "chunk_id": "chunk_016",
@@ -114,19 +119,19 @@
       "characters_present": [
         "The Narrator"
       ],
+      "character_attire": {},
       "setting": "The Scholar's Chamber",
-      "action_beat": "The Narrator upstarting in a frantic, desperate movement, his face contorted in a mixture of grief and fury as he shrieks at the bird.",
-      "camera_framing": "Medium shot, low angle, dramatic side-lighting (tenebrism) to emphasize the tension in his posture and the heavy texture of his velvet robes."
+      "action_beat": "The Narrator upstarts from his seat in a sudden, frantic movement, his face contorted in a shriek of despair as he gestures wildly toward the bird.",
+      "camera_framing": "Low angle, dramatic chiaroscuro lighting, focusing on the Narrator's distraught expression against the dark shadows of the room."
     },
     {
       "chunk_id": "chunk_017",
-      "scene_type": "square",
-      "characters_present": [
-        "The Raven"
-      ],
+      "scene_type": "landscape",
+      "characters_present": [],
+      "character_attire": {},
       "setting": "The Scholar's Chamber",
-      "action_beat": "The black Raven perched motionless atop the pallid, cold marble bust of Pallas; a single lamp-light casts a sharp, dark shadow of the bird across the floor.",
-      "camera_framing": "Close-up, high-contrast lighting, focusing on the tactile contrast between the bird's ebony feathers and the smooth, white marble."
+      "action_beat": "The Raven sits motionless atop the pale, marble bust of Pallas; a single lamp-light casts a long, looming, demonic shadow of the bird that stretches across the floor.",
+      "camera_framing": "Wide shot, emphasizing the stark contrast between the pale marble and the deep, ebony shadow stretching toward the viewer."
     }
   ]
 }
