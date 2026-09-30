@@ -190,6 +190,12 @@ class TestVisibleChromeDevToolsE2E(unittest.TestCase):
         if not mcp_cmd:
             raise unittest.SkipTest("chrome-devtools-mcp not installed in environment; skipping browser E2E tests.")
 
+        import urllib.request
+        try:
+            urllib.request.urlopen("http://127.0.0.1:5000/api/status", timeout=1.0)
+        except Exception:
+            raise unittest.SkipTest("Live web server is not running on http://127.0.0.1:5000; skipping browser E2E tests.")
+
         cmd = mcp_cmd + ['--channel=stable', '--viewport', '1280x800']
         cls.proc = subprocess.Popen(
             cmd,

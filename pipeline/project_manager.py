@@ -14,6 +14,7 @@ DEFAULT_LLM_CONFIG = {
     "api_base": "http://localhost:1234/v1",
     "api_key": "",
     "context_window": 8192,
+    "timeout": 600,
     "roles": {
         "structured_analyst": {
             "model": "thedrummer_orion-26b-a4b-v1",
@@ -52,40 +53,100 @@ DEFAULT_DIFFUSION_PROFILES = {
     "active_profile": "sdxl_base",
     "profiles": {
         "flux_natural": {
+            "resolution_tiers": {
+                "standard": {
+                    "landscape": {"width": 1344, "height": 768},
+                    "portrait": {"width": 896, "height": 1152},
+                    "square": {"width": 1024, "height": 1024},
+                    "cover": {"width": 832, "height": 1344}
+                },
+                "highres": {
+                    "landscape": {"width": 2048, "height": 1152},
+                    "portrait": {"width": 1536, "height": 2048},
+                    "square": {"width": 2048, "height": 2048},
+                    "cover": {"width": 1600, "height": 2560}
+                }
+            },
             "aspect_ratios": {
                 "landscape": {"width": 1344, "height": 768},
-                "portrait": {"width": 768, "height": 1344},
-                "square": {"width": 1024, "height": 1024}
+                "portrait": {"width": 896, "height": 1152},
+                "square": {"width": 1024, "height": 1024},
+                "cover": {"width": 832, "height": 1344}
             },
             "system_prompt": "You are an expert diffusion prompt synthesizer. Convert the provided scene beat, character appearance, setting, and style into a detailed natural-language description (2-3 complete sentences). Avoid booru tags and keyword lists.",
             "positive_prefix": "",
             "default_negative": ""
         },
         "sdxl_base": {
+            "resolution_tiers": {
+                "standard": {
+                    "landscape": {"width": 1344, "height": 768},
+                    "portrait": {"width": 896, "height": 1152},
+                    "square": {"width": 1024, "height": 1024},
+                    "cover": {"width": 832, "height": 1344}
+                },
+                "highres": {
+                    "landscape": {"width": 2048, "height": 1152},
+                    "portrait": {"width": 1536, "height": 2048},
+                    "square": {"width": 2048, "height": 2048},
+                    "cover": {"width": 1600, "height": 2560}
+                }
+            },
             "aspect_ratios": {
                 "landscape": {"width": 1344, "height": 768},
-                "portrait": {"width": 832, "height": 1216},
-                "square": {"width": 1024, "height": 1024}
+                "portrait": {"width": 896, "height": 1152},
+                "square": {"width": 1024, "height": 1024},
+                "cover": {"width": 832, "height": 1344}
             },
             "system_prompt": "You are an expert SDXL prompt synthesizer. Combine the scene elements into a keyword-focused, comma-separated prompt. Place primary subjects first, followed by camera framing, lighting, environment, and art style.",
             "positive_prefix": "",
             "default_negative": "blurry, low quality, deformed, extra limbs, bad anatomy, text, watermark, logo"
         },
         "anime_danbooru": {
+            "resolution_tiers": {
+                "standard": {
+                    "landscape": {"width": 1216, "height": 832},
+                    "portrait": {"width": 832, "height": 1216},
+                    "square": {"width": 1024, "height": 1024},
+                    "cover": {"width": 832, "height": 1344}
+                },
+                "highres": {
+                    "landscape": {"width": 2048, "height": 1152},
+                    "portrait": {"width": 1536, "height": 2048},
+                    "square": {"width": 2048, "height": 2048},
+                    "cover": {"width": 1600, "height": 2560}
+                }
+            },
             "aspect_ratios": {
                 "landscape": {"width": 1216, "height": 832},
                 "portrait": {"width": 832, "height": 1216},
-                "square": {"width": 1024, "height": 1024}
+                "square": {"width": 1024, "height": 1024},
+                "cover": {"width": 832, "height": 1344}
             },
             "system_prompt": "You are a prompt generator for anime diffusion models. Convert the scene components into Danbooru-style comma-separated tags. Always start with character counts (e.g., 1boy, 1girl), character visual tags, clothing, action pose, background tags, and style tags.",
             "positive_prefix": "",
             "default_negative": "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality"
         },
         "krea2": {
+            "resolution_tiers": {
+                "standard": {
+                    "landscape": {"width": 1344, "height": 768},
+                    "portrait": {"width": 896, "height": 1152},
+                    "square": {"width": 1024, "height": 1024},
+                    "cover": {"width": 832, "height": 1344}
+                },
+                "highres": {
+                    "landscape": {"width": 2048, "height": 1152},
+                    "portrait": {"width": 1536, "height": 2048},
+                    "square": {"width": 2048, "height": 2048},
+                    "cover": {"width": 1600, "height": 2560}
+                }
+            },
             "aspect_ratios": {
                 "landscape": {"width": 1344, "height": 768},
-                "portrait": {"width": 768, "height": 1344},
-                "square": {"width": 1024, "height": 1024}
+                "portrait": {"width": 896, "height": 1152},
+                "square": {"width": 1024, "height": 1024},
+                "cover": {"width": 832, "height": 1344}
             },
             "system_prompt": (
                 "You are an expert diffusion prompt synthesizer. Synthesize an evocative, sensory-rich natural language prompt strictly adhering to the following blueprint:\n\n"
@@ -104,10 +165,25 @@ DEFAULT_DIFFUSION_PROFILES = {
             "default_negative": ""
         },
         "zit": {
+            "resolution_tiers": {
+                "standard": {
+                    "landscape": {"width": 1344, "height": 768},
+                    "portrait": {"width": 896, "height": 1152},
+                    "square": {"width": 1024, "height": 1024},
+                    "cover": {"width": 832, "height": 1344}
+                },
+                "highres": {
+                    "landscape": {"width": 2048, "height": 1152},
+                    "portrait": {"width": 1536, "height": 2048},
+                    "square": {"width": 2048, "height": 2048},
+                    "cover": {"width": 1600, "height": 2560}
+                }
+            },
             "aspect_ratios": {
                 "landscape": {"width": 1344, "height": 768},
-                "portrait": {"width": 768, "height": 1344},
-                "square": {"width": 1024, "height": 1024}
+                "portrait": {"width": 896, "height": 1152},
+                "square": {"width": 1024, "height": 1024},
+                "cover": {"width": 832, "height": 1344}
             },
             "system_prompt": (
                 "You are an expert diffusion prompt synthesizer. Synthesize a dense, natural-language prompt paragraph strictly adhering to the following blueprint:\n\n"
@@ -411,4 +487,43 @@ def update_project_active_style(
         json.dump(bible, f, indent=2, ensure_ascii=False)
 
     return bible
+
+
+def get_dimensions_for_tier(
+    profile: Dict[str, Any],
+    scene_type: str = "landscape",
+    tier: str = "highres"
+) -> Dict[str, int]:
+    """
+    Returns {'width': int, 'height': int} based on profile, scene_type, and resolution_tier.
+    Gracefully falls back to legacy 'aspect_ratios' if 'resolution_tiers' is missing.
+    """
+    scene_type = (scene_type or "landscape").lower().strip()
+    tier = (tier or "highres").lower().strip()
+
+    # 1. Try explicit resolution_tiers
+    tiers = profile.get("resolution_tiers", {})
+    if tiers:
+        tier_cfg = tiers.get(tier) or tiers.get("highres") or tiers.get("standard") or {}
+        if scene_type in tier_cfg:
+            return dict(tier_cfg[scene_type])
+        if "landscape" in tier_cfg:
+            return dict(tier_cfg["landscape"])
+
+    # 2. Try legacy aspect_ratios
+    aspect_ratios = profile.get("aspect_ratios", {})
+    if aspect_ratios and scene_type in aspect_ratios:
+        return dict(aspect_ratios[scene_type])
+    if aspect_ratios and "landscape" in aspect_ratios:
+        return dict(aspect_ratios["landscape"])
+
+    # 3. Default fallback
+    defaults = {
+        "landscape": {"width": 2048, "height": 1152} if tier == "highres" else {"width": 1344, "height": 768},
+        "portrait": {"width": 1536, "height": 2048} if tier == "highres" else {"width": 896, "height": 1152},
+        "square": {"width": 2048, "height": 2048} if tier == "highres" else {"width": 1024, "height": 1024},
+        "cover": {"width": 1600, "height": 2560} if tier == "highres" else {"width": 832, "height": 1344}
+    }
+    return dict(defaults.get(scene_type, defaults["landscape"]))
+
 

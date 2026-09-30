@@ -39,7 +39,7 @@ class LMStudioClient:
         api_key: Optional[str] = None,
         backend: str = "lm_studio",
         context_window: Optional[int] = None,
-        timeout: int = 300
+        timeout: int = 600
     ):
         self.api_base = api_base.rstrip("/")
         # API key resolution: argument > LLM_API_KEY > OPENAI_API_KEY
@@ -298,6 +298,8 @@ class LMStudioClient:
     def _extract_json_block(self, text: str) -> str:
         """Extracts JSON substring if enclosed in markdown code fences or surrounded by prose."""
         text = text.strip()
+        # Strip thinking/reasoning tags if present
+        text = re.sub(r"<(?:thought|think)>.*?</(?:thought|think)>", "", text, flags=re.DOTALL | re.IGNORECASE).strip()
         match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text, re.IGNORECASE)
         if match:
             return match.group(1).strip()
@@ -803,6 +805,9 @@ def parse_styles_response(raw_text: str, category: str = "art", requested_count:
     cat_key = "photography" if category.lower() in ("photography", "photo") else "art"
     styles: List[Dict[str, str]] = []
 
+    # Strip thinking / reasoning tags if present
+    raw_text = re.sub(r"<(?:thought|think)>.*?</(?:thought|think)>", "", raw_text, flags=re.DOTALL | re.IGNORECASE).strip()
+
     # 1. Attempt JSON block extraction
     client = LMStudioClient()
     extracted_json = client._extract_json_block(raw_text)
@@ -846,10 +851,12 @@ def parse_styles_response(raw_text: str, category: str = "art", requested_count:
         cur_name = ""
         cur_desc = ""
 
+        invalid_prefixes = ("format", "option ", "technical detail", "task", "wait,", "note:", "prompt:", "here is", "here are")
+
         for line in lines:
-            # Match "Name: Foo" or "**Name**: Foo" or "1. **Foo**"
-            name_m = re.match(r"^(?:\d+\.|\*|-)?\s*(?:\*\*)?(?:Name|Style|Medium|Photographic Style)?(?:\*\*)?[:\s\-]+(?:\*\*)?([^*\n]+?)(?:\*\*)?$", line, re.IGNORECASE)
-            desc_m = re.match(r"^(?:\d+\.|\*|-)?\s*(?:\*\*)?(?:Description|Prompt|Keywords)?(?:\*\*)?[:\s\-]+(.*)$", line, re.IGNORECASE)
+            # Match "Name: Foo" or "**Name**: Foo"
+            name_m = re.match(r"^(?:\d+\.|\*|-)?\s*(?:\*\*)?(?:Name|Style|Medium|Photographic Style)(?:\*\*)?[:\s\-]+(?:\*\*)?([^*\n]+?)(?:\*\*)?$", line, re.IGNORECASE)
+            desc_m = re.match(r"^(?:\d+\.|\*|-)?\s*(?:\*\*)?(?:Description|Prompt|Keywords)(?:\*\*)?[:\s\-]+(.*)$", line, re.IGNORECASE)
 
             # Check for inline format: "1. **Style Name**: Description here..."
             inline_m = re.match(r"^(?:\d+\.|\*|-)?\s*\*\*([^*]+)\*\*[:\s\-]+(.*)$", line)
@@ -857,7 +864,7 @@ def parse_styles_response(raw_text: str, category: str = "art", requested_count:
             if inline_m:
                 cand_name = _clean_prompt_entry(inline_m.group(1))
                 cand_desc = _clean_prompt_entry(inline_m.group(2))
-                if cand_name.lower() not in ("name", "description", "note", "style"):
+                if cand_name.lower() not in ("name", "description", "note", "style") and not any(cand_name.lower().startswith(p) for p in invalid_prefixes):
                     styles.append({
                         "id": _slugify_style_local(cand_name),
                         "name": cand_name,
@@ -868,7 +875,7 @@ def parse_styles_response(raw_text: str, category: str = "art", requested_count:
 
             if name_m and not inline_m:
                 cand_name = _clean_prompt_entry(name_m.group(1))
-                if cand_name.lower() not in ("name", "description", "note"):
+                if cand_name.lower() not in ("name", "description", "note", "style") and not any(cand_name.lower().startswith(p) for p in invalid_prefixes):
                     if cur_name and cur_desc:
                         styles.append({
                             "id": _slugify_style_local(cur_name),
@@ -1008,7 +1015,7 @@ Format your output strictly as a JSON array of objects:
             messages=messages,
             model=model,
             temperature=temperature,
-            max_tokens=1024
+            max_tokens=3072
         )
         parsed = parse_styles_response(raw_output, category=cat_key, requested_count=count)
         return parsed

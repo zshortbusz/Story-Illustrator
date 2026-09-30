@@ -9,9 +9,10 @@ import os
 import json
 import random
 import argparse
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List, Optional, Tuple
 from pipeline.comfy_client import ComfyUIClient, load_workflow_file
 from pipeline.image_client import BaseImageClient, create_image_client
+from pipeline.project_manager import get_dimensions_for_tier
 
 
 def print_banner():
@@ -164,7 +165,8 @@ def run_phase_2(
     image_model: Optional[str] = None,
     workflow: Optional[str] = None,
     style_name: Optional[str] = None,
-    style_slug: Optional[str] = None
+    style_slug: Optional[str] = None,
+    resolution_tier: Optional[str] = None
 ) -> Dict[str, Any]:
     """Executes Phase 2 diffusion batch or targeted rerun with non-destructive multi-workflow and multi-style image sets."""
     print_banner()
@@ -176,6 +178,10 @@ def run_phase_2(
 
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
+
+    if resolution_tier:
+        manifest["resolution_tier"] = resolution_tier
+    effective_tier = resolution_tier or manifest.get("resolution_tier")
 
     img_config = load_image_config(project_dir)
     if backend:
@@ -223,6 +229,26 @@ def run_phase_2(
     manifest["active_workflow"] = workflow_name
     if style_name or style_slug:
         manifest["active_style"] = {"id": style_slug or "style", "name": style_name or "Custom Style"}
+
+    # Update dimensions based on resolution tier if configured
+    if effective_tier:
+        profiles_file = os.path.join(project_dir, "config", "diffusion_profiles.json")
+        prof = {}
+        if os.path.isfile(profiles_file):
+            try:
+                with open(profiles_file, "r", encoding="utf-8") as pf:
+                    pcfg = json.load(pf)
+                act_pname = manifest.get("active_profile", pcfg.get("active_profile", "sdxl_base"))
+                prof = pcfg.get("profiles", {}).get(act_pname, {})
+            except Exception:
+                pass
+        if prof:
+            for b in blocks:
+                if b.get("illustration"):
+                    stype = b["illustration"].get("llm_context", {}).get("scene_type", "landscape")
+                    dims = get_dimensions_for_tier(prof, scene_type=stype, tier=effective_tier)
+                    b["illustration"]["width"] = dims["width"]
+                    b["illustration"]["height"] = dims["height"]
 
     # Synchronize multi-workflow/style illustrations map in each block
     for b in blocks:

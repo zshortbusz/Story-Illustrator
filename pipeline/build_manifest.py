@@ -26,7 +26,7 @@ from pipeline.llm_client import (
     normalize_character_entry,
     infer_styles
 )
-from pipeline.project_manager import merge_into_global_styles
+from pipeline.project_manager import merge_into_global_styles, get_dimensions_for_tier
 
 
 def print_banner(stage_name: str = "ALL"):
@@ -269,38 +269,97 @@ def resolve_character_for_scene(
     return audit["full_description"]
 
 
+BIBLE_STOPWORDS = {"the", "a", "an", "and", "of", "in", "at", "on", "to", "for", "with"}
+
+
 def match_bible_entity(name: str, bible_dict: Dict[str, Any]) -> Optional[Tuple[str, Any]]:
     """
     Fuzzy and case-insensitive resolution of a character or setting name against the Visual Bible.
-    Handles partial matches (e.g. 'Lyra' matching 'Lyra (Mechanic)' or 'Catwalks' matching 'The Rust Catwalks').
+    Handles partial matches (e.g. 'Lyra' matching 'Lyra (Mechanic)' or 'Catwalks' matching 'The Rust Catwalks')
+    while preventing false-positive collisions across family members (e.g. 'Carson Drew' vs 'Nancy Drew')
+    or common articles (e.g. 'The Butler' vs 'The Robber Leader').
     """
     if not name or not bible_dict:
         return None
-    name_clean = name.strip().lower()
+    name_clean = name.strip()
+    name_lower = name_clean.lower()
 
     # 1. Exact match (case-insensitive)
     for k, v in bible_dict.items():
-        if k.strip().lower() == name_clean:
+        if k.strip().lower() == name_lower:
             return k, v
 
-    # 2. Key contains query or query contains key
-    for k, v in bible_dict.items():
-        k_clean = k.strip().lower()
-        if name_clean in k_clean or k_clean in name_clean:
-            return k, v
+    # Tokenizer ignoring parentheticals and stopwords
+    def get_tokens(text: str) -> List[str]:
+        cleaned = re.sub(r"\(.*?\)", "", text.lower())
+        toks = [w for w in re.findall(r"\w+", cleaned) if w not in BIBLE_STOPWORDS]
+        return toks if toks else re.findall(r"\w+", cleaned)
 
-    # 3. Word token overlap
-    name_words = set(re.findall(r"\w+", name_clean))
+    name_tokens = get_tokens(name_clean)
+    name_set = set(name_tokens)
+    name_base = re.sub(r"\(.*?\)", "", name_lower).strip()
+
     best_match = None
-    best_score = 0
+    best_score = 0.0
+
     for k, v in bible_dict.items():
-        k_words = set(re.findall(r"\w+", k.strip().lower()))
-        overlap = len(name_words.intersection(k_words))
-        if overlap > best_score:
-            best_score = overlap
+        k_clean = k.strip()
+        k_lower = k_clean.lower()
+        k_base = re.sub(r"\(.*?\)", "", k_lower).strip()
+
+        # Direct parenthetical base match (e.g. 'The Robbers (Gang)' <-> 'The Robbers' or 'Lyra (Mechanic)' <-> 'Lyra')
+        if name_base and k_base:
+            if name_base == k_base or get_tokens(name_base) == get_tokens(k_base):
+                return k, v
+
+        k_tokens = get_tokens(k_clean)
+        k_set = set(k_tokens)
+
+        # First-name conflict prevention:
+        # If both entities have multi-word names (e.g. 'Carson Drew' vs 'Nancy Drew' or 'Allie Horner' vs 'Grace Horner'),
+        # they must NOT match if their first words are distinct!
+        if len(name_tokens) >= 2 and len(k_tokens) >= 2:
+            if name_tokens[0] != k_tokens[0]:
+                continue
+
+        # Single-word nickname/given-name match (e.g. 'Nancy' <-> 'Nancy Drew')
+        if len(name_tokens) == 1 and len(k_tokens) >= 2:
+            if name_tokens[0] == k_tokens[0]:
+                score = 0.95
+                if score > best_score:
+                    best_score = score
+                    best_match = (k, v)
+                continue
+        elif len(k_tokens) == 1 and len(name_tokens) >= 2:
+            if k_tokens[0] == name_tokens[0]:
+                score = 0.95
+                if score > best_score:
+                    best_score = score
+                    best_match = (k, v)
+                continue
+
+        # Token overlap of significant (non-stopword) words
+        intersection = name_set.intersection(k_set)
+        if not intersection:
+            continue
+
+        overlap_len = len(intersection)
+        max_len = max(len(name_set), len(k_set))
+
+        # Exact subset matches (e.g. 'Catwalks' in 'The Rust Catwalks' or 'The Crane Cabin' in 'Crane Cabin Interior')
+        if name_set.issubset(k_set) or k_set.issubset(name_set):
+            score = (overlap_len / max_len) + 0.3
+            if score > best_score:
+                best_score = score
+                best_match = (k, v)
+            continue
+
+        overlap_ratio = overlap_len / max_len
+        if overlap_ratio >= 0.6 and overlap_ratio > best_score:
+            best_score = overlap_ratio
             best_match = (k, v)
 
-    if best_match and best_score > 0:
+    if best_match and best_score >= 0.5:
         return best_match
 
     return None
@@ -723,7 +782,8 @@ def compose_prompt_context_for_beat(
     profile: Dict[str, Any],
     active_profile_name: str,
     llm_config: Dict[str, Any],
-    model_name: Optional[str] = None
+    model_name: Optional[str] = None,
+    resolution_tier: str = "highres"
 ) -> Dict[str, Any]:
     """
     Composes the full prompt synthesis context for a single beat, returning both
@@ -731,12 +791,7 @@ def compose_prompt_context_for_beat(
     """
     cid = beat.get("chunk_id", "chunk_000")
     scene_type = beat.get("scene_type", "landscape")
-    aspect_ratios = profile.get("aspect_ratios", {
-        "landscape": {"width": 1344, "height": 768},
-        "portrait": {"width": 832, "height": 1216},
-        "square": {"width": 1024, "height": 1024}
-    })
-    dims = aspect_ratios.get(scene_type, aspect_ratios.get("landscape", {"width": 1344, "height": 768}))
+    dims = get_dimensions_for_tier(profile, scene_type=scene_type, tier=resolution_tier)
 
     profile_system_prompt = profile.get(
         "system_prompt",
@@ -868,15 +923,11 @@ def run_stage_manifest(
     project_dir: str,
     llm_client: LMStudioClient,
     llm_config: Dict[str, Any],
-    callback: Optional[Callable[[str], None]] = None
+    callback: Optional[Callable[[str], None]] = None,
+    resolution_tier: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Stage 4: Master Manifest & Prompt Synthesis.
-    Reads:
-      - 01_chunks.json
-      - 02_selected_beats.json
-      - 03_visual_bible.json
-      - diffusion_profiles.json
+    Step 4: Prompt Synthesis.
     Synthesizes positive/negative prompts for each selected beat using the active profile.
     Produces: manifest.json with full prompt context audit trail stored per illustration block.
     """
@@ -889,6 +940,16 @@ def run_stage_manifest(
     for fpath in [chunks_file, beats_file, bible_file, profiles_file]:
         if not os.path.isfile(fpath):
             raise FileNotFoundError(f"Missing prerequisite artifact: {fpath}")
+
+    # Detect existing tier if not specified
+    if not resolution_tier and os.path.isfile(output_file):
+        try:
+            with open(output_file, "r", encoding="utf-8") as f:
+                existing_manifest = json.load(f)
+                resolution_tier = existing_manifest.get("resolution_tier")
+        except Exception:
+            pass
+    resolved_tier = resolution_tier or "highres"
 
     with open(chunks_file, "r", encoding="utf-8") as f:
         chunks_data = json.load(f)
@@ -913,7 +974,7 @@ def run_stage_manifest(
     max_tokens = role_cfg.get("max_tokens", -1)
 
     resolved_model = llm_client.resolve_model(model)
-    msg = f"Step 4: Synthesizing prompts for {len(beats)} beats using profile '{active_profile_name}' and model '{resolved_model}'..."
+    msg = f"Step 4: Synthesizing prompts for {len(beats)} beats using profile '{active_profile_name}' ({resolved_tier}) and model '{resolved_model}'..."
     print(f"[*] {msg}")
     if callback: callback(msg)
 
@@ -930,7 +991,8 @@ def run_stage_manifest(
             profile=profile,
             active_profile_name=active_profile_name,
             llm_config=llm_config,
-            model_name=resolved_model
+            model_name=resolved_model,
+            resolution_tier=resolved_tier
         )
 
         status_msg = f"Synthesizing prompt {idx}/{len(beats)} for {cid} with model '{resolved_model}'..."
@@ -993,11 +1055,20 @@ def run_stage_manifest(
             pass
 
     blocks = []
+    s_name = active_style.get("name")
+    s_id = active_style.get("id")
+
     for chunk in chunks:
         cid = chunk["chunk_id"]
         illus = illustrations_by_chunk.get(cid, None)
         old_b = existing_blocks_by_cid.get(cid, {})
-        old_illustrations = old_b.get("illustrations", {})
+        old_illustrations = dict(old_b.get("illustrations", {})) if isinstance(old_b.get("illustrations"), dict) else {}
+
+        if illus:
+            if s_name:
+                old_illustrations[s_name] = dict(illus)
+            if s_id and s_id != s_name:
+                old_illustrations[s_id] = dict(illus)
 
         block_data = {
             "chunk_id": cid,
@@ -1017,11 +1088,20 @@ def run_stage_manifest(
     }
 
     manifest = {
-        "story_title": story_title,
+        "story_title": (old_m.get("story_title") if "old_m" in locals() and old_m.get("story_title") else story_title),
         "active_profile": active_profile_name,
         "active_style": active_style,
+        "resolution_tier": resolved_tier,
         "blocks": blocks
     }
+
+    if "old_m" in locals() and old_m:
+        if "metadata" in old_m:
+            manifest["metadata"] = old_m["metadata"]
+        if "cover" in old_m:
+            manifest["cover"] = old_m["cover"]
+        if "active_workflow" in old_m:
+            manifest["active_workflow"] = old_m["active_workflow"]
 
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as f:
@@ -1059,7 +1139,8 @@ def run_phase_1(
         api_base=api_base,
         api_key=api_key,
         backend=resolved_backend,
-        context_window=ctx_win
+        context_window=ctx_win,
+        timeout=int(llm_config.get("timeout", 600))
     )
 
     if stage in ["bible", "beats", "manifest", "all"]:

@@ -40,8 +40,21 @@ from pipeline.build_manifest import (
     compose_prompt_context_for_beat
 )
 from pipeline.render_images import run_phase_2, save_manifest_atomic, resolve_workflow
-from pipeline.compile_html import compile_html, compile_manifest_to_html
-from pipeline.book_exporter import export_high_res_pdf, export_fxl_epub, export_reflowable_epub, get_book_metadata
+from pipeline.compile_html import compile_manifest_to_html
+from pipeline.book_exporter import (
+    export_high_res_pdf,
+    export_fxl_epub,
+    export_reflowable_epub,
+    export_kdp_bundle,
+    get_book_metadata,
+    resolve_cover_image
+)
+from pipeline.cover_manager import (
+    synthesize_cover_prompt,
+    composite_cover_typography,
+    set_existing_scene_as_cover
+)
+from pipeline.project_manager import get_dimensions_for_tier
 
 
 def create_app() -> Flask:
@@ -108,7 +121,8 @@ def create_app() -> Flask:
             api_base=llm_cfg.get("api_base", "http://localhost:1234/v1"),
             api_key=llm_cfg.get("api_key"),
             backend=llm_cfg.get("backend", "lm_studio"),
-            context_window=llm_cfg.get("context_window")
+            context_window=llm_cfg.get("context_window"),
+            timeout=int(llm_cfg.get("timeout", 600))
         )
         llm_health = llm_client.check_health()
 
@@ -263,7 +277,8 @@ def create_app() -> Flask:
                 "api_base": llm_cfg.get("api_base", "http://localhost:1234/v1"),
                 "has_api_key": bool(llm_cfg.get("api_key")),
                 "api_key": llm_cfg.get("api_key", ""),
-                "context_window": llm_cfg.get("context_window", 8192)
+                "context_window": llm_cfg.get("context_window", 8192),
+                "timeout": llm_cfg.get("timeout", 600)
             },
             "image": {
                 "backend": diff_cfg.get("backend", "comfyui"),
@@ -296,6 +311,11 @@ def create_app() -> Flask:
             if "context_window" in llm_data and llm_data["context_window"]:
                 try:
                     current_llm["context_window"] = int(llm_data["context_window"])
+                except (ValueError, TypeError):
+                    pass
+            if "timeout" in llm_data and llm_data["timeout"]:
+                try:
+                    current_llm["timeout"] = int(llm_data["timeout"])
                 except (ValueError, TypeError):
                     pass
             with open(llm_path, "w", encoding="utf-8") as f:
@@ -445,7 +465,8 @@ def create_app() -> Flask:
             api_base=llm_cfg.get("api_base", "http://localhost:1234/v1"),
             api_key=llm_cfg.get("api_key"),
             backend=llm_cfg.get("backend", "lm_studio"),
-            context_window=llm_cfg.get("context_window")
+            context_window=llm_cfg.get("context_window"),
+            timeout=int(llm_cfg.get("timeout", 600))
         )
 
         new_styles = infer_styles(
@@ -676,7 +697,8 @@ def create_app() -> Flask:
             api_base=llm_cfg.get("api_base", "http://localhost:1234/v1"),
             api_key=llm_cfg.get("api_key"),
             backend=llm_cfg.get("backend", "lm_studio"),
-            context_window=llm_cfg.get("context_window")
+            context_window=llm_cfg.get("context_window"),
+            timeout=int(llm_cfg.get("timeout", 600))
         )
 
         # Role mapping for stage model overrides
@@ -757,7 +779,8 @@ def create_app() -> Flask:
         chunk_ids: Optional[List[str]],
         force_all: bool,
         style_name: Optional[str] = None,
-        style_slug: Optional[str] = None
+        style_slug: Optional[str] = None,
+        resolution_tier: Optional[str] = None
     ) -> Dict[str, Any]:
         try:
             manifest = run_phase_2(
@@ -766,7 +789,8 @@ def create_app() -> Flask:
                 rerun_chunk_ids=chunk_ids,
                 force_all=force_all,
                 style_name=style_name,
-                style_slug=style_slug
+                style_slug=style_slug,
+                resolution_tier=resolution_tier
             )
             res = {"success": True, "manifest": manifest}
             if job_id in jobs:
@@ -788,6 +812,7 @@ def create_app() -> Flask:
         force_all = bool(data.get("force_all", False))
         style_name = data.get("style_name")
         style_slug = data.get("style_slug")
+        resolution_tier = data.get("resolution_tier")
         wf_path = None
         if workflow_name:
             wf_path = os.path.join(base_dir, "workflows", workflow_name)
@@ -830,7 +855,8 @@ def create_app() -> Flask:
             chunk_ids=chunk_ids,
             force_all=force_all,
             style_name=style_name,
-            style_slug=style_slug
+            style_slug=style_slug,
+            resolution_tier=resolution_tier
         )
 
         is_async = bool(data.get("background") or data.get("async") or request.args.get("async"))
@@ -874,7 +900,14 @@ def create_app() -> Flask:
         wf_path = os.path.join(base_dir, "workflows", workflow_name) if workflow_name else None
 
         try:
-            updated_manifest = run_phase_2(project_dir=pdir, workflow_path=wf_path, rerun_chunk_id=chunk_id)
+            updated_manifest = run_phase_2(
+                project_dir=pdir,
+                workflow_path=wf_path,
+                rerun_chunk_id=chunk_id,
+                style_name=data.get("style_name"),
+                style_slug=data.get("style_slug"),
+                resolution_tier=data.get("resolution_tier")
+            )
             return jsonify({"success": True, "chunk_id": chunk_id, "manifest": updated_manifest})
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
@@ -905,8 +938,7 @@ def create_app() -> Flask:
         pdir = get_project_dir(slug)
         workflow = request.args.get("workflow")
         as_download = request.args.get("download") == "1"
-        wf_suffix = f"_{workflow.replace('.json', '')}" if workflow else ""
-        download_name = f"{slug}{wf_suffix}_illustrated.html"
+        download_name = f"{slug}_illustrated.html"
 
         manifest_path = os.path.join(pdir, "artifacts", "manifest.json")
         if os.path.isfile(manifest_path):
@@ -941,16 +973,25 @@ def create_app() -> Flask:
         if request.method == "POST":
             data = request.json or {}
             meta = manifest.setdefault("metadata", {})
-            for k in ["title", "author", "publisher", "language", "description", "isbn"]:
+            meta_keys = [
+                "title", "subtitle", "author", "illustrator", "publisher",
+                "language", "description", "isbn", "dedication",
+                "copyright_text", "colophon", "differentiation_summary",
+                "differentiation_type", "public_domain"
+            ]
+            for k in meta_keys:
                 if k in data:
-                    meta[k] = str(data[k]).strip()
+                    if isinstance(data[k], bool):
+                        meta[k] = data[k]
+                    else:
+                        meta[k] = str(data[k]).strip()
             if "title" in data and data["title"]:
                 manifest["story_title"] = str(data["title"]).strip()
 
             save_manifest_atomic(manifest_path, manifest)
-            return jsonify({"success": True, "metadata": get_book_metadata(manifest)})
+            return jsonify({"success": True, "metadata": get_book_metadata(manifest, project_dir=pdir)})
 
-        return jsonify({"success": True, "metadata": get_book_metadata(manifest)})
+        return jsonify({"success": True, "metadata": get_book_metadata(manifest, project_dir=pdir)})
 
     @app.route("/api/project/<slug>/export/<format_type>", methods=["GET"])
     def export_project_book(slug, format_type):
@@ -963,11 +1004,10 @@ def create_app() -> Flask:
             manifest = json.load(f)
 
         workflow = request.args.get("workflow") or manifest.get("active_workflow")
-        wf_suffix = f"_{workflow.replace('.json', '')}" if workflow else ""
 
         # Check for query parameter metadata overrides
         overrides = {}
-        for field in ["title", "author", "publisher", "language", "description", "isbn"]:
+        for field in ["title", "author", "publisher", "language", "description", "isbn", "copyright_text", "colophon"]:
             val = request.args.get(field)
             if val:
                 overrides[field] = val
@@ -978,27 +1018,307 @@ def create_app() -> Flask:
         fmt = format_type.lower().strip()
         try:
             if fmt == "pdf":
-                filename = f"{slug}{wf_suffix}_print.pdf"
+                filename = f"{slug}_print.pdf"
                 out_path = os.path.join(export_dir, filename)
                 export_high_res_pdf(manifest, pdir, out_path, workflow=workflow, overrides=overrides)
                 return send_file(out_path, mimetype="application/pdf", as_attachment=True, download_name=filename)
 
             elif fmt in ["fxl", "fxl_epub", "epub_fxl"]:
-                filename = f"{slug}{wf_suffix}_fxl.epub"
+                filename = f"{slug}_fxl.epub"
                 out_path = os.path.join(export_dir, filename)
                 export_fxl_epub(manifest, pdir, out_path, workflow=workflow, overrides=overrides)
                 return send_file(out_path, mimetype="application/epub+zip", as_attachment=True, download_name=filename)
 
             elif fmt in ["reflowable", "reflowable_epub", "epub_reflowable", "epub"]:
-                filename = f"{slug}{wf_suffix}_reflowable.epub"
+                filename = f"{slug}_reflowable.epub"
                 out_path = os.path.join(export_dir, filename)
                 export_reflowable_epub(manifest, pdir, out_path, workflow=workflow, overrides=overrides)
                 return send_file(out_path, mimetype="application/epub+zip", as_attachment=True, download_name=filename)
 
+            elif fmt in ["kdp", "kdp_pack", "kdp_bundle", "kdp_zip"]:
+                filename = f"{slug}_kdp_pack.zip"
+                out_path = os.path.join(export_dir, filename)
+                export_kdp_bundle(manifest, pdir, out_path, workflow=workflow, overrides=overrides)
+                return send_file(out_path, mimetype="application/zip", as_attachment=True, download_name=filename)
+
             else:
-                return jsonify({"error": f"Unsupported export format '{format_type}'. Supported: 'pdf', 'fxl_epub', 'reflowable_epub'"}), 400
+                return jsonify({"error": f"Unsupported export format '{format_type}'. Supported: 'pdf', 'fxl_epub', 'reflowable_epub', 'kdp_pack'"}), 400
         except Exception as e:
             return jsonify({"error": f"Failed to export book: {str(e)}"}), 500
+
+    # -------------------------------------------------------------------------
+    # Resolution Tier & Cover Studio Endpoints
+    # -------------------------------------------------------------------------
+    @app.route("/api/project/<slug>/resolution-tier", methods=["GET", "POST"])
+    def project_resolution_tier_endpoint(slug):
+        pdir = get_project_dir(slug)
+        manifest_path = os.path.join(pdir, "artifacts", "manifest.json")
+        if not os.path.isfile(manifest_path):
+            return jsonify({"tier": "highres", "available_tiers": ["standard", "highres"]})
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        if request.method == "POST":
+            data = request.json or {}
+            tier = data.get("tier", "highres").lower().strip()
+            if tier not in ["standard", "highres"]:
+                return jsonify({"error": f"Invalid tier '{tier}'. Must be 'standard' or 'highres'."}), 400
+            manifest["resolution_tier"] = tier
+            save_manifest_atomic(manifest_path, manifest)
+            return jsonify({"success": True, "tier": tier})
+
+        return jsonify({
+            "tier": manifest.get("resolution_tier", "highres"),
+            "available_tiers": ["standard", "highres"]
+        })
+
+    @app.route("/api/project/<slug>/cover", methods=["GET"])
+    def get_project_cover_endpoint(slug):
+        pdir = get_project_dir(slug)
+        manifest_path = os.path.join(pdir, "artifacts", "manifest.json")
+        if not os.path.isfile(manifest_path):
+            return jsonify({"error": "Manifest not found."}), 404
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        cover_data = manifest.get("cover", {})
+        marketing_exists = os.path.isfile(os.path.join(pdir, "images", "cover", "cover_kdp_marketing.jpg"))
+        epub_cover_exists = os.path.isfile(os.path.join(pdir, "images", "cover", "cover.jpg"))
+
+        target_wf = request.args.get("workflow") or request.args.get("style")
+
+        from pipeline.book_exporter import resolve_block_illustration
+
+        # Discover all available styles across manifest blocks
+        styles_map = {}
+        for b in manifest.get("blocks", []):
+            if b.get("illustrations") and isinstance(b["illustrations"], dict):
+                for k, v in b["illustrations"].items():
+                    if not v or not isinstance(v, dict):
+                        continue
+                    name = v.get("style_name") or k
+                    if name not in styles_map or (" (" in k and k.endswith(")")):
+                        styles_map[name] = {"workflow": k, "label": name}
+            if b.get("illustration") and isinstance(b["illustration"], dict):
+                wf = b["illustration"].get("workflow") or "sdxl_base.json"
+                name = b["illustration"].get("style_name") or wf
+                if name not in styles_map:
+                    styles_map[name] = {"workflow": wf, "label": name}
+
+        available_styles = []
+        for name, data in styles_map.items():
+            cnt = sum(1 for b in manifest.get("blocks", []) if resolve_block_illustration(b, pdir, data["workflow"]))
+            available_styles.append({
+                "workflow": data["workflow"],
+                "label": name,
+                "rendered_count": cnt
+            })
+
+        # Sort by rendered_count descending, then alphabetical
+        available_styles.sort(key=lambda s: (-s["rendered_count"], s["label"]))
+
+        # Select target_wf if not provided
+        if not target_wf:
+            if cover_data.get("workflow"):
+                target_wf = cover_data["workflow"]
+            elif available_styles and available_styles[0]["rendered_count"] > 0:
+                target_wf = available_styles[0]["workflow"]
+
+        available_scenes = []
+        for b in manifest.get("blocks", []):
+            cid = b.get("chunk_id")
+            info = resolve_block_illustration(b, pdir, target_wf)
+            if info:
+                # Relative web path
+                rel_p = os.path.relpath(info[0], pdir).replace("\\", "/")
+                beat_text = b.get("action_beat")
+                if not beat_text:
+                    raw_text = (b.get("text") or "").strip().replace("\n", " ")
+                    beat_text = (raw_text[:75] + "...") if len(raw_text) > 75 else raw_text
+                if not beat_text:
+                    beat_text = cid
+                filename = os.path.basename(info[0])
+                available_scenes.append({
+                    "chunk_id": cid,
+                    "title": beat_text,
+                    "action_beat": beat_text,
+                    "filename": filename,
+                    "prompt": info[1],
+                    "image_url": f"/api/project/{slug}/{rel_p}",
+                    "workflow": target_wf
+                })
+
+        return jsonify({
+            "cover": cover_data,
+            "has_marketing_cover": marketing_exists,
+            "has_epub_cover": epub_cover_exists,
+            "marketing_url": f"/api/project/{slug}/images/cover/cover_kdp_marketing.jpg" if marketing_exists else None,
+            "epub_cover_url": f"/api/project/{slug}/images/cover/cover.jpg" if epub_cover_exists else None,
+            "available_scenes": available_scenes,
+            "available_styles": available_styles,
+            "active_workflow": target_wf
+        })
+
+    @app.route("/api/project/<slug>/cover/synthesize", methods=["POST"])
+    def synthesize_cover_endpoint(slug):
+        pdir = get_project_dir(slug)
+        manifest_path = os.path.join(pdir, "artifacts", "manifest.json")
+        if not os.path.isfile(manifest_path):
+            return jsonify({"error": "Manifest not found."}), 404
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        config_file = os.path.join(pdir, "config", "llm_models.json")
+        llm_cfg = load_llm_config(config_file) if os.path.isfile(config_file) else DEFAULT_LLM_CONFIG
+        client = LMStudioClient(
+            api_base=llm_cfg.get("api_base", "http://localhost:1234/v1"),
+            api_key=llm_cfg.get("api_key"),
+            backend=llm_cfg.get("backend", "lm_studio"),
+            timeout=int(llm_cfg.get("timeout", 600))
+        )
+        try:
+            res = synthesize_cover_prompt(manifest, pdir, client, llm_cfg)
+            cover = manifest.setdefault("cover", {})
+            cover["prompt"] = res["prompt"]
+            cover["negative_prompt"] = res["negative_prompt"]
+            save_manifest_atomic(manifest_path, manifest)
+            return jsonify({"success": True, "cover": cover})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @app.route("/api/project/<slug>/cover/set-existing", methods=["POST"])
+    def set_existing_cover_endpoint(slug):
+        pdir = get_project_dir(slug)
+        manifest_path = os.path.join(pdir, "artifacts", "manifest.json")
+        if not os.path.isfile(manifest_path):
+            return jsonify({"error": "Manifest not found."}), 404
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        data = request.json or {}
+        chunk_id = data.get("chunk_id")
+        if not chunk_id:
+            return jsonify({"error": "chunk_id is required."}), 400
+
+        apply_typography = bool(data.get("apply_typography", True))
+        workflow = data.get("workflow")
+        font_family = data.get("font_family", "serif")
+        font_color = data.get("font_color", "gold")
+
+        try:
+            cover_record = set_existing_scene_as_cover(
+                manifest=manifest,
+                project_dir=pdir,
+                chunk_id=chunk_id,
+                apply_typography=apply_typography,
+                workflow=workflow,
+                font_family=font_family,
+                font_color=font_color
+            )
+            return jsonify({"success": True, "cover": cover_record})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @app.route("/api/project/<slug>/cover/render", methods=["POST"])
+    def render_cover_endpoint(slug):
+        pdir = get_project_dir(slug)
+        manifest_path = os.path.join(pdir, "artifacts", "manifest.json")
+        if not os.path.isfile(manifest_path):
+            return jsonify({"error": "Manifest not found."}), 404
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        data = request.json or {}
+        prompt = data.get("prompt") or manifest.get("cover", {}).get("prompt")
+        neg_prompt = data.get("negative_prompt") or manifest.get("cover", {}).get("negative_prompt", "")
+        workflow_name = data.get("workflow") or manifest.get("active_workflow", "sdxl_base.json")
+        apply_typography = bool(data.get("apply_typography", True))
+        tier = data.get("resolution_tier") or manifest.get("resolution_tier", "highres")
+        font_family = data.get("font_family", "serif")
+        font_color = data.get("font_color", "gold")
+
+        if not prompt:
+            return jsonify({"error": "No cover prompt provided. Synthesize or enter a prompt first."}), 400
+
+        diff_file = os.path.join(pdir, "config", "diffusion_profiles.json")
+        diff_cfg = {}
+        if os.path.isfile(diff_file):
+            try:
+                with open(diff_file, "r", encoding="utf-8") as df:
+                    diff_cfg = json.load(df)
+            except Exception:
+                pass
+
+        act_pname = manifest.get("active_profile", diff_cfg.get("active_profile", "sdxl_base"))
+        prof = diff_cfg.get("profiles", {}).get(act_pname, {})
+        dims = get_dimensions_for_tier(prof, scene_type="cover", tier=tier)
+
+        wf_path = os.path.join(base_dir, "workflows", workflow_name)
+        img_cfg = load_image_config(pdir)
+        wf_graph = resolve_workflow(pdir, wf_path) if img_cfg.get("backend", "comfyui").lower() == "comfyui" else None
+
+        from pipeline.image_client import create_image_client
+        img_client = create_image_client(config=img_cfg, workflow=wf_graph, workflow_path=wf_path)
+
+        cover_dir = os.path.join(pdir, "images", "cover")
+        os.makedirs(cover_dir, exist_ok=True)
+        raw_output_path = os.path.join(cover_dir, "raw_cover.png")
+        seed = random.randint(1, 1125899906842624)
+
+        try:
+            res = img_client.generate_image(
+                prompt=prompt,
+                negative_prompt=neg_prompt,
+                width=dims["width"],
+                height=dims["height"],
+                seed=seed,
+                output_path=raw_output_path
+            )
+
+            marketing_path = os.path.join(cover_dir, "cover_kdp_marketing.jpg")
+            epub_cover_path = os.path.join(cover_dir, "cover.jpg")
+
+            meta = manifest.get("metadata", {})
+            title = meta.get("title") or manifest.get("story_title") or "Illustrated Story"
+            author = meta.get("author", "Author Unknown")
+
+            if apply_typography:
+                composite_cover_typography(
+                    source_image_path=raw_output_path,
+                    title=title,
+                    author=author,
+                    output_marketing_path=marketing_path,
+                    output_epub_cover_path=epub_cover_path,
+                    font_family=font_family,
+                    font_color=font_color
+                )
+            else:
+                with Image.open(raw_output_path) as im:
+                    rgb = im.convert("RGB")
+                    rgb.save(marketing_path, format="JPEG", quality=92, progressive=True, optimize=True)
+                    rgb.save(epub_cover_path, format="JPEG", quality=90, progressive=True, optimize=True)
+
+            cover_record = {
+                "mode": "generated",
+                "prompt": prompt,
+                "negative_prompt": neg_prompt,
+                "width": dims["width"],
+                "height": dims["height"],
+                "seed": seed,
+                "image_file": "images/cover/cover.jpg",
+                "marketing_file": "images/cover/cover_kdp_marketing.jpg",
+                "applied_typography": apply_typography
+            }
+            manifest["cover"] = cover_record
+            save_manifest_atomic(manifest_path, manifest)
+            return jsonify({"success": True, "cover": cover_record})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
 
     return app
 

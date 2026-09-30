@@ -247,6 +247,22 @@ async function loadWorkflows() {
   }
 }
 
+async function loadResolutionTier() {
+  const select = document.getElementById("selectResolutionTier");
+  if (!select || !currentSlug) return;
+  try {
+    const res = await fetch(`/api/project/${encodeURIComponent(currentSlug)}/resolution-tier`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.tier) {
+        select.value = data.tier;
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to load resolution tier:", err);
+  }
+}
+
 async function loadProjectData(slug) {
   if (!slug) return;
   currentSlug = slug;
@@ -258,7 +274,8 @@ async function loadProjectData(slug) {
     loadBible(),
     loadBeats(),
     loadManifest(),
-    loadProjectStyles()
+    loadProjectStyles(),
+    loadResolutionTier()
   ]);
   loadReaderPreview();
 }
@@ -1070,13 +1087,11 @@ async function loadProjectStyles() {
     const activeBadge = document.getElementById("activeStyleBadge");
     const activeCatLabel = document.getElementById("activeStyleCatLabel");
     const activeDescInput = document.getElementById("activeStyleDescriptionInput");
-    const renderActiveStyleLabel = document.getElementById("renderActiveStyleLabel");
 
     if (activeStyleSelection) {
       if (activeBadge) activeBadge.textContent = activeStyleSelection.name || "Custom Style";
       if (activeCatLabel) activeCatLabel.textContent = activeStyleSelection.category === "photography" ? "Photography Era" : "Art Medium";
       if (activeDescInput) activeDescInput.value = activeStyleSelection.description || "";
-      if (renderActiveStyleLabel) renderActiveStyleLabel.textContent = activeStyleSelection.name || "Custom Style";
     }
 
     const activeId = activeStyleSelection?.id || "";
@@ -1109,6 +1124,11 @@ async function loadProjectStyles() {
     const globalPhotoContainer = document.getElementById("globalPhotoChips");
     if (globalPhotoContainer) {
       renderStyleChips(globalPhotoContainer, globalLib.photography || [], activeId, "photography");
+    }
+
+    // Synchronize Tab 5 Style Selector Dropdown if manifest is loaded
+    if (currentManifest) {
+      syncRenderStyleDropdown();
     }
 
   } catch (err) {
@@ -1160,12 +1180,10 @@ async function selectActiveStyle(styleObj) {
   const activeBadge = document.getElementById("activeStyleBadge");
   const activeCatLabel = document.getElementById("activeStyleCatLabel");
   const activeDescInput = document.getElementById("activeStyleDescriptionInput");
-  const renderActiveStyleLabel = document.getElementById("renderActiveStyleLabel");
 
   if (activeBadge) activeBadge.textContent = styleObj.name;
   if (activeCatLabel) activeCatLabel.textContent = styleObj.category === "photography" ? "Photography Era" : "Art Medium";
   if (activeDescInput) activeDescInput.value = styleObj.description || "";
-  if (renderActiveStyleLabel) renderActiveStyleLabel.textContent = styleObj.name;
 
   // Update active class on chips across containers
   document.querySelectorAll(".style-chip").forEach(chip => {
@@ -1180,6 +1198,23 @@ async function selectActiveStyle(styleObj) {
   const bibleArtInput = document.getElementById("bibleArtStyle");
   if (bibleArtInput && styleObj.description) {
     bibleArtInput.value = styleObj.description;
+  }
+
+  // Synchronize Tab 5 Style selector dropdown
+  const renderStyleSelect = document.getElementById("selectRenderStyle");
+  if (renderStyleSelect) {
+    const optExists = Array.from(renderStyleSelect.options).some(o => o.value === styleObj.name);
+    if (optExists) {
+      renderStyleSelect.value = styleObj.name;
+    } else {
+      syncRenderStyleDropdown();
+    }
+  }
+
+  // Immediately re-render Tab 4 manifest prompts for this active style
+  if (currentManifest) {
+    renderManifestBlocks();
+    renderGalleryCards();
   }
 
   // Persist to backend
@@ -1238,6 +1273,341 @@ async function inferMoreStyles(category) {
 }
 
 // ----------------------------------------------------------------------------
+// Style Resolution & Multi-Style Helpers (Tab 4 & Tab 5)
+// ----------------------------------------------------------------------------
+function resolveBlockIllustrationForStyle(block, styleTarget, workflow = null) {
+  if (!block) return null;
+  const illustrations = block.illustrations || {};
+
+  // Extract target style identifiers
+  let targetName = "";
+  let targetId = "";
+  if (typeof styleTarget === "string") {
+    targetName = styleTarget;
+    targetId = styleTarget.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  } else if (styleTarget && typeof styleTarget === "object") {
+    targetName = styleTarget.name || "";
+    targetId = (styleTarget.id || styleTarget.slug || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  }
+
+  const normTargetName = targetName.toLowerCase().trim();
+  const normTargetId = targetId.toLowerCase().trim();
+
+  // 1. If a style target is specified, search inside block.illustrations
+  if (normTargetName || normTargetId) {
+    // If workflow is provided, try exact compound keys first
+    if (workflow) {
+      const wfClean = workflow.replace(/\.json$/i, "");
+      const compoundKeys = [
+        `${workflow} (${targetName})`,
+        `${wfClean} (${targetName})`,
+        `${wfClean}__${normTargetId}`,
+        `${wfClean}__${normTargetName.replace(/[^a-z0-9]+/g, "_")}`
+      ];
+      for (const ck of compoundKeys) {
+        if (illustrations[ck]) return illustrations[ck];
+      }
+    }
+
+    // Try direct keys (style name, style slug)
+    if (illustrations[targetName]) return illustrations[targetName];
+    if (normTargetId && illustrations[normTargetId]) return illustrations[normTargetId];
+    if (illustrations[targetId]) return illustrations[targetId];
+
+    // Search by properties inside illustration objects
+    let candidate = null;
+    for (const [key, val] of Object.entries(illustrations)) {
+      if (!val || typeof val !== "object") continue;
+      const vName = (val.style_name || val.style?.name || "").toLowerCase().trim();
+      const vId = (val.style_slug || val.style?.id || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "_");
+
+      const nameMatches = normTargetName && (vName === normTargetName || key.toLowerCase().includes(`(${normTargetName})`));
+      const idMatches = normTargetId && (vId === normTargetId || key.toLowerCase().endsWith(`__${normTargetId}`));
+
+      if (nameMatches || idMatches) {
+        // If workflow was requested and matches, return immediately
+        if (workflow && (val.workflow === workflow || key.startsWith(workflow) || key.startsWith(workflow.replace(/\.json$/i, "")))) {
+          return val;
+        }
+        if (!candidate) candidate = val;
+      }
+    }
+    if (candidate) return candidate;
+
+    // Check root block.illustration if its style matches
+    if (block.illustration) {
+      const rootName = (block.illustration.style_name || block.illustration.style?.name || "").toLowerCase().trim();
+      const rootId = (block.illustration.style_slug || block.illustration.style?.id || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "_");
+      if ((normTargetName && rootName === normTargetName) || (normTargetId && rootId === normTargetId)) {
+        return block.illustration;
+      }
+    }
+  }
+
+  // 2. If no styleTarget matched or none specified, fallback to workflow lookup
+  if (workflow && illustrations[workflow]) {
+    return illustrations[workflow];
+  }
+
+  // 3. Fallback to root block.illustration if no specific style was targeted
+  if (!normTargetName && !normTargetId && block.illustration) {
+    return block.illustration;
+  }
+
+  return null;
+}
+
+function getManifestStylesList(manifest) {
+  const stylesMap = new Map();
+  if (!manifest) return [];
+
+  function recordStyle(sName, sId, wf, hasPrompt, isCompleted, desc = "", cat = "art") {
+    if (!sName) return;
+    const cleanName = sName.trim();
+    if (!cleanName) return;
+    const cleanId = (sId || cleanName.toLowerCase().replace(/[^a-z0-9]+/g, "_")).trim();
+
+    if (!stylesMap.has(cleanName)) {
+      stylesMap.set(cleanName, {
+        name: cleanName,
+        id: cleanId,
+        workflow: wf || null,
+        description: desc || "",
+        category: cat || "art",
+        promptsCount: 0,
+        renderedCount: 0
+      });
+    }
+    const entry = stylesMap.get(cleanName);
+    if (wf && !entry.workflow) entry.workflow = wf;
+    if (desc && !entry.description) entry.description = desc;
+    if (cat && entry.category === "art") entry.category = cat;
+    if (hasPrompt) entry.promptsCount++;
+    if (isCompleted) entry.renderedCount++;
+  }
+
+  // Scan blocks
+  (manifest.blocks || []).forEach(b => {
+    if (b.illustration) {
+      const s = b.illustration;
+      const sName = s.style_name || s.style?.name || manifest.active_style?.name;
+      const sId = s.style_slug || s.style?.id || manifest.active_style?.id;
+      const wf = s.workflow || null;
+      recordStyle(
+        sName,
+        sId,
+        wf,
+        Boolean(s.prompt && s.prompt.trim()),
+        s.status === "completed",
+        s.style?.description || "",
+        s.style?.category || "art"
+      );
+    }
+    if (b.illustrations && typeof b.illustrations === "object") {
+      Object.entries(b.illustrations).forEach(([key, v]) => {
+        if (!v || typeof v !== "object") return;
+        let sName = v.style_name || v.style?.name;
+        if (!sName && key.includes("(") && key.endsWith(")")) {
+          sName = key.split("(").pop().slice(0, -1).trim();
+        }
+        let sId = v.style_slug || v.style?.id;
+        let wf = v.workflow || (key.includes("(") ? key.split(" (")[0].trim() : null);
+        recordStyle(
+          sName,
+          sId,
+          wf,
+          Boolean(v.prompt && v.prompt.trim()),
+          v.status === "completed",
+          v.style?.description || "",
+          v.style?.category || "art"
+        );
+      });
+    }
+  });
+
+  // Also include project presets if loaded so users can pick any preset style
+  if (currentProjectStyles?.presets) {
+    const artPresets = currentProjectStyles.presets.art || [];
+    const photoPresets = currentProjectStyles.presets.photography || [];
+    artPresets.forEach(p => {
+      if (p.name && !stylesMap.has(p.name)) {
+        stylesMap.set(p.name, {
+          name: p.name,
+          id: p.id || p.name.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+          workflow: null,
+          description: p.description || "",
+          category: "art",
+          promptsCount: 0,
+          renderedCount: 0
+        });
+      }
+    });
+    photoPresets.forEach(p => {
+      if (p.name && !stylesMap.has(p.name)) {
+        stylesMap.set(p.name, {
+          name: p.name,
+          id: p.id || p.name.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+          workflow: null,
+          description: p.description || "",
+          category: "photography",
+          promptsCount: 0,
+          renderedCount: 0
+        });
+      }
+    });
+  }
+
+  const list = Array.from(stylesMap.values());
+  // Sort: styles with renders or prompts first, then alphabetical
+  list.sort((a, b) => {
+    const aScore = a.renderedCount * 100 + a.promptsCount;
+    const bScore = b.renderedCount * 100 + b.promptsCount;
+    if (aScore !== bScore) return bScore - aScore;
+    return a.name.localeCompare(b.name);
+  });
+  return list;
+}
+
+function syncRenderStyleDropdown() {
+  const selectEl = document.getElementById("selectRenderStyle");
+  if (!selectEl) return;
+
+  const styles = getManifestStylesList(currentManifest);
+  if (styles.length === 0) {
+    selectEl.innerHTML = `<option value="">No styles available</option>`;
+    return;
+  }
+
+  const targetName = activeStyleSelection?.name || currentManifest?.active_style?.name || styles[0].name;
+
+  selectEl.innerHTML = "";
+  styles.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.name;
+    const metaTag = s.renderedCount > 0
+      ? `${s.renderedCount} rendered`
+      : (s.promptsCount > 0 ? `${s.promptsCount} prompts` : 'no prompts yet');
+    opt.textContent = `${s.name} (${metaTag})`;
+    if (s.name.toLowerCase() === targetName.toLowerCase()) {
+      opt.selected = true;
+    }
+    selectEl.appendChild(opt);
+  });
+
+  // If no option was marked selected, select the first
+  if (!selectEl.value && styles.length > 0) {
+    selectEl.value = styles[0].name;
+  }
+
+  // Ensure activeStyleSelection is in sync
+  const matched = styles.find(s => s.name === selectEl.value) || styles[0];
+  if (matched && (!activeStyleSelection || activeStyleSelection.name !== matched.name)) {
+    activeStyleSelection = {
+      id: matched.id,
+      name: matched.name,
+      description: matched.description || "",
+      category: matched.category || "art"
+    };
+  }
+
+  updateBatchRenderButtonState();
+}
+
+async function onRenderStyleChanged(selectedStyleName) {
+  if (!selectedStyleName) return;
+  const styles = getManifestStylesList(currentManifest);
+  const matched = styles.find(s => s.name === selectedStyleName) || {
+    name: selectedStyleName,
+    id: selectedStyleName.toLowerCase().replace(/[^a-z0-9]+/g, "_")
+  };
+
+  activeStyleSelection = {
+    id: matched.id,
+    name: matched.name,
+    description: matched.description || "",
+    category: matched.category || "art"
+  };
+
+  // 1. Auto-switch workflow if associated with this style
+  if (matched.workflow) {
+    const wfSelect = document.getElementById("selectWorkflow");
+    if (wfSelect) {
+      const optExists = Array.from(wfSelect.options).some(o => o.value === matched.workflow);
+      if (optExists) {
+        wfSelect.value = matched.workflow;
+      }
+    }
+  }
+
+  // 2. Update Tab 4 indicators
+  const activeBadge = document.getElementById("activeStyleBadge");
+  const activeCatLabel = document.getElementById("activeStyleCatLabel");
+  const activeDescInput = document.getElementById("activeStyleDescriptionInput");
+  if (activeBadge) activeBadge.textContent = matched.name;
+  if (activeCatLabel) activeCatLabel.textContent = matched.category === "photography" ? "Photography Era" : "Art Medium";
+  if (activeDescInput && matched.description) activeDescInput.value = matched.description;
+
+  document.querySelectorAll(".style-chip").forEach(chip => {
+    if (chip.dataset.styleId === matched.id || chip.querySelector(".style-chip-name")?.textContent.trim() === matched.name) {
+      chip.classList.add("active");
+    } else {
+      chip.classList.remove("active");
+    }
+  });
+
+  // 3. Render gallery cards for this style on Tab 5
+  renderGalleryCards();
+
+  // 4. Also render manifest blocks on Tab 4 so both tabs are synchronized
+  renderManifestBlocks();
+
+  // 5. Update batch render button availability
+  updateBatchRenderButtonState();
+
+  // 6. Persist style selection
+  if (currentSlug) {
+    try {
+      await fetch(`/api/project/${currentSlug}/styles/select`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          style_id: matched.id,
+          style_name: matched.name,
+          description: matched.description,
+          category: matched.category
+        })
+      });
+    } catch (e) {
+      console.warn("Could not persist style selection:", e);
+    }
+  }
+}
+
+function updateBatchRenderButtonState() {
+  const btnBatch = document.getElementById("btnStartBatchRender");
+  if (!btnBatch) return;
+
+  const blocks = (currentManifest?.blocks || []).filter(b => b.illustration || (b.illustrations && Object.keys(b.illustrations).length > 0));
+  const wf = document.getElementById("selectWorkflow")?.value || "";
+  const hasPrompts = blocks.some(b => {
+    const illus = resolveBlockIllustrationForStyle(b, activeStyleSelection, wf);
+    return Boolean(illus && illus.prompt && illus.prompt.trim());
+  });
+
+  if (!hasPrompts) {
+    btnBatch.disabled = true;
+    btnBatch.title = `Start Batch Render unavailable: No prompts generated for '${activeStyleSelection?.name || 'this style'}' yet. Go to Step 4 (Manifest & Prompts) and click 'Synthesize Prompts' first.`;
+    btnBatch.style.opacity = "0.5";
+    btnBatch.style.cursor = "not-allowed";
+  } else {
+    btnBatch.disabled = false;
+    btnBatch.title = `Start ComfyUI batch rendering for ${activeStyleSelection?.name || 'active style'}`;
+    btnBatch.style.opacity = "";
+    btnBatch.style.cursor = "";
+  }
+}
+
+// ----------------------------------------------------------------------------
 // Tab 4: Manifest & Prompts
 // ----------------------------------------------------------------------------
 function renderManifestBlocks() {
@@ -1247,7 +1617,7 @@ function renderManifestBlocks() {
 
   const filterIllustratedOnly = document.getElementById("chkShowIllustratedOnly")?.checked ?? true;
   const blocks = currentManifest.blocks || [];
-  const illustratedBlocks = blocks.filter(b => b.illustration);
+  const illustratedBlocks = blocks.filter(b => b.illustration || (b.illustrations && Object.keys(b.illustrations).length > 0));
 
   if (filterIllustratedOnly && illustratedBlocks.length === 0) {
     loadPreGenReviewMatrix(container).then(loaded => {
@@ -1258,19 +1628,55 @@ function renderManifestBlocks() {
     return;
   }
 
+  const activeStyleName = activeStyleSelection?.name || currentManifest.active_style?.name || "Default Style";
+
+  // Calculate prompt count for this style
+  const blocksWithPromptForStyle = illustratedBlocks.filter(b => {
+    const illus = resolveBlockIllustrationForStyle(b, activeStyleSelection);
+    return Boolean(illus && illus.prompt && illus.prompt.trim());
+  });
+  const hasPromptsForActiveStyle = blocksWithPromptForStyle.length > 0;
+
+  // Header Banner for Style Prompts Status
+  const headerBanner = document.createElement("div");
+  headerBanner.className = "card";
+  headerBanner.style.marginBottom = "14px";
+  headerBanner.style.padding = "10px 16px";
+  headerBanner.style.display = "flex";
+  headerBanner.style.justifyContent = "space-between";
+  headerBanner.style.alignItems = "center";
+  headerBanner.style.flexWrap = "wrap";
+  headerBanner.style.gap = "8px";
+  headerBanner.style.borderLeft = hasPromptsForActiveStyle ? "4px solid var(--online)" : "4px solid #f59e0b";
+
+  headerBanner.innerHTML = `
+    <div>
+      <span style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); display: block;">Active Visual Style</span>
+      <strong style="font-size: 1.05rem; color: var(--accent);">${escapeHtml(activeStyleName)}</strong>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      ${hasPromptsForActiveStyle
+        ? `<span class="badge badge-online">&#10003; ${blocksWithPromptForStyle.length} / ${illustratedBlocks.length} Prompts Synthesized</span>`
+        : `<span class="badge badge-warning">&#9888; 0 / ${illustratedBlocks.length} Prompts Synthesized (Click 'Synthesize Prompts' to generate)</span>`}
+    </div>
+  `;
+  container.appendChild(headerBanner);
+
   blocks.forEach(block => {
     const cid = block.chunk_id;
-    const illus = block.illustration;
+    const isIllustrationBeat = Boolean(block.illustration || (block.illustrations && Object.keys(block.illustrations).length > 0));
 
-    if (!illus && filterIllustratedOnly) {
+    if (!isIllustrationBeat && filterIllustratedOnly) {
       return;
     }
 
+    const illus = resolveBlockIllustrationForStyle(block, activeStyleSelection);
+    const hasPrompt = Boolean(illus && illus.prompt && illus.prompt.trim());
     const card = document.createElement("div");
-    card.className = `manifest-block-card ${illus ? "has-illustration" : ""}`;
+    card.className = `manifest-block-card ${isIllustrationBeat ? "has-illustration" : ""}`;
     card.dataset.chunkId = cid;
 
-    if (!illus) {
+    if (!isIllustrationBeat) {
       card.innerHTML = `
         <div class="card-header">
           <span class="chunk-id">${escapeHtml(cid)}</span>
@@ -1278,7 +1684,7 @@ function renderManifestBlocks() {
         </div>
         <p class="chunk-text" style="color: var(--text-dim);">${escapeHtml(block.text)}</p>
       `;
-    } else {
+    } else if (hasPrompt) {
       const isCompleted = illus.status === "completed";
       const badgesHtml = renderContinuityBadgesRow(illus.llm_context);
       card.innerHTML = `
@@ -1288,19 +1694,44 @@ function renderManifestBlocks() {
             <button class="btn btn-sm btn-secondary btn-audit-context" data-chunk-id="${escapeHtml(cid)}" title="Audit Visual Bible context sent to LLM for this prompt">&#128269; Context Audit</button>
           </div>
           <div>
-            <span class="badge ${isCompleted ? 'badge-online' : 'badge-accent'}">${illus.status.toUpperCase()}</span>
-            <span class="badge">${illus.width}x${illus.height}</span>
+            <span class="badge ${isCompleted ? 'badge-online' : 'badge-accent'}">${escapeHtml((illus.status || 'pending').toUpperCase())}</span>
+            <span class="badge">${illus.width || 1344}x${illus.height || 768}</span>
           </div>
         </div>
         <p class="chunk-text" style="margin-bottom: 10px;">${escapeHtml(block.text)}</p>
         ${badgesHtml}
         <div class="form-group" style="margin-top: 10px;">
-          <label>Positive Prompt:</label>
+          <label>Positive Prompt (${escapeHtml(activeStyleName)}):</label>
           <textarea class="textarea-input manifest-prompt" rows="3">${escapeHtml(illus.prompt || "")}</textarea>
         </div>
         <div class="form-group">
           <label>Negative Prompt:</label>
           <input type="text" class="text-input manifest-neg-prompt" value="${escapeHtml(illus.negative_prompt || '')}">
+        </div>
+      `;
+    } else {
+      // Illustrated scene, but no prompt generated yet for this style
+      card.innerHTML = `
+        <div class="card-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="chunk-id">${escapeHtml(cid)}</span>
+            <button class="btn btn-sm btn-secondary btn-audit-context" data-chunk-id="${escapeHtml(cid)}" title="Audit Visual Bible context sent to LLM for this prompt">&#128269; Context Audit</button>
+          </div>
+          <div>
+            <span class="badge badge-warning">NO PROMPT FOR THIS STYLE</span>
+          </div>
+        </div>
+        <p class="chunk-text" style="margin-bottom: 8px;">${escapeHtml(block.text)}</p>
+        <div class="style-no-prompt-notice" style="padding: 8px 12px; margin-bottom: 8px; border-radius: 4px; background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; font-size: 0.82rem; color: var(--text-dim);">
+          No prompt synthesized for <strong>${escapeHtml(activeStyleName)}</strong> yet. Click <strong>Synthesize Prompts</strong> above to generate, or enter one manually below.
+        </div>
+        <div class="form-group" style="margin-top: 10px;">
+          <label>Positive Prompt (${escapeHtml(activeStyleName)}):</label>
+          <textarea class="textarea-input manifest-prompt" rows="3" placeholder="Enter custom positive prompt for ${escapeHtml(activeStyleName)}..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Negative Prompt:</label>
+          <input type="text" class="text-input manifest-neg-prompt" placeholder="Optional negative prompt...">
         </div>
       `;
     }
@@ -1312,13 +1743,135 @@ function renderManifestBlocks() {
     btn.addEventListener("click", () => {
       const cid = btn.dataset.chunkId;
       const blk = (currentManifest?.blocks || []).find(b => b.chunk_id === cid);
-      if (blk && blk.illustration && blk.illustration.llm_context) {
-        openPromptContextModal(blk.illustration.llm_context, cid);
+      const ill = resolveBlockIllustrationForStyle(blk, activeStyleSelection) || blk?.illustration;
+      if (ill && ill.llm_context) {
+        openPromptContextModal(ill.llm_context, cid);
       } else {
         previewPromptContext(cid);
       }
     });
   });
+}
+
+function renderGalleryCards() {
+  const gallery = document.getElementById("imagesGallery");
+  if (!gallery || !currentManifest) return;
+  gallery.innerHTML = "";
+
+  const blocks = (currentManifest.blocks || []).filter(b => b.illustration || (b.illustrations && Object.keys(b.illustrations).length > 0));
+  const activeWf = document.getElementById("selectWorkflow")?.value || currentManifest.active_workflow || "sdxl_base.json";
+
+  if (blocks.length === 0) {
+    gallery.innerHTML = `<div class="card" style="grid-column: 1/-1;"><p>No illustrated scenes in manifest. Go to Step 3 &amp; 4 to select beats and synthesize prompts.</p></div>`;
+    updateBatchRenderButtonState();
+    return;
+  }
+
+  blocks.forEach(block => {
+    const cid = block.chunk_id;
+    const illus = resolveBlockIllustrationForStyle(block, activeStyleSelection, activeWf);
+    const hasPrompt = Boolean(illus && illus.prompt && illus.prompt.trim());
+    const isCompleted = Boolean(illus && illus.status === "completed" && illus.image_file);
+    const isChecked = selectedImageChunks.has(cid);
+
+    const imgCard = document.createElement("div");
+    imgCard.className = `image-card ${isChecked ? "selected" : ""}`;
+    imgCard.dataset.chunkId = cid;
+
+    let previewHtml = "";
+    if (isCompleted) {
+      const relImgPath = illus.image_file.replace(/^images\//, "");
+      const imgSrc = `/api/project/${currentSlug}/images/${encodeURI(relImgPath)}?t=${Date.now()}`;
+      previewHtml = `<img src="${imgSrc}" alt="${cid}" onerror="this.parentElement.innerHTML='<div class=\\'image-placeholder\\'>Rendered file not found on disk</div>'">`;
+    } else if (hasPrompt) {
+      previewHtml = `<div class="image-placeholder">&#9654; Ready to Render (${illus.width || 1344}x${illus.height || 768})</div>`;
+    } else {
+      previewHtml = `<div class="image-placeholder" style="color: var(--text-dim); font-size: 0.82rem;">&#9888; No prompt synthesized for this style</div>`;
+    }
+
+    const promptText = (illus && illus.prompt) ? illus.prompt : "";
+    const statusText = illus ? (illus.status || "pending") : "unrendered";
+    const statusBadgeClass = isCompleted ? 'badge-online' : (hasPrompt ? 'badge-accent' : 'badge-warning');
+
+    imgCard.innerHTML = `
+      <div class="image-card-preview">
+        <input type="checkbox" class="img-card-checkbox" data-chunk-id="${cid}" ${isChecked ? "checked" : ""} ${hasPrompt || isCompleted ? "" : "disabled"} title="Select for regeneration">
+        ${previewHtml}
+      </div>
+      <div class="image-card-body">
+        <div class="card-header" style="margin-bottom: 4px;">
+          <span class="chunk-id">${cid}</span>
+          <span class="badge ${statusBadgeClass}">${statusText.toUpperCase()}</span>
+        </div>
+        <div class="card-prompt-container" style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.35; flex-grow: 1;">
+          <p class="prompt-text prompt-collapsed" style="margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-word;">
+            ${escapeHtml(promptText || "No prompt synthesized for this style yet.")}
+          </p>
+          ${promptText ? `
+            <button type="button" class="btn-toggle-prompt" style="background: none; border: none; color: var(--accent); font-size: 0.78rem; cursor: pointer; padding: 2px 0 0 0; text-decoration: underline;">
+              View Full Prompt
+            </button>
+          ` : ''}
+        </div>
+        <div style="margin-top: 10px; display: flex; gap: 8px;">
+          <button class="btn btn-sm btn-primary btn-tweak-rerun" data-chunk-id="${cid}" ${hasPrompt || isCompleted ? "" : "disabled"}>
+            ${isCompleted ? '&#8635; Tweak &amp; Regenerate' : '&#9654; Render Scene'}
+          </button>
+          <button class="btn btn-sm btn-secondary btn-gallery-audit" data-chunk-id="${cid}" title="Inspect Visual Bible Context Audit">
+            &#128269; Context
+          </button>
+        </div>
+      </div>
+    `;
+
+    const chk = imgCard.querySelector(".img-card-checkbox");
+    if (chk) {
+      chk.addEventListener("change", (e) => {
+        e.stopPropagation();
+        if (chk.checked) {
+          selectedImageChunks.add(cid);
+        } else {
+          selectedImageChunks.delete(cid);
+        }
+        updateSelectedImagesUI();
+      });
+    }
+
+    const toggleBtn = imgCard.querySelector(".btn-toggle-prompt");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", () => {
+        const pEl = imgCard.querySelector(".prompt-text");
+        if (pEl.classList.contains("prompt-collapsed")) {
+          pEl.classList.remove("prompt-collapsed");
+          pEl.style.display = "block";
+          pEl.style.webkitLineClamp = "unset";
+          toggleBtn.textContent = "Hide Prompt";
+        } else {
+          pEl.classList.add("prompt-collapsed");
+          pEl.style.display = "-webkit-box";
+          pEl.style.webkitLineClamp = "2";
+          toggleBtn.textContent = "View Full Prompt";
+        }
+      });
+    }
+
+    imgCard.querySelector(".btn-tweak-rerun")?.addEventListener("click", () => {
+      openTweakModal(block);
+    });
+
+    imgCard.querySelector(".btn-gallery-audit")?.addEventListener("click", () => {
+      if (illus && illus.llm_context) {
+        openPromptContextModal(illus.llm_context, cid);
+      } else {
+        previewPromptContext(cid);
+      }
+    });
+
+    gallery.appendChild(imgCard);
+  });
+
+  updateSelectedImagesUI();
+  updateBatchRenderButtonState();
 }
 
 async function loadManifest() {
@@ -1338,76 +1891,9 @@ async function loadManifest() {
     }
 
     currentManifest = await res.json();
+    syncRenderStyleDropdown();
     renderManifestBlocks();
-
-    // Render in Image Gallery Tab (Tab 5)
-    const blocks = currentManifest.blocks || [];
-    const activeWf = document.getElementById("selectWorkflow")?.value || currentManifest.active_workflow || "sdxl_base.json";
-
-    blocks.filter(b => b.illustration).forEach(block => {
-      const cid = block.chunk_id;
-      const illus = (block.illustrations && block.illustrations[activeWf])
-        ? block.illustrations[activeWf]
-        : block.illustration;
-      const isCompleted = illus.status === "completed";
-      const isChecked = selectedImageChunks.has(cid);
-
-      const imgCard = document.createElement("div");
-      imgCard.className = `image-card ${isChecked ? "selected" : ""}`;
-      imgCard.dataset.chunkId = cid;
-      const relImgPath = illus.image_file ? illus.image_file.replace(/^images\//, "") : `${cid}.png`;
-      const imgSrc = `/api/project/${currentSlug}/images/${encodeURI(relImgPath)}?t=${Date.now()}`;
-
-      imgCard.innerHTML = `
-        <div class="image-card-preview">
-          <input type="checkbox" class="img-card-checkbox" data-chunk-id="${cid}" ${isChecked ? "checked" : ""} title="Select for regeneration">
-          ${isCompleted
-            ? `<img src="${imgSrc}" alt="${cid}" onerror="this.parentElement.innerHTML='<div class=\\'image-placeholder\\'>Rendered file not found on disk</div>'">`
-            : `<div class="image-placeholder">&#9654; Ready to Render (${illus.width || 1344}x${illus.height || 768})</div>`}
-        </div>
-        <div class="image-card-body">
-          <div class="card-header" style="margin-bottom: 4px;">
-            <span class="chunk-id">${cid}</span>
-            <span class="badge ${isCompleted ? 'badge-online' : 'badge-accent'}">${illus.status}</span>
-          </div>
-          <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.35; flex-grow: 1;">${escapeHtml(illus.prompt || "")}</p>
-          <div style="margin-top: 10px; display: flex; gap: 8px;">
-            <button class="btn btn-sm btn-primary btn-tweak-rerun" data-chunk-id="${cid}">
-              ${isCompleted ? '&#8635; Tweak &amp; Regenerate' : '&#9654; Render Scene'}
-            </button>
-            <button class="btn btn-sm btn-secondary btn-gallery-audit" data-chunk-id="${cid}" title="Inspect Visual Bible Context Audit">
-              &#128269; Context
-            </button>
-          </div>
-        </div>
-      `;
-
-      const chk = imgCard.querySelector(".img-card-checkbox");
-      chk.addEventListener("change", (e) => {
-        e.stopPropagation();
-        if (chk.checked) {
-          selectedImageChunks.add(cid);
-        } else {
-          selectedImageChunks.delete(cid);
-        }
-        updateSelectedImagesUI();
-      });
-
-      imgCard.querySelector(".btn-tweak-rerun").addEventListener("click", () => {
-        openTweakModal(block);
-      });
-
-      imgCard.querySelector(".btn-gallery-audit")?.addEventListener("click", () => {
-        if (illus && illus.llm_context) {
-          openPromptContextModal(illus.llm_context, cid);
-        } else {
-          previewPromptContext(cid);
-        }
-      });
-
-      gallery.appendChild(imgCard);
-    });
-    updateSelectedImagesUI();
+    renderGalleryCards();
 
   } catch (err) {
     console.error("Manifest load error:", err);
@@ -1417,15 +1903,67 @@ async function loadManifest() {
 async function saveManifest() {
   if (!currentManifest) return;
   const cards = document.querySelectorAll(".manifest-block-card.has-illustration");
+  const activeStyleName = activeStyleSelection?.name || currentManifest.active_style?.name || "Default Style";
+  const activeStyleSlug = activeStyleSelection?.id || currentManifest.active_style?.id || activeStyleName.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+
   cards.forEach(c => {
     const cid = c.dataset.chunkId;
-    const prompt = c.querySelector(".manifest-prompt").value.trim();
-    const negPrompt = c.querySelector(".manifest-neg-prompt").value.trim();
+    const prompt = c.querySelector(".manifest-prompt")?.value.trim() || "";
+    const negPrompt = c.querySelector(".manifest-neg-prompt")?.value.trim() || "";
 
     const block = currentManifest.blocks.find(b => b.chunk_id === cid);
-    if (block && block.illustration) {
-      block.illustration.prompt = prompt;
-      block.illustration.negative_prompt = negPrompt;
+    if (!block) return;
+
+    if (!block.illustrations) block.illustrations = {};
+
+    // 1. Update any existing entries in block.illustrations for this style
+    let updatedInIllustrations = false;
+    for (const [k, v] of Object.entries(block.illustrations)) {
+      if (!v || typeof v !== "object") continue;
+      const vName = v.style_name || v.style?.name || "";
+      const vSlug = v.style_slug || v.style?.id || "";
+      if (vName === activeStyleName || vSlug === activeStyleSlug || k.includes(`(${activeStyleName})`) || k.endsWith(`__${activeStyleSlug}`)) {
+        v.prompt = prompt;
+        v.negative_prompt = negPrompt;
+        updatedInIllustrations = true;
+      }
+    }
+
+    // 2. If not found in illustrations, create new entries under style name and slug
+    if (!updatedInIllustrations && prompt) {
+      const newEntry = {
+        status: "pending",
+        image_file: `images/${cid}.png`,
+        width: block.illustration?.width || 1344,
+        height: block.illustration?.height || 768,
+        prompt: prompt,
+        negative_prompt: negPrompt,
+        style_name: activeStyleName,
+        style_slug: activeStyleSlug,
+        style: activeStyleSelection || { id: activeStyleSlug, name: activeStyleName }
+      };
+      block.illustrations[activeStyleName] = newEntry;
+      block.illustrations[activeStyleSlug] = newEntry;
+    }
+
+    // 3. Update root block.illustration if it matches active style or if no root exists
+    if (!block.illustration || block.illustration.style_name === activeStyleName || block.illustration.style_slug === activeStyleSlug || block.illustration.style?.name === activeStyleName) {
+      if (!block.illustration) {
+        block.illustration = {
+          status: "pending",
+          image_file: `images/${cid}.png`,
+          width: 1344,
+          height: 768,
+          prompt: prompt,
+          negative_prompt: negPrompt,
+          style: activeStyleSelection || { id: activeStyleSlug, name: activeStyleName },
+          style_name: activeStyleName,
+          style_slug: activeStyleSlug
+        };
+      } else {
+        block.illustration.prompt = prompt;
+        block.illustration.negative_prompt = negPrompt;
+      }
     }
   });
 
@@ -1450,7 +1988,11 @@ async function saveManifest() {
 function openTweakModal(block) {
   currentTweakBlock = block;
   const activeWf = document.getElementById("selectWorkflow")?.value || currentManifest?.active_workflow || "sdxl_base.json";
-  const illus = (block.illustrations && block.illustrations[activeWf]) ? block.illustrations[activeWf] : block.illustration;
+  const illus = resolveBlockIllustrationForStyle(block, activeStyleSelection, activeWf)
+    || (block.illustrations && block.illustrations[activeWf])
+    || block.illustration
+    || {};
+
   document.getElementById("tweakChunkId").textContent = block.chunk_id;
   document.getElementById("tweakPrompt").value = illus.prompt || "";
   document.getElementById("tweakNegativePrompt").value = illus.negative_prompt || "";
@@ -1483,7 +2025,10 @@ async function submitTweakRerun() {
         width: width,
         height: height,
         seed: seed,
-        workflow: wf
+        workflow: wf,
+        style_name: activeStyleSelection?.name,
+        style_slug: activeStyleSelection?.id,
+        resolution_tier: document.getElementById("selectResolutionTier")?.value || "standard"
       })
     });
     const data = await res.json();
@@ -1500,16 +2045,28 @@ async function submitTweakRerun() {
 }
 
 async function startBatchRender() {
-  const wf = document.getElementById("selectWorkflow").value;
-  const blocks = (currentManifest?.blocks || []).filter(b => b.illustration);
-  const pendingCount = blocks.filter(b => {
-    const illus = (b.illustrations && b.illustrations[wf]) ? b.illustrations[wf] : b.illustration;
+  const wf = document.getElementById("selectWorkflow")?.value || "sdxl_base.json";
+  const blocks = (currentManifest?.blocks || []).filter(b => b.illustration || (b.illustrations && Object.keys(b.illustrations).length > 0));
+
+  // Check if prompts exist for this active style
+  const blocksWithPrompts = blocks.filter(b => {
+    const illus = resolveBlockIllustrationForStyle(b, activeStyleSelection, wf);
+    return Boolean(illus && illus.prompt && illus.prompt.trim());
+  });
+
+  if (blocksWithPrompts.length === 0) {
+    showToast(`No prompts synthesized for '${activeStyleSelection?.name || 'this style'}' yet. Go to Step 4 (Manifest & Prompts) and click 'Synthesize Prompts' first.`, "warning");
+    return;
+  }
+
+  const pendingCount = blocksWithPrompts.filter(b => {
+    const illus = resolveBlockIllustrationForStyle(b, activeStyleSelection, wf);
     return !illus || illus.status !== "completed";
   }).length;
 
   let forceAll = false;
-  if (pendingCount === 0 && blocks.length > 0) {
-    if (!confirm(`All illustrations for workflow '${wf}' are already completed. Re-render all scenes with fresh seeds?`)) {
+  if (pendingCount === 0 && blocksWithPrompts.length > 0) {
+    if (!confirm(`All illustrations for style '${activeStyleSelection?.name || wf}' are already completed. Re-render all scenes with fresh seeds?`)) {
       return;
     }
     forceAll = true;
@@ -1528,7 +2085,8 @@ async function startBatchRender() {
         workflow: wf,
         force_all: forceAll,
         style_name: activeStyleSelection?.name,
-        style_slug: activeStyleSelection?.id
+        style_slug: activeStyleSelection?.id,
+        resolution_tier: document.getElementById("selectResolutionTier")?.value || "standard"
       })
     });
     const data = await res.json();
@@ -1568,7 +2126,8 @@ async function regenerateSelectedImages() {
         workflow: wf,
         chunk_ids: chunkIds,
         style_name: activeStyleSelection?.name,
-        style_slug: activeStyleSelection?.id
+        style_slug: activeStyleSelection?.id,
+        resolution_tier: document.getElementById("selectResolutionTier")?.value || "standard"
       })
     });
     const data = await res.json();
@@ -1680,8 +2239,19 @@ async function openMetadataModal(formatToDownloadAfter = null) {
   const meta = await fetchProjectMetadata();
 
   document.getElementById("metaBookTitle").value = meta?.title || currentManifest?.story_title || currentSlug || "";
+  document.getElementById("metaBookSubtitle").value = meta?.subtitle || "";
   document.getElementById("metaBookAuthor").value = meta?.author && meta.author !== "Author Unknown" ? meta.author : "";
+  document.getElementById("metaBookIllustrator").value = meta?.illustrator || "";
   document.getElementById("metaBookPublisher").value = meta?.publisher || "Self-Published";
+  const copyrightEl = document.getElementById("metaBookCopyright");
+  if (copyrightEl) {
+    copyrightEl.value = meta?.copyright_text || "";
+  }
+  const colophonEl = document.getElementById("metaBookColophon");
+  if (colophonEl) {
+    colophonEl.value = meta?.colophon || "";
+  }
+  document.getElementById("metaBookDedication").value = meta?.dedication || "";
   document.getElementById("metaBookLanguage").value = meta?.language || "en";
   document.getElementById("metaBookIsbn").value = meta?.isbn || "";
   document.getElementById("metaBookDescription").value = meta?.description || "";
@@ -1715,8 +2285,13 @@ async function saveMetadata(andDownload = false) {
 
   const payload = {
     title: title,
+    subtitle: document.getElementById("metaBookSubtitle").value.trim(),
     author: author,
+    illustrator: document.getElementById("metaBookIllustrator").value.trim(),
     publisher: document.getElementById("metaBookPublisher").value.trim() || "Self-Published",
+    copyright_text: document.getElementById("metaBookCopyright") ? document.getElementById("metaBookCopyright").value.trim() : "",
+    colophon: document.getElementById("metaBookColophon") ? document.getElementById("metaBookColophon").value.trim() : "",
+    dedication: document.getElementById("metaBookDedication").value.trim(),
     language: document.getElementById("metaBookLanguage").value.trim() || "en",
     isbn: document.getElementById("metaBookIsbn").value.trim(),
     description: document.getElementById("metaBookDescription").value.trim()
@@ -1788,6 +2363,457 @@ async function compileReader() {
     }
   } catch (err) {
     showToast("Error: " + err, "error");
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Amazon KDP Cover Studio Controller
+// ----------------------------------------------------------------------------
+let currentCoverData = null;
+let currentCoverSelectedChunkId = null;
+let currentCoverActiveWorkflow = null;
+let currentCoverScenes = [];
+let coverStudioEventsBound = false;
+
+async function openCoverStudio(preferredStyle = null) {
+  if (!currentSlug) {
+    showToast("Please select a story project first.", "error");
+    return;
+  }
+  const modal = document.getElementById("modalCoverStudio");
+  if (modal) modal.style.display = "flex";
+
+  // If no style explicitly passed, inherit from Reader tab or Render tab
+  if (!preferredStyle) {
+    const readerWf = document.getElementById("readerWorkflowSelect")?.value;
+    const renderStyle = document.getElementById("selectRenderStyle")?.value;
+    preferredStyle = readerWf || renderStyle || null;
+  }
+
+  await loadCoverStudio(preferredStyle);
+}
+
+function closeCoverStudio() {
+  const modal = document.getElementById("modalCoverStudio");
+  if (modal) modal.style.display = "none";
+}
+
+function switchCoverMode(mode) {
+  const btnGen = document.getElementById("tabModeGenerate");
+  const btnExist = document.getElementById("tabModeExisting");
+  const panelGen = document.getElementById("panelCoverGenerate");
+  const panelExist = document.getElementById("panelCoverExisting");
+
+  if (mode === "generate") {
+    if (btnGen) { btnGen.className = "btn btn-primary"; }
+    if (btnExist) { btnExist.className = "btn btn-secondary"; }
+    if (panelGen) panelGen.style.display = "flex";
+    if (panelExist) panelExist.style.display = "none";
+  } else {
+    if (btnGen) { btnGen.className = "btn btn-secondary"; }
+    if (btnExist) { btnExist.className = "btn btn-primary"; }
+    if (panelGen) panelGen.style.display = "none";
+    if (panelExist) panelExist.style.display = "flex";
+  }
+}
+
+async function loadCoverStudio(preferredStyle = null) {
+  if (!currentSlug) return;
+  try {
+    const query = preferredStyle ? `?workflow=${encodeURIComponent(preferredStyle)}` : "";
+    const res = await fetch(`/api/project/${encodeURIComponent(currentSlug)}/cover${query}`);
+    if (!res.ok) {
+      showToast("Failed to load cover information.", "error");
+      return;
+    }
+    const data = await res.json();
+    currentCoverData = data;
+    currentCoverActiveWorkflow = data.active_workflow || preferredStyle || "";
+    currentCoverScenes = data.available_scenes || [];
+
+    updateCoverPreviewUI(data.cover);
+
+    // Setup style selector
+    const selectStyle = document.getElementById("selectCoverStyle");
+    if (selectStyle) {
+      selectStyle.innerHTML = "";
+      const styles = data.available_styles || [];
+      if (styles.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "No style variants found";
+        selectStyle.appendChild(opt);
+      } else {
+        styles.forEach(s => {
+          const opt = document.createElement("option");
+          opt.value = s.workflow;
+          opt.textContent = `${s.label} (${s.rendered_count} scenes)`;
+          if (s.workflow === currentCoverActiveWorkflow) {
+            opt.selected = true;
+          }
+          selectStyle.appendChild(opt);
+        });
+      }
+    }
+
+    // Default selected chunk to current cover chunk if present, else first scene
+    if (data.cover && data.cover.chunk_id && currentCoverScenes.some(s => s.chunk_id === data.cover.chunk_id)) {
+      currentCoverSelectedChunkId = data.cover.chunk_id;
+    } else if (currentCoverScenes.length > 0 && (!currentCoverSelectedChunkId || !currentCoverScenes.some(s => s.chunk_id === currentCoverSelectedChunkId))) {
+      currentCoverSelectedChunkId = currentCoverScenes[0].chunk_id;
+    }
+
+    // Render Scene Grid
+    renderCoverSceneGrid(currentCoverScenes, currentCoverSelectedChunkId);
+
+    // One-time event bindings for style change & search filter
+    if (!coverStudioEventsBound) {
+      coverStudioEventsBound = true;
+
+      const styleSelectEl = document.getElementById("selectCoverStyle");
+      if (styleSelectEl) {
+        styleSelectEl.addEventListener("change", async (e) => {
+          const newWf = e.target.value;
+          if (newWf) {
+            await loadCoverStudio(newWf);
+          }
+        });
+      }
+
+      const searchInput = document.getElementById("inputCoverSceneFilter");
+      if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+          filterCoverScenes(e.target.value);
+        });
+      }
+    }
+
+    const promptInput = document.getElementById("coverPromptInput");
+    const negInput = document.getElementById("coverNegativeInput");
+    if (promptInput && !promptInput.value.trim()) {
+      if (data.cover && data.cover.prompt) {
+        promptInput.value = data.cover.prompt;
+      } else if (data.default_prompt) {
+        promptInput.value = data.default_prompt;
+      }
+    }
+    if (negInput && !negInput.value.trim()) {
+      if (data.cover && data.cover.negative_prompt) {
+        negInput.value = data.cover.negative_prompt;
+      }
+    }
+  } catch (err) {
+    console.error("Error loading cover studio:", err);
+    showToast("Error loading cover studio: " + err, "error");
+  }
+}
+
+function renderCoverSceneGrid(scenes, selectedChunkId) {
+  const grid = document.getElementById("coverSceneGrid");
+  const countBadge = document.getElementById("coverSceneCountBadge");
+  const hiddenSelect = document.getElementById("selectCoverScene");
+
+  if (countBadge) {
+    countBadge.textContent = `${scenes.length} scene${scenes.length === 1 ? '' : 's'}`;
+  }
+
+  if (hiddenSelect) {
+    hiddenSelect.innerHTML = "";
+    scenes.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.chunk_id;
+      opt.textContent = `${s.chunk_id}: ${s.action_beat || s.title || s.chunk_id}`;
+      if (s.chunk_id === selectedChunkId) opt.selected = true;
+      hiddenSelect.appendChild(opt);
+    });
+  }
+
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  if (!scenes || scenes.length === 0) {
+    grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 24px 12px; font-size: 0.85rem;">No rendered scenes found for this style. Switch styles above or render scenes in Phase 2.</div>`;
+    return;
+  }
+
+  scenes.forEach(scene => {
+    const isSelected = (scene.chunk_id === selectedChunkId);
+    const card = document.createElement("div");
+    card.className = `cover-scene-card ${isSelected ? 'selected' : ''}`;
+    card.dataset.chunkId = scene.chunk_id;
+    card.title = scene.prompt || scene.title || scene.chunk_id;
+
+    const beatText = scene.action_beat || scene.title || "";
+
+    card.innerHTML = `
+      <div class="cover-scene-thumb-wrap">
+        <img src="${scene.image_url}?t=${Date.now()}" alt="${scene.chunk_id}" onerror="this.src=''; this.alt='Preview unavailable';">
+        <span class="cover-scene-badge">${scene.chunk_id}</span>
+        <span class="cover-scene-selected-icon">&#10003;</span>
+      </div>
+      <div class="cover-scene-info">
+        <div class="cover-scene-id">${scene.chunk_id}</div>
+        <div class="cover-scene-text">${escapeHtml(beatText)}</div>
+      </div>
+    `;
+
+    card.addEventListener("click", () => {
+      selectCoverSceneCard(scene);
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+function selectCoverSceneCard(scene) {
+  currentCoverSelectedChunkId = scene.chunk_id;
+
+  // Update visual selection in grid
+  const allCards = document.querySelectorAll(".cover-scene-card");
+  allCards.forEach(c => {
+    if (c.dataset.chunkId === scene.chunk_id) {
+      c.classList.add("selected");
+    } else {
+      c.classList.remove("selected");
+    }
+  });
+
+  // Update hidden select for backward compatibility
+  const hiddenSelect = document.getElementById("selectCoverScene");
+  if (hiddenSelect) {
+    hiddenSelect.value = scene.chunk_id;
+  }
+
+  // Update live preview in right panel staging box
+  previewSceneStaging(scene);
+}
+
+function previewSceneStaging(scene) {
+  if (!scene) return;
+  const badge = document.getElementById("coverStatusBadge");
+  const img = document.getElementById("coverPreviewImg");
+  const placeholder = document.getElementById("coverPlaceholderText");
+
+  if (badge) {
+    badge.textContent = `Selected: ${scene.chunk_id}`;
+    badge.className = "badge badge-accent";
+  }
+  if (img) {
+    img.src = `${scene.image_url}?t=${Date.now()}`;
+    img.style.display = "block";
+  }
+  if (placeholder) {
+    placeholder.style.display = "none";
+  }
+}
+
+function filterCoverScenes(query) {
+  const q = (query || "").trim().toLowerCase();
+  const cards = document.querySelectorAll(".cover-scene-card");
+  let visibleCount = 0;
+
+  cards.forEach(card => {
+    const text = card.textContent.toLowerCase();
+    const title = (card.title || "").toLowerCase();
+    const matches = !q || text.includes(q) || title.includes(q);
+    card.style.display = matches ? "flex" : "none";
+    if (matches) visibleCount++;
+  });
+
+  const countBadge = document.getElementById("coverSceneCountBadge");
+  if (countBadge) {
+    countBadge.textContent = `${visibleCount} scene${visibleCount === 1 ? '' : 's'}`;
+  }
+}
+
+function updateCoverPreviewUI(cover) {
+  const badge = document.getElementById("coverStatusBadge");
+  const img = document.getElementById("coverPreviewImg");
+  const placeholder = document.getElementById("coverPlaceholderText");
+  const downloadBox = document.getElementById("coverDownloadActions");
+  const downloadLink = document.getElementById("linkDownloadMarketingCover");
+
+  if (cover && (cover.marketing_file || cover.image_file)) {
+    let relPath = cover.marketing_file || cover.image_file;
+    if (relPath.startsWith("images/")) {
+      relPath = relPath.substring(7);
+    }
+    const imgSrc = `/api/project/${encodeURIComponent(currentSlug)}/images/${encodeURI(relPath)}?t=${Date.now()}`;
+    if (badge) {
+      badge.textContent = "Cover Ready (1600×2560)";
+      badge.className = "badge badge-success";
+    }
+    if (img) {
+      img.src = imgSrc;
+      img.style.display = "block";
+    }
+    if (placeholder) {
+      placeholder.style.display = "none";
+    }
+    if (downloadBox) {
+      downloadBox.style.display = "block";
+    }
+    if (downloadLink) {
+      downloadLink.href = imgSrc;
+    }
+  } else {
+    if (badge) {
+      badge.textContent = "No Cover Set";
+      badge.className = "badge badge-accent";
+    }
+    if (img) {
+      img.style.display = "none";
+      img.src = "";
+    }
+    if (placeholder) {
+      placeholder.style.display = "block";
+    }
+    if (downloadBox) {
+      downloadBox.style.display = "none";
+    }
+  }
+}
+
+async function synthesizeCoverPromptAction() {
+  if (!currentSlug) return;
+  const btn = document.getElementById("btnSynthesizeCoverPrompt");
+  const originalText = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Synthesizing...`;
+  }
+  try {
+    const res = await fetch(`/api/project/${encodeURIComponent(currentSlug)}/cover/synthesize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    const data = await res.json();
+    if (data.success) {
+      const promptInput = document.getElementById("coverPromptInput");
+      const negInput = document.getElementById("coverNegativeInput");
+      if (promptInput) promptInput.value = data.prompt || "";
+      if (negInput && data.negative_prompt) negInput.value = data.negative_prompt;
+      showToast("Cover prompt synthesized from Visual Bible!");
+    } else {
+      showToast("Prompt synthesis error: " + (data.error || "Unknown"), "error");
+    }
+  } catch (err) {
+    showToast("Network error synthesizing cover: " + err, "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  }
+}
+
+async function renderCoverAction() {
+  if (!currentSlug) return;
+  const promptInput = document.getElementById("coverPromptInput");
+  const prompt = promptInput ? promptInput.value.trim() : "";
+  if (!prompt) {
+    showToast("Please enter or auto-synthesize a cover prompt first.", "error");
+    return;
+  }
+  const negInput = document.getElementById("coverNegativeInput");
+  const negPrompt = negInput ? negInput.value.trim() : "";
+  const wf = document.getElementById("selectWorkflow")?.value || "sdxl_base.json";
+  const applyTypo = document.getElementById("checkCoverTypography")?.checked ?? true;
+  const tier = document.getElementById("selectResolutionTier")?.value || "standard";
+  const fontFamily = document.getElementById("selectCoverFontFamily")?.value || "serif";
+  const fontColor = document.getElementById("selectCoverFontColor")?.value || "gold";
+
+  const btn = document.getElementById("btnRenderCoverAction");
+  const originalText = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Rendering KDP Cover (ComfyUI)...`;
+  }
+
+  showToast("Rendering commercial cover in ComfyUI... this may take a moment.");
+
+  try {
+    const res = await fetch(`/api/project/${encodeURIComponent(currentSlug)}/cover/render`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt: prompt,
+        negative_prompt: negPrompt,
+        workflow: wf,
+        apply_typography: applyTypo,
+        resolution_tier: tier,
+        font_family: fontFamily,
+        font_color: fontColor
+      })
+    });
+    const data = await res.json();
+    if (data.success && data.cover) {
+      updateCoverPreviewUI(data.cover);
+      showToast("KDP Cover rendered & composited successfully!", "success");
+      await loadManifest();
+      loadReaderPreview(wf);
+    } else {
+      showToast("Cover render error: " + (data.error || "Failed"), "error");
+    }
+  } catch (err) {
+    showToast("Network error during cover render: " + err, "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  }
+}
+
+async function setExistingSceneCoverAction() {
+  if (!currentSlug) return;
+  const sceneSelect = document.getElementById("selectCoverScene");
+  const chunkId = currentCoverSelectedChunkId || (sceneSelect ? sceneSelect.value : "");
+  if (!chunkId) {
+    showToast("Please select a scene first.", "error");
+    return;
+  }
+  const applyTypo = document.getElementById("checkCoverTypography")?.checked ?? true;
+  const styleSelect = document.getElementById("selectCoverStyle");
+  const wf = styleSelect?.value || currentCoverActiveWorkflow || document.getElementById("selectWorkflow")?.value;
+  const fontFamily = document.getElementById("selectCoverFontFamily")?.value || "serif";
+  const fontColor = document.getElementById("selectCoverFontColor")?.value || "gold";
+
+  const btn = document.getElementById("btnSetExistingCoverAction");
+  const originalText = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Building KDP Cover...`;
+  }
+
+  try {
+    const res = await fetch(`/api/project/${encodeURIComponent(currentSlug)}/cover/set-existing`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chunk_id: chunkId,
+        apply_typography: applyTypo,
+        workflow: wf,
+        font_family: fontFamily,
+        font_color: fontColor
+      })
+    });
+    const data = await res.json();
+    if (data.success && data.cover) {
+      updateCoverPreviewUI(data.cover);
+      showToast("Scene successfully set as official KDP Cover!", "success");
+      await loadManifest();
+      loadReaderPreview(wf);
+    } else {
+      showToast("Error setting cover: " + (data.error || "Failed"), "error");
+    }
+  } catch (err) {
+    showToast("Network error setting cover: " + err, "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
   }
 }
 
@@ -2003,7 +3029,8 @@ function setupEventListeners() {
   if (selWf) {
     selWf.addEventListener("change", () => {
       if (currentManifest) {
-        loadManifest();
+        renderGalleryCards();
+        updateBatchRenderButtonState();
       }
     });
   }
@@ -2026,6 +3053,9 @@ function setupEventListeners() {
   const btnExpReflow = document.getElementById("btnExportReflowable");
   if (btnExpReflow) btnExpReflow.addEventListener("click", () => triggerBookExport("reflowable_epub"));
 
+  const btnExpKdp = document.getElementById("btnExportKdpPack");
+  if (btnExpKdp) btnExpKdp.addEventListener("click", () => triggerBookExport("kdp_pack"));
+
   const btnEditMeta = document.getElementById("btnEditEbookMetadata");
   if (btnEditMeta) btnEditMeta.addEventListener("click", () => openMetadataModal(null));
 
@@ -2040,6 +3070,66 @@ function setupEventListeners() {
 
   const btnSaveExp = document.getElementById("btnSaveAndExport");
   if (btnSaveExp) btnSaveExp.addEventListener("click", () => saveMetadata(true));
+
+  // Resolution tier switcher in Tab 5 toolbar
+  const selTier = document.getElementById("selectResolutionTier");
+  if (selTier) {
+    selTier.addEventListener("change", async (e) => {
+      if (!currentSlug) return;
+      try {
+        const res = await fetch(`/api/project/${encodeURIComponent(currentSlug)}/resolution-tier`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tier: e.target.value })
+        });
+        if (res.ok) {
+          showToast(`Resolution tier set to ${e.target.value === 'highres' ? 'High-Res Retina (~2048)' : 'Standard Ebook (~1 MP)'}`);
+        }
+      } catch (err) {
+        showToast("Failed to save resolution tier: " + err, "error");
+      }
+    });
+  }
+
+  // Cover Studio Modal bindings
+  const btnOpenCover = document.getElementById("btnOpenCoverStudio");
+  if (btnOpenCover) btnOpenCover.addEventListener("click", () => openCoverStudio());
+
+  const btnReaderCover = document.getElementById("btnReaderCoverStudio");
+  if (btnReaderCover) {
+    btnReaderCover.addEventListener("click", () => {
+      const selectedWf = document.getElementById("readerWorkflowSelect")?.value;
+      openCoverStudio(selectedWf);
+    });
+  }
+
+  const btnCloseCoverModal = document.getElementById("btnCloseCoverStudioModal");
+  if (btnCloseCoverModal) btnCloseCoverModal.addEventListener("click", closeCoverStudio);
+
+  const btnCloseCover = document.getElementById("btnCloseCoverStudio");
+  if (btnCloseCover) btnCloseCover.addEventListener("click", closeCoverStudio);
+
+  const modalCover = document.getElementById("modalCoverStudio");
+  if (modalCover) {
+    modalCover.addEventListener("click", (e) => {
+      if (e.target === modalCover) closeCoverStudio();
+    });
+  }
+
+  const tabGen = document.getElementById("tabModeGenerate");
+  if (tabGen) tabGen.addEventListener("click", () => switchCoverMode("generate"));
+
+  const tabExist = document.getElementById("tabModeExisting");
+  if (tabExist) tabExist.addEventListener("click", () => switchCoverMode("existing"));
+
+  const btnSynthCover = document.getElementById("btnSynthesizeCoverPrompt");
+  if (btnSynthCover) btnSynthCover.addEventListener("click", synthesizeCoverPromptAction);
+
+  const btnRndCover = document.getElementById("btnRenderCoverAction");
+  if (btnRndCover) btnRndCover.addEventListener("click", renderCoverAction);
+
+  const btnSetExistCover = document.getElementById("btnSetExistingCoverAction");
+  if (btnSetExistCover) btnSetExistCover.addEventListener("click", setExistingSceneCoverAction);
 
   // Active diffusion profile switcher in Tab 4
   const activeProfSel = document.getElementById("activeProfileSelect");
@@ -2374,11 +3464,10 @@ function setupEventListeners() {
       }
     });
   }
-  const renderStyleLabel = document.getElementById("renderActiveStyleLabel");
-  if (renderStyleLabel) {
-    renderStyleLabel.addEventListener("click", () => {
-      const tabBtn = document.querySelector('[data-tab="tab-manifest"]');
-      if (tabBtn) tabBtn.click();
+  const renderStyleSelect = document.getElementById("selectRenderStyle");
+  if (renderStyleSelect) {
+    renderStyleSelect.addEventListener("change", (e) => {
+      onRenderStyleChanged(e.target.value);
     });
   }
   const readerWfSelect = document.getElementById("readerWorkflowSelect");

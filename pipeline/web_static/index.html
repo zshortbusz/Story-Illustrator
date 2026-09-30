@@ -352,10 +352,14 @@
         <div class="render-controls-group" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <label for="selectWorkflow">Workflow:</label>
           <select id="selectWorkflow" class="select-input" style="width: 170px;"></select>
-          <span class="render-style-display" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; color: var(--text-dim); margin-left: 4px; margin-right: 4px;">
-            <span>Style:</span>
-            <strong id="renderActiveStyleLabel" class="badge badge-accent" style="cursor: pointer;" title="Active style set in Tab 4">Default Style</strong>
-          </span>
+          <label for="selectResolutionTier" style="font-size: 0.88rem; color: var(--text-dim); margin-left: 4px;">Tier:</label>
+          <select id="selectResolutionTier" class="select-input" style="width: 160px;" title="Choose between High-Res Retina (~2048) and Standard Ebook (~1 MP)">
+            <option value="highres" selected>High-Res (~2048)</option>
+            <option value="standard">Standard (~1 MP)</option>
+          </select>
+          <label for="selectRenderStyle" style="font-size: 0.88rem; color: var(--text-dim); margin-left: 4px;">Style:</label>
+          <select id="selectRenderStyle" class="select-input" style="width: auto; min-width: 180px; max-width: 250px;" title="Select visual style to view images and prompts"></select>
+          <button id="btnOpenCoverStudio" class="btn btn-secondary" title="Design or choose book cover for Amazon KDP">&#127912; Cover Studio</button>
           <button id="btnToggleSelectAll" class="btn btn-secondary" title="Select or deselect all scene illustrations">Select All</button>
           <button id="btnRegenerateSelected" class="btn btn-primary" disabled title="Regenerate checked scenes">&#8635; Regenerate Selected (0)</button>
           <button id="btnStartBatchRender" class="btn btn-success">&#9654; Start Batch Render</button>
@@ -380,15 +384,17 @@
     <section id="tab-reader" class="tab-content">
       <div class="tab-header-row">
         <div>
-          <h2>Phase 3: Static Reader Preview</h2>
-          <p class="section-desc">Responsive offline reader layout with dialogue quote highlighting (preserved from <code>build_site.cjs</code>) and embedded illustrations.</p>
+          <h2>Phase 3: Static Reader Preview &amp; Ebook Exports</h2>
+          <p class="section-desc">Preview illustrated reader layout and export validated retailer-grade editions for Amazon KDP, Apple Books, and Google Play.</p>
         </div>
         <div class="btn-group" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <label for="readerWorkflowSelect" style="font-size: 0.88rem; color: var(--text-dim);">Image Set:</label>
           <select id="readerWorkflowSelect" class="select-input" style="width: auto; min-width: 140px; font-size: 0.88rem;"></select>
-          <button id="btnExportPdf" class="btn btn-secondary" title="Export print-ready high-resolution PDF for Amazon KDP Print & physical books">&#128196; High-Res PDF</button>
-          <button id="btnExportFxl" class="btn btn-secondary" title="Export Fixed-Layout EPUB 3.0 with Kindle pre-paginated metadata for illustrated books">&#128214; FXL EPUB3</button>
+          <button id="btnReaderCoverStudio" class="btn btn-secondary" title="Design or choose book cover for this export style">&#127912; Cover Studio</button>
+          <button id="btnExportKdpPack" class="btn btn-primary" title="Download 1-Click Amazon KDP Publishing Kit (.zip) with EPUB, 1600x2560 Cover & Metadata">&#128230; KDP Publish Kit (.zip)</button>
           <button id="btnExportReflowable" class="btn btn-secondary" title="Export Reflowable EPUB for Kindle Paperwhite, Apple Books, and Kobo">&#128241; Reflowable EPUB</button>
+          <button id="btnExportFxl" class="btn btn-secondary" title="Export Fixed-Layout EPUB 3.0 with Kindle pre-paginated metadata for illustrated books">&#128214; FXL EPUB3</button>
+          <button id="btnExportPdf" class="btn btn-secondary" title="Export print-ready high-resolution PDF for Amazon KDP Print & physical books">&#128196; High-Res PDF</button>
           <button id="btnEditEbookMetadata" class="btn btn-secondary" title="Edit Ebook Retailer Metadata (Title, Author, Publisher, ISBN)">&#9881; Book Metadata</button>
         </div>
       </div>
@@ -658,12 +664,32 @@
         <input type="text" id="metaBookTitle" class="text-input" placeholder="e.g. The Raven: Illustrated Edition" required>
       </div>
       <div class="form-group" style="margin-bottom: 12px;">
+        <label for="metaBookSubtitle">Subtitle (KDP Compliant)</label>
+        <input type="text" id="metaBookSubtitle" class="text-input" placeholder="e.g. With 16 Original Pre-Raphaelite Oil Plates">
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
         <label for="metaBookAuthor">Author / Creator <span style="color: #ef4444;">*</span></label>
         <input type="text" id="metaBookAuthor" class="text-input" placeholder="e.g. Edgar Allan Poe" required>
       </div>
       <div class="form-group" style="margin-bottom: 12px;">
+        <label for="metaBookIllustrator">Illustrator</label>
+        <input type="text" id="metaBookIllustrator" class="text-input" placeholder="e.g. Artist or Imprint Name">
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
         <label for="metaBookPublisher">Publisher</label>
         <input type="text" id="metaBookPublisher" class="text-input" placeholder="e.g. Self-Published or Imprint Name">
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="metaBookCopyright">Copyright &amp; Licensing Notice (Optional)</label>
+        <textarea id="metaBookCopyright" class="textarea-input" rows="2" placeholder="Auto-generated from publisher &amp; author if left blank. Use {publisher}, {year}, {author} placeholders."></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="metaBookColophon">Colophon &amp; Print Notes (Optional)</label>
+        <textarea id="metaBookColophon" class="textarea-input" rows="2" placeholder="Auto-generated from illustration plates, visual style, and typography if left blank."></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="metaBookDedication">Dedication</label>
+        <input type="text" id="metaBookDedication" class="text-input" placeholder="e.g. To my wife">
       </div>
       <div class="form-group" style="margin-bottom: 12px;">
         <label for="metaBookLanguage">Language Code</label>
@@ -685,7 +711,130 @@
     </div>
   </div>
 
+  <!-- Cover Studio Modal -->
+  <div id="modalCoverStudio" class="modal-backdrop" style="display: none;">
+    <div class="modal-card modal-large" style="max-width: 960px; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="card-header" style="flex-shrink: 0;">
+        <h3>&#127912; Amazon KDP Book Cover Studio</h3>
+        <button id="btnCloseCoverStudioModal" class="btn btn-icon">&times;</button>
+      </div>
+      <p style="font-size: 0.88rem; color: var(--text-dim); margin-top: 4px; margin-bottom: 14px; flex-shrink: 0;">
+        Design a publication-grade 1:1.6 cover for Amazon KDP (1600 &times; 2560 px) with automatic typography, or select an existing scene illustration.
+      </p>
+
+      <div class="cover-studio-layout" style="display: flex; gap: 20px; overflow-y: auto; flex: 1 1 auto; padding-right: 4px;">
+        <!-- Left: Options & Tools -->
+        <div class="cover-studio-controls" style="flex: 1 1 58%; display: flex; flex-direction: column; gap: 14px;">
+          <!-- Mode Tabs -->
+          <div class="cover-mode-tabs" style="display: flex; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+            <button type="button" id="tabModeGenerate" class="btn btn-primary" style="font-size: 0.88rem;">&#10024; Generate Dedicated AI Cover</button>
+            <button type="button" id="tabModeExisting" class="btn btn-secondary" style="font-size: 0.88rem;">&#128444; Choose from Existing Scene</button>
+          </div>
+
+          <!-- Panel A: Generate AI Cover -->
+          <div id="panelCoverGenerate" style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label style="font-weight: 600; font-size: 0.9rem;">Cover Illustration Prompt:</label>
+              <button type="button" id="btnSynthesizeCoverPrompt" class="btn btn-secondary" style="font-size: 0.8rem;" title="Synthesize cover prompt using Visual Bible protagonist DNA & motifs">&#10024; Auto-Synthesize from Bible</button>
+            </div>
+            <textarea id="coverPromptInput" class="textarea-input" rows="3" placeholder="Click 'Auto-Synthesize' or write an evocative 1:1.6 cover prompt..."></textarea>
+
+            <label style="font-weight: 600; font-size: 0.88rem; margin-top: 2px;">Negative Prompt:</label>
+            <input type="text" id="coverNegativeInput" class="text-input" placeholder="blurry, deformed, text, watermark, bad anatomy">
+
+            <div style="margin-top: 6px;">
+              <button type="button" id="btnRenderCoverAction" class="btn btn-success" style="width: 100%;">
+                &#9654; Render &amp; Build KDP Cover (1600 &times; 2560)
+              </button>
+            </div>
+          </div>
+
+          <!-- Panel B: Choose Existing Scene -->
+          <div id="panelCoverExisting" style="display: none; flex-direction: column; gap: 10px;">
+            <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between;">
+              <label for="selectCoverStyle" style="font-weight: 600; font-size: 0.88rem; color: var(--text-color); white-space: nowrap;">🎨 Export Style / Image Set:</label>
+              <select id="selectCoverStyle" class="select-input" style="flex: 1; font-size: 0.85rem; max-width: 320px;" title="Filter scenes by rendered style / export set"></select>
+            </div>
+
+            <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between;">
+              <div style="position: relative; flex: 1;">
+                <input type="text" id="inputCoverSceneFilter" class="text-input" placeholder="🔍 Search scenes by number or description..." style="font-size: 0.82rem; padding: 5px 8px; width: 100%; box-sizing: border-box;">
+              </div>
+              <span id="coverSceneCountBadge" class="badge badge-accent" style="font-size: 0.75rem; white-space: nowrap;">0 scenes</span>
+            </div>
+
+            <div id="coverSceneGrid" class="cover-scene-grid">
+              <!-- Dynamically populated with scene thumbnail cards -->
+            </div>
+            <!-- Hidden select retained for backward compatibility -->
+            <select id="selectCoverScene" style="display: none;"></select>
+
+            <p style="font-size: 0.82rem; color: var(--text-dim); margin: 0;">
+              Click any scene above to live-preview on the right. ASI will crop/fit this scene to the Amazon 1:1.6 ratio and composite typography.
+            </p>
+            <div style="margin-top: 4px;">
+              <button type="button" id="btnSetExistingCoverAction" class="btn btn-primary" style="width: 100%;">
+                &#128190; Use Selected Scene as Official Cover
+              </button>
+            </div>
+          </div>
+
+          <!-- Typography Options (Shared) -->
+          <div class="card" style="padding: 12px; margin-top: 4px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <input type="checkbox" id="checkCoverTypography" checked style="cursor: pointer;">
+              <label for="checkCoverTypography" style="font-weight: 600; cursor: pointer; font-size: 0.9rem;">Overlay Title &amp; Author Typography</label>
+            </div>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <div style="flex: 1 1 45%;">
+                <label style="font-size: 0.82rem; color: var(--text-dim);">Font Family:</label>
+                <select id="selectCoverFontFamily" class="select-input" style="width: 100%; font-size: 0.85rem;">
+                  <option value="serif" selected>Classic Serif (Georgia / Cinzel)</option>
+                  <option value="sans">Modern Sans (Segoe / Montserrat)</option>
+                </select>
+              </div>
+              <div style="flex: 1 1 45%;">
+                <label style="font-size: 0.82rem; color: var(--text-dim);">Text Color:</label>
+                <select id="selectCoverFontColor" class="select-input" style="width: 100%; font-size: 0.85rem;">
+                  <option value="gold" selected>Amber Gold (#facc15)</option>
+                  <option value="white">Crisp White (#ffffff)</option>
+                  <option value="silver">Silver Platinum (#e2e8f0)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live Cover Preview Card -->
+        <div class="cover-studio-preview" style="flex: 1 1 42%; display: flex; flex-direction: column; align-items: center; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 14px; border: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 8px;">
+            <span style="font-weight: 600; font-size: 0.88rem;">Current KDP Cover:</span>
+            <span id="coverStatusBadge" class="badge badge-accent">No Cover Set</span>
+          </div>
+
+          <div class="cover-preview-img-box" style="width: 100%; max-width: 240px; aspect-ratio: 1 / 1.6; background: #0a0c10; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.6);">
+            <img id="coverPreviewImg" src="" alt="Book Cover Preview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+            <span id="coverPlaceholderText" style="font-size: 0.82rem; color: var(--text-dim); text-align: center; padding: 20px;">
+              No cover rendered yet.<br><br>Synthesize AI cover or pick an existing scene.
+            </span>
+          </div>
+
+          <div id="coverDownloadActions" style="margin-top: 12px; display: none; width: 100%; text-align: center;">
+            <a id="linkDownloadMarketingCover" href="#" download="cover_kdp_marketing.jpg" class="btn btn-secondary" style="font-size: 0.82rem; width: 100%; display: block; box-sizing: border-box;">
+              &#11015; Download Standalone KDP Cover (1600 &times; 2560)
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-group" style="justify-content: flex-end; margin-top: 14px; gap: 10px; flex-shrink: 0; border-top: 1px solid var(--border-color); padding-top: 10px;">
+        <button type="button" id="btnCloseCoverStudio" class="btn btn-secondary">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Notification Toast -->
+
   <div id="toast" class="toast"></div>
 
   <script src="/static/app.js"></script>

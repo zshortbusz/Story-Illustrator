@@ -44,7 +44,8 @@ class TestCompileHTML(unittest.TestCase):
         self.assertIn("Test Odyssey", html_out)
         self.assertIn('<strong class="q">"Wait,"</strong>', html_out)
         self.assertIn("story-paragraph", html_out)
-        self.assertIn("Automated Story Illustrator", html_out)
+        self.assertIn("story-footer", html_out)
+        self.assertNotIn("Automated Story Illustrator", html_out)
 
     def test_file_to_data_uri(self):
         # Non-existent file returns None
@@ -95,6 +96,11 @@ class TestCompileHTML(unittest.TestCase):
         html_linked = compile_manifest_to_html(manifest, project_dir=self.temp_dir, embed_images=False)
         self.assertNotIn("data:image/png;base64,", html_linked)
         self.assertIn('src="images/chunk_001.png"', html_linked)
+
+        # Verify no visible figcaption is rendered in the reader
+        self.assertNotIn("<figcaption>", html_embedded)
+        self.assertNotIn("<figcaption>", html_linked)
+        self.assertNotIn("[chunk_001]", html_embedded)
 
 
 if __name__ == "__main__":

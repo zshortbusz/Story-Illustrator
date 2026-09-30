@@ -199,20 +199,7 @@ figure.scene-illustration img {
   object-fit: cover;
 }
 
-figcaption {
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  padding: 12px 18px;
-  line-height: 1.45;
-  border-top: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.2);
-}
 
-figcaption strong {
-  color: var(--accent);
-  margin-right: 6px;
-}
 
 footer.story-footer {
   margin-top: 60px;
@@ -334,7 +321,7 @@ def compile_manifest_to_html(
             # Render illustration if status is completed or image file exists on disk
             if os.path.isfile(full_img_path):
                 illustrations_count += 1
-                prompt_caption = escape_html(illus.get("prompt", ""))
+                prompt_alt = escape_html(illus.get("prompt", ""))
                 cid = block.get("chunk_id", "")
                 filename = os.path.basename(img_rel_path)
 
@@ -345,8 +332,7 @@ def compile_manifest_to_html(
 
                 body_html_parts.append(f"""
 <figure class="scene-illustration" id="{cid}">
-  <img src="{img_src}" data-filename="{filename}" alt="{prompt_caption}" loading="lazy">
-  <figcaption><strong>[{cid}]</strong> {prompt_caption}</figcaption>
+  <img src="{img_src}" data-filename="{filename}" alt="{prompt_alt}" loading="lazy">
 </figure>""")
 
     body_content = "\n".join(body_html_parts)
@@ -378,7 +364,7 @@ def compile_manifest_to_html(
     </main>
 
     <footer class="story-footer">
-      <p>Automated Story Illustrator &bull; {escape_html(title)}</p>
+      <p>{escape_html(title)}</p>
     </footer>
   </div>
 </body>

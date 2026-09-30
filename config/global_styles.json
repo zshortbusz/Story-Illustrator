@@ -76,6 +76,48 @@
       "description": "1950s medium format black-and-white analog photography, Kodak Tri-X 400 silver gelatin print, deep velvety shadows, sharp optical contrast, Hasselblad 80mm lens rendering, fine natural film grain, moody chiaroscuro lighting.",
       "category": "art",
       "source_project": "ash_wednesday"
+    },
+    {
+      "id": "oil_glazing_impasto",
+      "name": "Oil Glazing & Impasto",
+      "description": "Layers of translucent oil glazes over thick, impasto strokes. Rich pigments of ultramarine and burnt sienna applied with a palette knife on heavy linen canvas, creating deep shadows and luminous, saturated highlights.",
+      "category": "art",
+      "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "soft_pastel_on_heavy_grain_paper",
+      "name": "Soft Pastel on Heavy Grain Paper",
+      "description": "Velvety soft pastels applied to textured, heavy-grain archival paper. Blended edges create a cinematic soft-focus effect, with heavy pigment buildup in the amber highlights against deep, smudged indigo shadows.",
+      "category": "art",
+      "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "dry_brush_gouache_ink_wash",
+      "name": "Dry Brush Gouache & Ink Wash",
+      "description": "Opaque gouache layered over fluid ink washes. Visible dry-brush strokes create gritty textures, while deep pigment saturation in emerald and amber captures a moody, painterly mid-century cinematic atmosphere.",
+      "category": "art",
+      "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "charcoal_white_chalk_on_toned_paper",
+      "name": "Charcoal & White Chalk on Toned Paper",
+      "description": "Compressed charcoal and white chalk on mid-grey toned paper. Dramatic chiaroscuro lighting achieved through heavy smudging and sharp, expressive strokes, emphasizing high-contrast silhouettes and atmospheric, smoky textures.",
+      "category": "art",
+      "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "intaglio_etching_aquatint",
+      "name": "Intaglio Etching & Aquatint",
+      "description": "Fine-line copperplate etching combined with aquatint tonal washes. Deeply bitten grooves create rich, velvety blacks, while granular textures provide a moody, cinematic depth reminiscent of classic noir printmaking.",
+      "category": "art",
+      "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "encaustic_wax_pigment",
+      "name": "Encaustic Wax & Pigment",
+      "description": "Layered molten beeswax and pigmented wax on a wooden panel. The translucent, heavy texture creates a luminous, sculptural depth, with embedded pigments of deep teal and warm amber catching the light.",
+      "category": "art",
+      "source_project": "the_secret_of_the_old_clock"
     }
   ],
   "photography": [
@@ -106,6 +148,27 @@
       "description": "19th century antique large format wet plate collodion photograph, subtle hand-tinted lapis and emerald dyes, silver gelatin emulsion swirls, sepia and graphite tones, delicate chemical plate imperfections, heavy edge vignetting.",
       "category": "photography",
       "source_project": "ash_wednesday"
+    },
+    {
+      "id": "1950s_three_strip_technicolor",
+      "name": "1950s Three-Strip Technicolor",
+      "description": "35mm Three-Strip Technicolor with anamorphic lenses. Saturated dye-transfer palette of deep blues, warm ambers, and emerald greens. High-contrast chiaroscuro lighting with heavy halation and a painterly, soft-focus glow.",
+      "category": "photography",
+      "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "1940s_kodachrome_noir",
+      "name": "1940s Kodachrome Noir",
+      "description": "1940s Kodachrome on 35mm Leica. Intense ambers and deep blues with high-contrast shadows. Fine, organic grain, sharp optics with subtle edge softness and dramatic, hard-light chiaroscuro.",
+      "category": "photography",
+      "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "1950s_medium_format_agfacolor",
+      "name": "1950s Medium Format Agfacolor",
+      "description": "1950s medium format Agfacolor with Zeiss Planar optics. Painterly, soft-focus diffusion. Earthy greens and warm ambers against deep, ink-black shadows. Rich, velvety grain and soft volumetric lighting.",
+      "category": "photography",
+      "source_project": "the_secret_of_the_old_clock"
     }
   ]
 }
