@@ -289,35 +289,56 @@ class TestCoverAndKdpExport(unittest.TestCase):
         self.assertEqual(cover_record["prompt"], "Dark charcoal sketch")
 
     def test_cover_api_endpoint_style_filtering(self):
-        """Verify /api/project/<slug>/cover returns available_styles and filters scenes by workflow."""
+        """Verify /api/project/<slug>/cover returns available_styles and filters scenes by workflow hermetically."""
+        from unittest.mock import patch
         from pipeline.web_server import create_app
-        # Register a mock project directory pointing to self.temp_dir
+
+        # Set up a multi-style manifest in self.temp_dir
+        multi_manifest = dict(self.manifest)
+        wf_name = "workflow_api.json (Pre-Raphaelite Impasto & Glaze Oil)"
+        wf_folder = "workflow_api__pre_raphaelite_oil"
+        wf_img_dir = os.path.join(self.images_dir, wf_folder)
+        os.makedirs(wf_img_dir, exist_ok=True)
+        img_file = os.path.join(wf_img_dir, "chunk_001.png")
+        shutil.copy(self.sample_png, img_file)
+
+        multi_manifest["blocks"][0]["illustrations"] = {
+            wf_name: {
+                "status": "completed",
+                "image_file": f"images/{wf_folder}/chunk_001.png",
+                "prompt": "Pre-Raphaelite styled starship",
+                "width": 2048,
+                "height": 1152
+            }
+        }
+        with open(os.path.join(self.artifacts_dir, "manifest.json"), "w", encoding="utf-8") as f:
+            json.dump(multi_manifest, f)
+
         app = create_app()
         client = app.test_client()
 
-        # ash_wednesday is an existing project in the repo
-        res = client.get("/api/project/ash_wednesday/cover")
-        self.assertEqual(res.status_code, 200)
-        data = res.get_json()
-        self.assertIn("available_styles", data)
-        self.assertIn("available_scenes", data)
-        self.assertGreater(len(data["available_styles"]), 0)
+        with patch("pipeline.web_server.get_project_dir", return_value=self.temp_dir):
+            res = client.get("/api/project/mock_project/cover")
+            self.assertEqual(res.status_code, 200)
+            data = res.get_json()
+            self.assertIn("available_styles", data)
+            self.assertIn("available_scenes", data)
+            self.assertGreater(len(data["available_styles"]), 0)
 
-        # Verify scenes have human-readable action_beat or title, avoiding 'undefined'
-        for s in data["available_scenes"][:3]:
-            self.assertIn("chunk_id", s)
-            self.assertIn("action_beat", s)
-            self.assertNotEqual(s["action_beat"], "undefined")
-            self.assertIn("image_url", s)
+            # Verify scenes have human-readable action_beat or title, avoiding 'undefined'
+            for s in data["available_scenes"][:3]:
+                self.assertIn("chunk_id", s)
+                self.assertIn("action_beat", s)
+                self.assertNotEqual(s["action_beat"], "undefined")
+                self.assertIn("image_url", s)
 
-        # Test filtering by specific style
-        import urllib.parse
-        wf = "workflow_api.json (Pre-Raphaelite Impasto & Glaze Oil)"
-        res_style = client.get(f"/api/project/ash_wednesday/cover?workflow={urllib.parse.quote(wf)}")
-        self.assertEqual(res_style.status_code, 200)
-        data_style = res_style.get_json()
-        self.assertEqual(data_style["active_workflow"], wf)
-        self.assertIn("workflow_api__pre_raphaelite_oil", data_style["available_scenes"][0]["image_url"])
+            # Test filtering by specific style
+            import urllib.parse
+            res_style = client.get(f"/api/project/mock_project/cover?workflow={urllib.parse.quote(wf_name)}")
+            self.assertEqual(res_style.status_code, 200)
+            data_style = res_style.get_json()
+            self.assertEqual(data_style["active_workflow"], wf_name)
+            self.assertIn(wf_folder, data_style["available_scenes"][0]["image_url"])
 
 
 if __name__ == "__main__":

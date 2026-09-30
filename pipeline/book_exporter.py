@@ -374,7 +374,7 @@ def get_book_metadata(
     now_iso = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     date_simple = datetime.date.today().isoformat()
 
-    return {
+    meta_res = {
         "title": title,
         "kdp_title": kdp_title,
         "subtitle": subtitle,
@@ -393,6 +393,10 @@ def get_book_metadata(
         "modified": now_iso,
         "date": date_simple
     }
+    for k, v in meta_res.items():
+        if isinstance(v, str):
+            meta_res[k] = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', v)
+    return meta_res
 
 
 def parse_block_heading_and_body(text: str) -> Tuple[Optional[str], str]:
@@ -469,7 +473,8 @@ def split_quotes_for_pdf(text: str) -> str:
 
 def split_quotes_for_epub(text: str) -> str:
     """Highlights dialogue quotes wrapped in <strong class="q"> for EPUB XHTML."""
-    normalized = text.replace("“", '"').replace("”", '"')
+    cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text or "")
+    normalized = cleaned.replace("“", '"').replace("”", '"')
     escaped = html.escape(normalized, quote=False)
 
     parts = []
@@ -555,12 +560,22 @@ def resolve_block_illustration(
     if not img_rel:
         return None
 
-    full_img = os.path.join(project_dir, img_rel)
+    full_img = os.path.abspath(os.path.join(project_dir, img_rel))
+    proj_abs = os.path.abspath(project_dir)
+    try:
+        if os.path.commonpath([proj_abs, full_img]) != proj_abs:
+            return None
+    except ValueError:
+        return None
+
     if not os.path.isfile(full_img):
-        fallback = os.path.join(project_dir, "images", f"{block['chunk_id']}.png")
-        if os.path.isfile(fallback):
-            full_img = fallback
-        else:
+        fallback = os.path.abspath(os.path.join(project_dir, "images", f"{block['chunk_id']}.png"))
+        try:
+            if os.path.commonpath([proj_abs, fallback]) == proj_abs and os.path.isfile(fallback):
+                full_img = fallback
+            else:
+                return None
+        except ValueError:
             return None
 
     return full_img, illus.get("prompt", ""), block.get("chunk_id", "")
@@ -573,11 +588,15 @@ def resolve_cover_image(manifest: Dict[str, Any], project_dir: str) -> Optional[
     then falls back to images/cover/cover.jpg or None.
     Returns (cover_file_path, title) or None.
     """
+    proj_abs = os.path.abspath(project_dir)
     cover_meta = manifest.get("cover")
     if isinstance(cover_meta, dict) and cover_meta.get("image_file"):
-        cpath = os.path.join(project_dir, cover_meta["image_file"])
-        if os.path.isfile(cpath):
-            return cpath, cover_meta.get("title", manifest.get("story_title", "Cover"))
+        cpath = os.path.abspath(os.path.join(project_dir, cover_meta["image_file"]))
+        try:
+            if os.path.commonpath([proj_abs, cpath]) == proj_abs and os.path.isfile(cpath):
+                return cpath, cover_meta.get("title", manifest.get("story_title", "Cover"))
+        except ValueError:
+            pass
 
     # Fallback to images/cover/cover.jpg or images/cover/cover_kdp_marketing.jpg
     for candidate in ["images/cover/cover.jpg", "images/cover/cover_kdp_marketing.jpg", "images/cover.jpg"]:
@@ -609,7 +628,7 @@ def process_image_for_epub(src_path: str, quality: int = 90, max_dim: int = 2400
         w, h = rgb_im.size
         if w > max_dim or h > max_dim:
             scale = min(max_dim / float(w), max_dim / float(h))
-            nw, nh = int(w * scale), int(h * scale)
+            nw, nh = max(1, int(w * scale)), max(1, int(h * scale))
             rgb_im = rgb_im.resize((nw, nh), Image.Resampling.LANCZOS)
 
         out_buf = io.BytesIO()

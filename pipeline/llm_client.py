@@ -272,7 +272,14 @@ class LMStudioClient:
                     self._handle_http_error(resp)
 
                 data = resp.json()
-                raw_text = data["choices"][0]["message"]["content"]
+                choices = data.get("choices", [])
+                if not choices:
+                    raise RuntimeError(f"LLM returned empty choices array ({self.backend})")
+                msg = choices[0].get("message", {})
+                content = msg.get("content") or ""
+                if not content.strip() and msg.get("reasoning_content"):
+                    content = msg.get("reasoning_content", "")
+                raw_text = content
                 break
             except ContextWindowExceededError:
                 raise
@@ -282,7 +289,7 @@ class LMStudioClient:
                 time.sleep(backoff ** attempt)
 
         # Attempt JSON extraction
-        extracted = self._extract_json_block(raw_text)
+        extracted = self._extract_json_block(raw_text or "")
         try:
             return json.loads(extracted)
         except json.JSONDecodeError:
@@ -297,6 +304,8 @@ class LMStudioClient:
 
     def _extract_json_block(self, text: str) -> str:
         """Extracts JSON substring if enclosed in markdown code fences or surrounded by prose."""
+        if not text:
+            return ""
         text = text.strip()
         # Strip thinking/reasoning tags if present
         text = re.sub(r"<(?:thought|think)>.*?</(?:thought|think)>", "", text, flags=re.DOTALL | re.IGNORECASE).strip()

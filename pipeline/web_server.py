@@ -39,8 +39,10 @@ from pipeline.build_manifest import (
     run_stage_manifest,
     compose_prompt_context_for_beat
 )
-from pipeline.render_images import run_phase_2, save_manifest_atomic, resolve_workflow
-from pipeline.compile_html import compile_manifest_to_html
+from PIL import Image
+
+from pipeline.render_images import run_phase_2, save_manifest_atomic, resolve_workflow, load_image_config
+from pipeline.compile_html import compile_html, compile_manifest_to_html
 from pipeline.book_exporter import (
     export_high_res_pdf,
     export_fxl_epub,
@@ -57,6 +59,17 @@ from pipeline.cover_manager import (
 from pipeline.project_manager import get_dimensions_for_tier
 
 
+def get_project_dir(slug: str, base_dir: Optional[str] = None) -> str:
+    base_dir = base_dir or get_base_dir()
+    safe_slug = secure_filename(slug)
+    if not safe_slug:
+        raise ValueError(f"Invalid project slug: '{slug}'")
+    pdir = os.path.join(base_dir, "projects", safe_slug)
+    if not os.path.isdir(pdir):
+        raise FileNotFoundError(f"Project '{safe_slug}' not found.")
+    return pdir
+
+
 def create_app() -> Flask:
     base_dir = get_base_dir()
     static_dir = os.path.join(base_dir, "pipeline", "web_static")
@@ -71,15 +84,6 @@ def create_app() -> Flask:
 
     # Job tracking for background stage runs
     jobs: Dict[str, Dict[str, Any]] = {}
-
-    def get_project_dir(slug: str) -> str:
-        safe_slug = secure_filename(slug)
-        if not safe_slug:
-            raise ValueError(f"Invalid project slug: '{slug}'")
-        pdir = os.path.join(base_dir, "projects", safe_slug)
-        if not os.path.isdir(pdir):
-            raise FileNotFoundError(f"Project '{safe_slug}' not found.")
-        return pdir
 
     @app.errorhandler(FileNotFoundError)
     def handle_not_found(err):
@@ -1271,13 +1275,13 @@ def create_app() -> Flask:
         seed = random.randint(1, 1125899906842624)
 
         try:
-            res = img_client.generate_image(
+            res = img_client.render(
                 prompt=prompt,
                 negative_prompt=neg_prompt,
                 width=dims["width"],
                 height=dims["height"],
                 seed=seed,
-                output_path=raw_output_path
+                output_filepath=raw_output_path
             )
 
             marketing_path = os.path.join(cover_dir, "cover_kdp_marketing.jpg")

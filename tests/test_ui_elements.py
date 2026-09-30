@@ -13,8 +13,10 @@ from pipeline.web_server import create_app
 WORKSPACE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INDEX_HTML_PATH = os.path.join(WORKSPACE_DIR, 'pipeline', 'web_static', 'index.html')
 APP_JS_PATH = os.path.join(WORKSPACE_DIR, 'pipeline', 'web_static', 'app.js')
-DEFAULT_BRAIN_DIR = r'C:\Users\Shortbus\.gemini\antigravity\brain\55f1d8f8-9f52-4e71-aa0a-fed84b436ea0'
-ARTIFACT_DIR = DEFAULT_BRAIN_DIR if os.path.isdir(DEFAULT_BRAIN_DIR) else os.path.join(WORKSPACE_DIR, 'tests', 'artifacts')
+import tempfile
+
+DEFAULT_BRAIN_DIR = os.path.join(tempfile.gettempdir(), 'asi_test_artifacts')
+ARTIFACT_DIR = os.path.join(WORKSPACE_DIR, 'tests', 'artifacts') if os.path.isdir(os.path.join(WORKSPACE_DIR, 'tests')) else DEFAULT_BRAIN_DIR
 os.makedirs(ARTIFACT_DIR, exist_ok=True)
 
 

@@ -288,17 +288,23 @@ def update_project_diffusion_profile(project_dir: str, profile_name: str, update
     if os.path.isfile(diff_path):
         try:
             with open(diff_path, "r", encoding="utf-8") as f:
-                cfg = json.load(f)
+                loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    cfg = loaded
         except Exception:
             pass
-    if "profiles" not in cfg:
+    if not isinstance(cfg, dict):
+        cfg = dict(DEFAULT_DIFFUSION_PROFILES)
+    if "profiles" not in cfg or not isinstance(cfg["profiles"], dict):
         cfg["profiles"] = dict(DEFAULT_DIFFUSION_PROFILES.get("profiles", {}))
     if profile_name not in cfg["profiles"]:
         cfg["profiles"][profile_name] = {}
     cfg["profiles"][profile_name].update(updates)
     os.makedirs(os.path.dirname(diff_path), exist_ok=True)
-    with open(diff_path, "w", encoding="utf-8") as f:
+    tmp_diff_path = diff_path + ".tmp"
+    with open(tmp_diff_path, "w", encoding="utf-8") as f:
         json.dump(cfg, f, indent=2)
+    os.replace(tmp_diff_path, diff_path)
     return cfg["profiles"]
 
 
@@ -327,11 +333,13 @@ def load_global_styles() -> Dict[str, List[Dict[str, Any]]]:
 
 
 def save_global_styles(data: Dict[str, List[Dict[str, Any]]]) -> None:
-    """Persists the universal style presets library."""
+    """Persists the universal style presets library atomically."""
     path = get_global_styles_path()
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    tmp_path = path + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+    os.replace(tmp_path, path)
 
 
 def slugify_style(name: str) -> str:

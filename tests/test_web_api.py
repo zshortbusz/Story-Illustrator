@@ -1,3 +1,5 @@
+import os
+import shutil
 import unittest
 import json
 from pipeline.web_server import create_app
@@ -92,6 +94,89 @@ class TestWebAPI(unittest.TestCase):
         self.assertEqual(reflow_resp.status_code, 200)
         self.assertEqual(reflow_resp.mimetype, "application/epub+zip")
         self.assertGreater(len(reflow_resp.data), 1000)
+
+    def test_compile_reader_endpoint(self):
+        """Verifies POST /api/project/<slug>/compile runs without NameError: compile_html."""
+        slug = "the_raven"
+        resp = self.client.post(
+            f"/api/project/{slug}/compile",
+            data=json.dumps({"embed_images": False}),
+            content_type="application/json"
+        )
+        self.assertEqual(
+            resp.status_code,
+            200,
+            f"compile_reader_endpoint failed with {resp.status_code}: {resp.get_data(as_text=True)}"
+        )
+        data = resp.get_json()
+        self.assertTrue(data.get("success"))
+        self.assertIn("path", data)
+        # Clean up compiled index.html
+        if os.path.isfile(data["path"]):
+            try:
+                os.remove(data["path"])
+            except Exception:
+                pass
+
+    def test_render_cover_endpoint(self):
+        """Verifies POST /api/project/<slug>/cover/render runs without NameError (load_image_config, Image) or AttributeError (generate_image)."""
+        from unittest.mock import patch, MagicMock
+        from PIL import Image
+        import os
+        import tempfile
+        import shutil
+        slug = "the_raven"
+
+        manifest_path = os.path.join(self.app.root_path, "projects", slug, "artifacts", "manifest.json") if hasattr(self.app, "root_path") else ""
+        from pipeline.web_server import get_project_dir
+        pdir = get_project_dir(slug)
+        manifest_file = os.path.join(pdir, "artifacts", "manifest.json")
+        orig_manifest = None
+        if os.path.isfile(manifest_file):
+            with open(manifest_file, "r", encoding="utf-8") as f:
+                orig_manifest = f.read()
+
+        # Mock Image Client
+        mock_client = MagicMock()
+        def mock_render_side_effect(*args, **kwargs):
+            out_p = kwargs.get("output_path") or kwargs.get("output_filepath")
+            if out_p:
+                os.makedirs(os.path.dirname(out_p), exist_ok=True)
+                im = Image.new("RGB", (100, 100), color=(20, 20, 40))
+                im.save(out_p)
+            return {"status": "success", "images": [out_p]}
+
+        mock_client.render.side_effect = mock_render_side_effect
+        mock_client.generate_image.side_effect = mock_render_side_effect
+
+        try:
+            with patch("pipeline.image_client.create_image_client", return_value=mock_client):
+                resp = self.client.post(
+                    f"/api/project/{slug}/cover/render",
+                    data=json.dumps({
+                        "prompt": "Gothic raven perched on bust of Pallas",
+                        "negative_prompt": "blurry",
+                        "apply_typography": False,
+                        "tier": "standard"
+                    }),
+                    content_type="application/json"
+                )
+                self.assertEqual(
+                    resp.status_code,
+                    200,
+                    f"render_cover_endpoint failed with {resp.status_code}: {resp.get_data(as_text=True)}"
+                )
+                data = resp.get_json()
+                self.assertTrue(data.get("success"))
+                self.assertIn("cover", data)
+        finally:
+            if orig_manifest is not None and os.path.isfile(manifest_file):
+                with open(manifest_file, "w", encoding="utf-8") as f:
+                    f.write(orig_manifest)
+            cover_dir = os.path.join(pdir, "images", "cover")
+            if os.path.isdir(cover_dir):
+                shutil.rmtree(cover_dir, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main()

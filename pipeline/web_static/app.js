@@ -22,12 +22,12 @@ function updateSelectedImagesUI() {
   const count = selectedImageChunks.size;
   const btnRegen = document.getElementById("btnRegenerateSelected");
   if (btnRegen) {
-    btnRegen.textContent = `↻ Regenerate Selected (${count})`;
+    btnRegen.innerHTML = `&#8635; Regenerate Selected (${count})`;
     btnRegen.disabled = count === 0;
   }
   const btnToggle = document.getElementById("btnToggleSelectAll");
   if (btnToggle) {
-    const totalIllustrated = (currentManifest?.blocks || []).filter(b => b.illustration).length;
+    const totalIllustrated = (currentManifest?.blocks || []).filter(b => b.illustration || (b.illustrations && Object.keys(b.illustrations).length > 0)).length;
     btnToggle.textContent = (count > 0 && count === totalIllustrated) ? "Deselect All" : "Select All";
   }
   document.querySelectorAll(".image-card").forEach(card => {
@@ -273,10 +273,10 @@ async function loadProjectData(slug) {
     loadChunks(),
     loadBible(),
     loadBeats(),
-    loadManifest(),
     loadProjectStyles(),
     loadResolutionTier()
   ]);
+  await loadManifest();
   loadReaderPreview();
 }
 
@@ -1009,8 +1009,9 @@ async function loadPreGenReviewMatrix(container) {
     const res = await fetch(`/api/project/${currentSlug}/prompt_context_preview`);
     if (!res.ok) return false;
     const data = await res.json();
-    const previews = data.previews || data.preview || [];
-    if (!Array.isArray(previews) || previews.length === 0) return false;
+    const rawPreviews = data.previews || data.preview || [];
+    const previews = Array.isArray(rawPreviews) ? rawPreviews : [rawPreviews];
+    if (previews.length === 0) return false;
 
     let bannerHtml = `
       <div class="pregen-review-banner">
@@ -2874,8 +2875,11 @@ async function triggerStage(stageName, label) {
 
   showToast(`Running ${label}...`);
 
-  // Progress polling interval
+  // Progress polling interval with request stacking guard
+  let isPolling = false;
   const pollTimer = setInterval(async () => {
+    if (isPolling) return;
+    isPolling = true;
     try {
       const pRes = await fetch(`/api/project/${currentSlug}/stage_progress`);
       if (pRes.ok) {
@@ -2884,7 +2888,10 @@ async function triggerStage(stageName, label) {
           msgEl.textContent = pData.message;
         }
       }
-    } catch (e) {}
+    } catch (e) {
+    } finally {
+      isPolling = false;
+    }
   }, 800);
 
   try {
@@ -3006,7 +3013,7 @@ function setupEventListeners() {
   const btnToggleAll = document.getElementById("btnToggleSelectAll");
   if (btnToggleAll) {
     btnToggleAll.addEventListener("click", () => {
-      const totalIllustrated = (currentManifest?.blocks || []).filter(b => b.illustration);
+      const totalIllustrated = (currentManifest?.blocks || []).filter(b => b.illustration || (b.illustrations && Object.keys(b.illustrations).length > 0));
       if (selectedImageChunks.size === totalIllustrated.length && totalIllustrated.length > 0) {
         selectedImageChunks.clear();
       } else {

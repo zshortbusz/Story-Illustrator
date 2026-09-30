@@ -45,9 +45,12 @@ def get_system_font(font_family: str = "serif", bold: bool = True, size: int = 4
                     except Exception:
                         pass
     try:
-        return ImageFont.load_default()
+        return ImageFont.load_default(size=size)
     except Exception:
-        return None
+        try:
+            return ImageFont.load_default()
+        except Exception:
+            return None
 
 
 def synthesize_cover_prompt(
@@ -169,14 +172,14 @@ def composite_cover_typography(
         if orig_aspect > target_aspect:
             # Source is wider: scale height to target_h and crop width
             scale = target_h / float(oh)
-            new_w = int(ow * scale)
+            new_w = max(1, int(ow * scale))
             scaled = orig.resize((new_w, target_h), Image.Resampling.LANCZOS)
             left = (new_w - target_w) // 2
             cropped = scaled.crop((left, 0, left + target_w, target_h))
         else:
             # Source is taller: scale width to target_w and crop height
             scale = target_w / float(ow)
-            new_h = int(oh * scale)
+            new_h = max(1, int(oh * scale))
             scaled = orig.resize((target_w, new_h), Image.Resampling.LANCZOS)
             top = (new_h - target_h) // 2
             cropped = scaled.crop((0, top, target_w, top + target_h))
@@ -370,7 +373,7 @@ def set_existing_scene_as_cover(
             target_w, target_h = 1600, 2560
             ow, oh = rgb.size
             scale = max(target_w / float(ow), target_h / float(oh))
-            nw, nh = int(ow * scale), int(oh * scale)
+            nw, nh = max(1, int(ow * scale)), max(1, int(oh * scale))
             scaled = rgb.resize((nw, nh), Image.Resampling.LANCZOS)
             left = (nw - target_w) // 2
             top = (nh - target_h) // 2

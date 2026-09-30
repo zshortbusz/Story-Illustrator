@@ -310,16 +310,30 @@ def compile_manifest_to_html(
 
         if illus and illus.get("image_file"):
             img_rel_path = illus["image_file"]
-            full_img_path = os.path.join(project_dir, img_rel_path)
+            full_img_path = os.path.abspath(os.path.join(project_dir, img_rel_path))
+            proj_abs = os.path.abspath(project_dir)
+            try:
+                is_safe = os.path.commonpath([proj_abs, full_img_path]) == proj_abs
+            except ValueError:
+                is_safe = False
+
+            if not is_safe:
+                full_img_path = None
+
             # Check fallback root images path if not found
-            if not os.path.isfile(full_img_path):
-                fallback_path = os.path.join(project_dir, "images", f"{block['chunk_id']}.png")
-                if os.path.isfile(fallback_path):
-                    full_img_path = fallback_path
-                    img_rel_path = f"images/{block['chunk_id']}.png"
+            if full_img_path and not os.path.isfile(full_img_path):
+                fallback_path = os.path.abspath(os.path.join(project_dir, "images", f"{block['chunk_id']}.png"))
+                try:
+                    if os.path.commonpath([proj_abs, fallback_path]) == proj_abs and os.path.isfile(fallback_path):
+                        full_img_path = fallback_path
+                        img_rel_path = f"images/{block['chunk_id']}.png"
+                    else:
+                        full_img_path = None
+                except ValueError:
+                    full_img_path = None
 
             # Render illustration if status is completed or image file exists on disk
-            if os.path.isfile(full_img_path):
+            if full_img_path and os.path.isfile(full_img_path):
                 illustrations_count += 1
                 prompt_alt = escape_html(illus.get("prompt", ""))
                 cid = block.get("chunk_id", "")

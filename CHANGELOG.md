@@ -23,8 +23,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Real-Time Stage Progress Tracking**:
   - `/api/project/<slug>/stage_progress` polling endpoint on the web server.
   - Live console feedback and front-end status reporting during long-running batch extractions.
+- **Comprehensive Test Suite & Static Analysis**:
+  - Expanded test suite from 123 to 141 tests across 5 new test modules covering security, network resilience, exporter edge cases, and atomic persistence.
+  - Automated Node.js frontend syntax parsing via `node -c pipeline/web_static/app.js`.
 
 ### Fixed
+- **Web Server Endpoint Crashes** ([`pipeline/web_server.py`](file:///c:/Users/Shortbus/Story%20illustrator/pipeline/web_server.py)):
+  - Resolved `NameError` crashes on `/api/project/<slug>/cover/render` by importing `Image` and `load_image_config`.
+  - Resolved `AttributeError` by correctly calling `img_client.render()` instead of `generate_image()`.
+  - Resolved `NameError` on `/api/project/<slug>/compile` by importing `compile_html` and promoting `get_project_dir` to module scope.
+- **Path Traversal & Security Boundary Hardening** ([`pipeline/book_exporter.py`](file:///c:/Users/Shortbus/Story%20illustrator/pipeline/book_exporter.py), [`pipeline/compile_html.py`](file:///c:/Users/Shortbus/Story%20illustrator/pipeline/compile_html.py)):
+  - Implemented `os.path.commonpath` verification across image resolvers and static HTML compilation to prevent arbitrary file reading via crafted manifests.
+- **LLM Client Null Content & Reasoning Fallback** ([`pipeline/llm_client.py`](file:///c:/Users/Shortbus/Story%20illustrator/pipeline/llm_client.py)):
+  - Fixed `chat_json` crashing on `NoneType.strip()` when models return `null` content or empty choices; added automatic fallback to `reasoning_content` for thinking models.
+- **Image Resizing & Typography Fallback Resilience** ([`pipeline/book_exporter.py`](file:///c:/Users/Shortbus/Story%20illustrator/pipeline/book_exporter.py), [`pipeline/cover_manager.py`](file:///c:/Users/Shortbus/Story%20illustrator/pipeline/cover_manager.py)):
+  - Clamped all image scaling dimensions to a minimum of 1 pixel, preventing Pillow `ValueError` crashes on extreme aspect ratios.
+  - Fixed headless font fallback to use scalable TrueType defaults via `ImageFont.load_default(size=size)`.
+  - Sanitized XML 1.0 restricted control characters in EPUB metadata and body text.
+- **Atomic Persistence & Type Safety** ([`pipeline/project_manager.py`](file:///c:/Users/Shortbus/Story%20illustrator/pipeline/project_manager.py)):
+  - Converted `save_global_styles` and profile updates to atomic tempfile writes (`.tmp` + `os.replace`) to prevent file corruption.
+  - Added dictionary type validation guards for corrupted config files.
+- **Frontend Race Conditions & Polling Stacking** ([`pipeline/web_static/app.js`](file:///c:/Users/Shortbus/Story%20illustrator/pipeline/web_static/app.js)):
+  - Sequenced manifest loading after styles to resolve style selector dropdown race condition.
+  - Added mutex flag to stage progress polling interval to prevent request pile-up during slow server responses.
 - **Visual Bible Entity Merging Engine** ([`pipeline/build_manifest.py`](file:///c:/Users/Shortbus/Story%20illustrator/pipeline/build_manifest.py)):
   - Implemented stopword filtering (`"the"`, `"and"`, `"of"`, etc.) and multi-word first-name conflict detection in `match_bible_entity()`.
   - Prevented distinct family members (e.g. Carson Drew vs. Nancy Drew, Ada vs. Isabel Topham) and distinct roles (*The Butler*, *The Banker*, *The Marshal*, *The Robber Leader*) from erroneously collapsing into a single profile.
