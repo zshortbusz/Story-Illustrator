@@ -191,7 +191,95 @@ class TestPromptContextPreviewAPI(unittest.TestCase):
         self.assertEqual(elena["resolved_attire"], "Crimson leather dueling tunic")
         self.assertIn(elena["attire_source"], ["beat_override", "scene_override"])
 
+    def test_compose_prompt_context_system_prompt_precedence(self):
+        """Verify compose_prompt_context_for_beat honors profile prompt, then role_cfg, then default."""
+        beat = {
+            "chunk_id": "chunk_001",
+            "scene_type": "landscape",
+            "characters_present": [],
+            "character_attire": {},
+            "setting": "",
+            "action_beat": "A lonely road at dusk.",
+            "camera_framing": "Wide shot"
+        }
+        bible = {"characters": {}, "settings": {}, "global_art_style": ""}
+        chunks = [{"chunk_id": "chunk_001", "text": "A lonely road."}]
+
+        # 1. Profile prompt takes precedence
+        profile_with_prompt = {
+            "system_prompt": "Profile-specific synthesizer instructions: use cinematic lighting.",
+            "aspect_ratios": {"landscape": {"width": 1024, "height": 1024}}
+        }
+        role_cfg = {
+            "roles": {
+                "prompt_synthesizer": {
+                    "system_prompt": "Generic role synthesizer prompt."
+                }
+            }
+        }
+        ctx1 = compose_prompt_context_for_beat(
+            beat=beat, bible=bible, chunks=chunks, profile=profile_with_prompt,
+            active_profile_name="custom_prof", llm_config=role_cfg
+        )
+        self.assertEqual(ctx1["system_prompt"], "Profile-specific synthesizer instructions: use cinematic lighting.")
+
+        # 2. Falls back to role_cfg if profile has empty/no system_prompt
+        profile_without_prompt = {
+            "aspect_ratios": {"landscape": {"width": 1024, "height": 1024}}
+        }
+        ctx2 = compose_prompt_context_for_beat(
+            beat=beat, bible=bible, chunks=chunks, profile=profile_without_prompt,
+            active_profile_name="custom_prof", llm_config=role_cfg
+        )
+        self.assertEqual(ctx2["system_prompt"], "Generic role synthesizer prompt.")
+
+        # 3. Falls back to default if neither specifies system_prompt
+        ctx3 = compose_prompt_context_for_beat(
+            beat=beat, bible=bible, chunks=chunks, profile=profile_without_prompt,
+            active_profile_name="custom_prof", llm_config={}
+        )
+        self.assertIn("expert diffusion prompt synthesizer", ctx3["system_prompt"])
+
+    def test_diffusion_profile_system_prompt_persistence(self):
+        """Verify POST /api/project/<slug>/config/diffusion persists profile system prompt and returns it."""
+        from pipeline.web_server import get_project_dir
+        pdir = get_project_dir("the_clockwork_duel")
+        cfg_file = os.path.join(pdir, "config", "diffusion_profiles.json")
+        with open(cfg_file, "r", encoding="utf-8") as f:
+            raw_orig = f.read()
+
+        # 1. Fetch current config
+        res = self.client.get("/api/project/the_clockwork_duel/config/diffusion")
+        self.assertEqual(res.status_code, 200)
+        cfg = res.get_json()
+        active_prof = cfg.get("active_profile", "sdxl_base")
+
+        try:
+            # 2. Update system prompt for active profile
+            custom_prompt = "Customized SDXL test system prompt: focus on steampunk textures."
+            if "profiles" in cfg and active_prof in cfg["profiles"]:
+                cfg["profiles"][active_prof]["system_prompt"] = custom_prompt
+
+            post_res = self.client.post("/api/project/the_clockwork_duel/config/diffusion", json=cfg)
+            self.assertEqual(post_res.status_code, 200)
+
+            # 3. Verify it was persisted and read back
+            check_res = self.client.get("/api/project/the_clockwork_duel/config/diffusion")
+            self.assertEqual(check_res.status_code, 200)
+            updated_cfg = check_res.get_json()
+            self.assertEqual(updated_cfg["profiles"][active_prof]["system_prompt"], custom_prompt)
+
+            # 4. Verify preview endpoint uses this updated system prompt
+            prev_res = self.client.get("/api/project/the_clockwork_duel/prompt_context_preview?chunk_id=chunk_002")
+            self.assertEqual(prev_res.status_code, 200)
+            prev_data = prev_res.get_json()
+            self.assertEqual(prev_data["preview"]["system_prompt"], custom_prompt)
+        finally:
+            with open(cfg_file, "w", encoding="utf-8") as f:
+                f.write(raw_orig)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

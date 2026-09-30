@@ -254,8 +254,11 @@ def create_app() -> Flask:
         pdir = get_project_dir(slug)
         cfg_path = os.path.join(pdir, "config", "diffusion_profiles.json")
         data = request.json or {}
-        with open(cfg_path, "w", encoding="utf-8") as f:
+        os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
+        tmp_path = cfg_path + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+        os.replace(tmp_path, cfg_path)
         return jsonify({"success": True})
 
     @app.route("/api/project/<slug>/config/providers", methods=["GET"])
@@ -738,6 +741,30 @@ def create_app() -> Flask:
                         json.dump(llm_cfg, f, indent=2, ensure_ascii=False)
                 except Exception as ex:
                     print(f"[!] Warning: failed to persist updated llm config: {ex}")
+
+        # When running manifest synthesis, also persist profile prompt & prefix to diffusion_profiles.json
+        if stage == "manifest":
+            diff_path = os.path.join(pdir, "config", "diffusion_profiles.json")
+            if os.path.isfile(diff_path):
+                try:
+                    with open(diff_path, "r", encoding="utf-8") as df:
+                        diff_cfg = json.load(df)
+                    act_prof = data.get("active_profile") or diff_cfg.get("active_profile", "sdxl_base")
+                    diff_cfg["active_profile"] = act_prof
+                    if "profiles" in diff_cfg and act_prof in diff_cfg["profiles"]:
+                        prof_entry = diff_cfg["profiles"][act_prof]
+                        if data.get("system_prompt"):
+                            prof_entry["system_prompt"] = data["system_prompt"].strip()
+                        if data.get("positive_prefix") is not None:
+                            prof_entry["positive_prefix"] = data["positive_prefix"].strip()
+                        if data.get("default_negative") is not None:
+                            prof_entry["default_negative"] = data["default_negative"].strip()
+                        tmp_diff = diff_path + ".tmp"
+                        with open(tmp_diff, "w", encoding="utf-8") as df:
+                            json.dump(diff_cfg, df, indent=2, ensure_ascii=False)
+                        os.replace(tmp_diff, diff_path)
+                except Exception as ex:
+                    print(f"[!] Warning: failed to persist profile updates to diffusion_profiles.json: {ex}")
 
         job_id = f"job_stage_{slug}_{int(time.time())}_{uuid.uuid4().hex[:6]}"
         jobs[job_id] = {

@@ -793,19 +793,20 @@ def compose_prompt_context_for_beat(
     scene_type = beat.get("scene_type", "landscape")
     dims = get_dimensions_for_tier(profile, scene_type=scene_type, tier=resolution_tier)
 
-    profile_system_prompt = profile.get(
-        "system_prompt",
-        "You are an expert diffusion prompt synthesizer. You synthesize rich, cohesive image prompts "
+    role_cfg = llm_config.get("roles", {}).get("prompt_synthesizer", {})
+    resolved_model = model_name or role_cfg.get("model", "thedrummer_orion-26b-a4b-v1")
+    temperature = role_cfg.get("temperature", 0.35)
+
+    profile_system_prompt = (
+        profile.get("system_prompt")
+        or role_cfg.get("system_prompt")
+        or "You are an expert diffusion prompt synthesizer. You synthesize rich, cohesive image prompts "
         "by seamlessly blending the character's explicit physical appearance and distinctive features from "
         "the Visual Bible, the setting's textures and architecture from the Visual Bible, the scene action beat, "
         "camera framing, and the global art style."
     )
     default_negative = profile.get("default_negative", "")
     positive_prefix = profile.get("positive_prefix", "").strip()
-
-    role_cfg = llm_config.get("roles", {}).get("prompt_synthesizer", {})
-    resolved_model = model_name or role_cfg.get("model", "thedrummer_orion-26b-a4b-v1")
-    temperature = role_cfg.get("temperature", 0.35)
 
     # 1. Setting Resolution
     setting_name = beat.get("setting", "")

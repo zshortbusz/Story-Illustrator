@@ -99,16 +99,22 @@ def synthesize_cover_prompt(
 
     global_style = bible.get("global_art_style", "cinematic, atmospheric digital painting, highly detailed")
 
-    system_prompt = (
-        "You are an expert commercial book cover art director. Synthesize a captivating, high-impact "
-        "diffusion prompt for the front cover of a novel. Adhere strictly to these rules:\n"
-        "1. Hero Composition: Prominently feature the central protagonist or iconic symbolic centerpiece.\n"
-        "2. Art & Medium: Use the specified global art style, cinematic rim lighting, and atmospheric depth.\n"
-        "3. Negative Space Rule: Leave clear, uncluttered breathing room in the top 20% (for title typography) "
-        "and lower 15% (for author name).\n"
-        "4. Output format: A single evocative paragraph under 'PROMPT:', followed by 'NEGATIVE:' with unwanted elements."
-    )
+    role_cfg = llm_config.get("roles", {}).get("prompt_synthesizer", {})
+    model = role_cfg.get("model", "thedrummer_orion-26b-a4b-v1")
+    temperature = role_cfg.get("temperature", 0.4)
 
+    system_prompt = role_cfg.get(
+        "cover_system_prompt",
+        (
+            "You are an expert commercial book cover art director. Synthesize a captivating, high-impact "
+            "diffusion prompt for the front cover of a novel. Adhere strictly to these rules:\n"
+            "1. Hero Composition: Prominently feature the central protagonist or iconic symbolic centerpiece.\n"
+            "2. Art & Medium: Use the specified global art style, cinematic rim lighting, and atmospheric depth.\n"
+            "3. Negative Space Rule: Leave clear, uncluttered breathing room in the top 20% (for title typography) "
+            "and lower 15% (for author name).\n"
+            "4. Output format: A single evocative paragraph under 'PROMPT:', followed by 'NEGATIVE:' with unwanted elements."
+        )
+    )
     user_payload = (
         f"BOOK TITLE: {story_title}\n"
         f"AUTHOR: {author}\n"
@@ -119,10 +125,6 @@ def synthesize_cover_prompt(
         f"TARGET ASPECT RATIO: 1:1.6 Portrait (Book Cover)\n\n"
         "Synthesize the official book cover illustration prompt:"
     )
-
-    role_cfg = llm_config.get("roles", {}).get("prompt_synthesizer", {})
-    model = role_cfg.get("model", "thedrummer_orion-26b-a4b-v1")
-    temperature = role_cfg.get("temperature", 0.4)
 
     messages = [
         {"role": "system", "content": system_prompt},

@@ -94,7 +94,7 @@ class TestUIDOMStructure(unittest.TestCase):
             'modelPromptSynthesizerCustom', 'tempSynth', 'promptSynth', 'activeProfileSelect',
             'profilePositivePrefix', 'profileNegativePrompt', 'btnSaveSynthConfig', 'manifestProgressBox', 'manifestBlocksContainer',
             # Tab 5
-            'selectWorkflow', 'btnToggleSelectAll', 'btnRegenerateSelected', 'btnStartBatchRender', 'renderProgressBox', 'renderProgressBar', 'imagesGallery',
+            'selectWorkflow', 'btnToggleSelectAll', 'btnRegenerateSelected', 'btnStartBatchRender', 'renderProgressBox', 'renderProgressBar', 'renderProgressPercent', 'imagesGallery',
             # Tab 6
             'readerWorkflowSelect', 'btnExportPdf', 'btnExportFxl', 'btnExportReflowable', 'btnEditEbookMetadata', 'readerIframe'
         ]

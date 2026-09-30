@@ -266,9 +266,9 @@ async function loadResolutionTier() {
 async function loadProjectData(slug) {
   if (!slug) return;
   currentSlug = slug;
+  await loadLLMConfig();
+  await loadDiffusionConfig();
   await Promise.all([
-    loadLLMConfig(),
-    loadDiffusionConfig(),
     loadSourceText(),
     loadChunks(),
     loadBible(),
@@ -384,6 +384,10 @@ async function loadDiffusionConfig() {
     document.getElementById("profileNegativePrompt").value = curProfile.default_negative || "";
     const prefixEl = document.getElementById("profilePositivePrefix");
     if (prefixEl) prefixEl.value = curProfile.positive_prefix || "";
+    const synthEl = document.getElementById("promptSynth");
+    if (synthEl && curProfile.system_prompt) {
+      synthEl.value = curProfile.system_prompt;
+    }
   } catch (err) {
     console.error("Diffusion config load error:", err);
   }
@@ -400,6 +404,10 @@ async function saveDiffusionConfig() {
       const prefixEl = document.getElementById("profilePositivePrefix");
       if (prefixEl) {
         cfg.profiles[activeProf].positive_prefix = prefixEl.value.trim();
+      }
+      const synthEl = document.getElementById("promptSynth");
+      if (synthEl) {
+        cfg.profiles[activeProf].system_prompt = synthEl.value.trim();
       }
     }
 
@@ -2077,6 +2085,8 @@ async function startBatchRender() {
   pbox.style.display = "block";
   document.getElementById("renderStatusText").innerHTML = `<span class="spinner"></span> Dispatching batch to ComfyUI [${wf}]...`;
   document.getElementById("renderProgressBar").style.width = "20%";
+  const pctEl = document.getElementById("renderProgressPercent");
+  if (pctEl) pctEl.textContent = "20%";
 
   try {
     const res = await fetch(`/api/project/${currentSlug}/render`, {
@@ -2093,6 +2103,7 @@ async function startBatchRender() {
     const data = await res.json();
     if (data.success) {
       document.getElementById("renderProgressBar").style.width = "100%";
+      if (pctEl) pctEl.textContent = "100%";
       document.getElementById("renderStatusText").textContent = "Batch render completed!";
       showToast("All illustrations completed successfully!");
       selectedImageChunks.clear();
@@ -2105,7 +2116,12 @@ async function startBatchRender() {
   } catch (err) {
     showToast("Render network error: " + err, "error");
   } finally {
-    setTimeout(() => { pbox.style.display = "none"; }, 5000);
+    setTimeout(() => {
+      pbox.style.display = "none";
+      const bar = document.getElementById("renderProgressBar");
+      if (bar) bar.style.width = "0%";
+      if (pctEl) pctEl.textContent = "0%";
+    }, 5000);
   }
 }
 
@@ -2118,6 +2134,8 @@ async function regenerateSelectedImages() {
   pbox.style.display = "block";
   document.getElementById("renderStatusText").innerHTML = `<span class="spinner"></span> Regenerating ${chunkIds.length} scene(s) [${wf}]...`;
   document.getElementById("renderProgressBar").style.width = "25%";
+  const pctEl = document.getElementById("renderProgressPercent");
+  if (pctEl) pctEl.textContent = "25%";
 
   try {
     const res = await fetch(`/api/project/${currentSlug}/render`, {
@@ -2134,6 +2152,7 @@ async function regenerateSelectedImages() {
     const data = await res.json();
     if (data.success) {
       document.getElementById("renderProgressBar").style.width = "100%";
+      if (pctEl) pctEl.textContent = "100%";
       document.getElementById("renderStatusText").textContent = `Regenerated ${chunkIds.length} scene(s)!`;
       showToast(`Successfully regenerated ${chunkIds.length} scene(s)!`);
       selectedImageChunks.clear();
@@ -2146,7 +2165,12 @@ async function regenerateSelectedImages() {
   } catch (err) {
     showToast("Network error: " + err, "error");
   } finally {
-    setTimeout(() => { pbox.style.display = "none"; }, 5000);
+    setTimeout(() => {
+      pbox.style.display = "none";
+      const bar = document.getElementById("renderProgressBar");
+      if (bar) bar.style.width = "0%";
+      if (pctEl) pctEl.textContent = "0%";
+    }, 5000);
   }
 }
 
@@ -2860,6 +2884,7 @@ async function triggerStage(stageName, label) {
     activeModel = getActiveRoleModel("modelPromptSynthesizer", "modelPromptSynthesizerCustom");
     activeTemp = parseFloat(document.getElementById("tempSynth")?.value || 0.35);
     activePrompt = document.getElementById("promptSynth")?.value || "";
+    await saveDiffusionConfig();
   }
 
   if (btn) {
@@ -2902,7 +2927,10 @@ async function triggerStage(stageName, label) {
         stage: stageName,
         model: activeModel,
         temperature: activeTemp,
-        system_prompt: activePrompt
+        system_prompt: activePrompt,
+        active_profile: document.getElementById("activeProfileSelect")?.value,
+        positive_prefix: document.getElementById("profilePositivePrefix")?.value,
+        default_negative: document.getElementById("profileNegativePrompt")?.value
       })
     });
     const data = await res.json();
@@ -3150,6 +3178,8 @@ function setupEventListeners() {
         document.getElementById("profileNegativePrompt").value = curProfile.default_negative || "";
         const prefixEl = document.getElementById("profilePositivePrefix");
         if (prefixEl) prefixEl.value = curProfile.positive_prefix || "";
+        const synthEl = document.getElementById("promptSynth");
+        if (synthEl) synthEl.value = curProfile.system_prompt || "";
       } catch (err) {}
     });
   }
