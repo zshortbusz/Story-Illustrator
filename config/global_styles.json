@@ -118,6 +118,34 @@
       "description": "Layered molten beeswax and pigmented wax on a wooden panel. The translucent, heavy texture creates a luminous, sculptural depth, with embedded pigments of deep teal and warm amber catching the light.",
       "category": "art",
       "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "russell_tandy_gouache",
+      "name": "Russell H. Tandy Golden Age Gouache & Casein",
+      "description": "Opaque casein and gouache on heavy illustration board. Rich ultramarine blues, warm glowing amber lantern light casting sharp dramatic chiaroscuro diagonal shadows, bold Art Deco graphic silhouettes, fine painterly brushwork with vintage mystery book cover styling.",
+      "category": "art",
+      "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "vintage_pulp_halftone",
+      "name": "Vintage Detective Pulp Lithograph & Halftone",
+      "description": "4-color offset lithography print with authentic coarse Ben-Day halftone dot pattern, aged pulp paper grain, stark black India ink linework and crosshatching, vibrant cadmium red and cobalt accents, dramatic noir lighting.",
+      "category": "art",
+      "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "americana_gouache_wash",
+      "name": "Classic Americana Gouache & Ink Wash",
+      "description": "Classic narrative story illustration in opaque gouache and warm ink wash on textured watercolor paper. Warm buttery golden sunlight streaming across oak wood grain, palette of rich burnt sienna, dusty ochre, deep forest green, and soft indigo shadows, nostalgic painterly aesthetic.",
+      "category": "art",
+      "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "storybook_sepia_watercolor",
+      "name": "Vintage Storybook Watercolor & Sepia Quill Pen",
+      "description": "Delicate mineral watercolor washes and fine dip-pen sepia ink linework on aged cream deckle-edge paper. Soft wet-on-wet atmospheric pigment blooming, granulating watercolor washes, muted vintage palette of antique Prussian blue, dusty ochre, olive green, and soft umber shadows.",
+      "category": "art",
+      "source_project": "the_secret_of_the_old_clock"
     }
   ],
   "photography": [

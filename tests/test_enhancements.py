@@ -55,6 +55,21 @@ class TestEnhancements(unittest.TestCase):
             self.assertIn("positive_prefix", prof)
             self.assertIn("default_negative", prof)
 
+    def test_krea2_system_prompt_fidelity_and_structure(self):
+        profiles = DEFAULT_DIFFUSION_PROFILES.get("profiles", {})
+        self.assertIn("krea2", profiles)
+        krea_prompt = profiles["krea2"]["system_prompt"]
+        self.assertIn("Krea 2", krea_prompt)
+        self.assertIn("MEDIUM-FIRST HIERARCHY", krea_prompt)
+        self.assertIn("Visual Bible", krea_prompt)
+        self.assertIn("Physical DNA", krea_prompt)
+        self.assertIn("Attire & Material Textures", krea_prompt)
+        self.assertIn("Setting Architecture & Environment", krea_prompt)
+        self.assertIn("Lighting Physics", krea_prompt)
+        self.assertIn("CFG 1.0", krea_prompt)
+        self.assertIn("NEGATIVE:", krea_prompt)
+        self.assertIn("Exhaustive Visual Bible Fidelity", krea_prompt)
+
     def test_update_and_get_diffusion_profile_positive_prefix(self):
         profiles = get_project_diffusion_profiles(self.pdir)
         self.assertIn("positive_prefix", profiles["sdxl_base"])

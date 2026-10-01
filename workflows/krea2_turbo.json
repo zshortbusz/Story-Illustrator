@@ -21,12 +21,12 @@
   },
   "3": {
     "inputs": {
-      "unet_name": "krea2TurboOfficialComfy_krea2TurboInt8.safetensors",
+      "unet_name": "realismByStableYogi_v30INT8FP8Extended_int8.safetensors",
       "weight_dtype": "default"
     },
     "class_type": "UNETLoader",
     "_meta": {
-      "title": "Load Diffusion Model (Krea 2 Turbo NVFP4)"
+      "title": "Load Diffusion Model (Krea 2 INT8-ConvRot)"
     }
   },
   "4": {
@@ -77,14 +77,15 @@
   },
   "6": {
     "inputs": {
+      "filename_prefix": "Krea2_Turbo",
       "images": [
         "5",
         0
       ]
     },
-    "class_type": "PreviewImage",
+    "class_type": "SaveImage",
     "_meta": {
-      "title": "Preview Image"
+      "title": "Save Image"
     }
   },
   "7": {

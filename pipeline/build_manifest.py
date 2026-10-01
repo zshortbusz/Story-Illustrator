@@ -976,13 +976,92 @@ def run_stage_manifest(
 
     resolved_model = llm_client.resolve_model(model)
     msg = f"Step 4: Synthesizing prompts for {len(beats)} beats using profile '{active_profile_name}' ({resolved_tier}) and model '{resolved_model}'..."
-    print(f"[*] {msg}")
+    print(f"[*] {msg}", flush=True)
     if callback: callback(msg)
+
+    active_style = bible.get("active_style") or {
+        "id": "custom",
+        "name": "Default Style",
+        "description": bible.get("global_art_style", ""),
+        "category": "art"
+    }
+    s_name = active_style.get("name")
+    s_id = active_style.get("id")
+
+    # Load existing manifest to preserve past multi-workflow/multi-style illustrations and allow resuming
+    existing_blocks_by_cid = {}
+    old_m = {}
+    if os.path.isfile(output_file):
+        try:
+            with open(output_file, "r", encoding="utf-8") as f:
+                old_m = json.load(f)
+                for b in old_m.get("blocks", []):
+                    existing_blocks_by_cid[b.get("chunk_id")] = b
+        except Exception:
+            pass
 
     illustrations_by_chunk: Dict[str, Dict[str, Any]] = {}
 
+    def _save_manifest_checkpoint():
+        """Helper to write out manifest.json checkpoint incrementally."""
+        story_title = os.path.basename(os.path.abspath(project_dir)).replace("_", " ").title()
+        blocks = []
+        for chunk in chunks:
+            cid = chunk["chunk_id"]
+            illus = illustrations_by_chunk.get(cid, None)
+            old_b = existing_blocks_by_cid.get(cid, {})
+            old_illustrations = dict(old_b.get("illustrations", {})) if isinstance(old_b.get("illustrations"), dict) else {}
+
+            if illus:
+                if s_name:
+                    old_illustrations[s_name] = dict(illus)
+                if s_id and s_id != s_name:
+                    old_illustrations[s_id] = dict(illus)
+
+            block_data = {
+                "chunk_id": cid,
+                "text": chunk["text"],
+                "illustration": illus
+            }
+            if old_illustrations:
+                block_data["illustrations"] = old_illustrations
+            blocks.append(block_data)
+
+        chk_manifest = {
+            "story_title": (old_m.get("story_title") if old_m and old_m.get("story_title") else story_title),
+            "active_profile": active_profile_name,
+            "active_style": active_style,
+            "resolution_tier": resolved_tier,
+            "blocks": blocks
+        }
+        if old_m:
+            if "metadata" in old_m:
+                chk_manifest["metadata"] = old_m["metadata"]
+            if "cover" in old_m:
+                chk_manifest["cover"] = old_m["cover"]
+            if "active_workflow" in old_m:
+                chk_manifest["active_workflow"] = old_m["active_workflow"]
+
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        tmp_output = f"{output_file}.tmp"
+        with open(tmp_output, "w", encoding="utf-8") as f:
+            json.dump(chk_manifest, f, indent=2, ensure_ascii=False)
+        os.replace(tmp_output, output_file)
+        return chk_manifest
+
+    synthesized_count = 0
     for idx, beat in enumerate(beats, 1):
         cid = beat["chunk_id"]
+
+        # Check if already synthesized in existing manifest
+        old_b = existing_blocks_by_cid.get(cid, {})
+        old_illustrations = old_b.get("illustrations", {}) if isinstance(old_b.get("illustrations"), dict) else {}
+        existing_illus = old_illustrations.get(s_name) or old_illustrations.get(s_id) or (old_b.get("illustration") if old_b.get("illustration", {}).get("style", {}).get("id") == s_id else None)
+
+        if existing_illus and existing_illus.get("prompt"):
+            illustrations_by_chunk[cid] = existing_illus
+            print(f"  -> [{idx}/{len(beats)}] Resuming {cid}: prompt already exists.", flush=True)
+            continue
 
         # Compose context with full Visual Bible and timeline resolution
         ctx = compose_prompt_context_for_beat(
@@ -997,7 +1076,7 @@ def run_stage_manifest(
         )
 
         status_msg = f"Synthesizing prompt {idx}/{len(beats)} for {cid} with model '{resolved_model}'..."
-        print(f"  -> {status_msg}")
+        print(f"  -> {status_msg}", flush=True)
         if callback: callback(status_msg)
 
         messages = [
@@ -1024,13 +1103,6 @@ def run_stage_manifest(
         if not neg_prompt or not neg_prompt.strip():
             neg_prompt = default_negative
 
-        active_style = bible.get("active_style") or {
-            "id": "custom",
-            "name": "Default Style",
-            "description": bible.get("global_art_style", ""),
-            "category": "art"
-        }
-
         illustrations_by_chunk[cid] = {
             "status": "pending",
             "image_file": f"images/{cid}.png",
@@ -1041,76 +1113,18 @@ def run_stage_manifest(
             "style": active_style,
             "llm_context": ctx
         }
+        synthesized_count += 1
 
-    story_title = os.path.basename(os.path.abspath(project_dir)).replace("_", " ").title()
+        # Checkpoint every 5 beats
+        if synthesized_count % 5 == 0:
+            _save_manifest_checkpoint()
+            print(f"  [Checkpoint] Saved manifest.json ({synthesized_count} new prompts synthesized)", flush=True)
 
-    # Load existing manifest to preserve past multi-workflow/multi-style illustrations
-    existing_blocks_by_cid = {}
-    if os.path.isfile(output_file):
-        try:
-            with open(output_file, "r", encoding="utf-8") as f:
-                old_m = json.load(f)
-                for b in old_m.get("blocks", []):
-                    existing_blocks_by_cid[b.get("chunk_id")] = b
-        except Exception:
-            pass
+    manifest = _save_manifest_checkpoint()
 
-    blocks = []
-    s_name = active_style.get("name")
-    s_id = active_style.get("id")
-
-    for chunk in chunks:
-        cid = chunk["chunk_id"]
-        illus = illustrations_by_chunk.get(cid, None)
-        old_b = existing_blocks_by_cid.get(cid, {})
-        old_illustrations = dict(old_b.get("illustrations", {})) if isinstance(old_b.get("illustrations"), dict) else {}
-
-        if illus:
-            if s_name:
-                old_illustrations[s_name] = dict(illus)
-            if s_id and s_id != s_name:
-                old_illustrations[s_id] = dict(illus)
-
-        block_data = {
-            "chunk_id": cid,
-            "text": chunk["text"],
-            "illustration": illus
-        }
-        if old_illustrations:
-            block_data["illustrations"] = old_illustrations
-
-        blocks.append(block_data)
-
-    active_style = bible.get("active_style") or {
-        "id": "custom",
-        "name": "Default Style",
-        "description": bible.get("global_art_style", ""),
-        "category": "art"
-    }
-
-    manifest = {
-        "story_title": (old_m.get("story_title") if "old_m" in locals() and old_m.get("story_title") else story_title),
-        "active_profile": active_profile_name,
-        "active_style": active_style,
-        "resolution_tier": resolved_tier,
-        "blocks": blocks
-    }
-
-    if "old_m" in locals() and old_m:
-        if "metadata" in old_m:
-            manifest["metadata"] = old_m["metadata"]
-        if "cover" in old_m:
-            manifest["cover"] = old_m["cover"]
-        if "active_workflow" in old_m:
-            manifest["active_workflow"] = old_m["active_workflow"]
-
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(manifest, f, indent=2, ensure_ascii=False)
-
-    total_illus = sum(1 for b in blocks if b.get("illustration") is not None)
+    total_illus = sum(1 for b in manifest.get("blocks", []) if b.get("illustration") is not None)
     done_msg = f"Master manifest generated: {total_illus} illustrations scheduled -> manifest.json"
-    print(f"[+] {done_msg}")
+    print(f"[+] {done_msg}", flush=True)
     if callback: callback(done_msg)
     return manifest
 

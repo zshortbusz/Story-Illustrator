@@ -52,10 +52,31 @@ def check_runtime_readiness(image_client: BaseImageClient):
     # If ComfyUI is the active backend, check if LM Studio is still holding memory
     if health.get("backend") == "comfyui":
         try:
-            resp = requests.get("http://localhost:1234/v1/models", timeout=1)
+            import shutil
+            import subprocess
+            # Query LM Studio models API to check for loaded models
+            resp = requests.get("http://localhost:1234/api/v0/models", timeout=1)
+            loaded_models = []
             if resp.status_code == 200:
-                print("\n[WARNING] LM Studio was detected active at http://localhost:1234.")
-                print("[WARNING] To prevent GPU Out-of-Memory (OOM) errors during local diffusion, please UNLOAD your LLM or CLOSE LM Studio.\n")
+                data = resp.json()
+                for m in data.get("data", []):
+                    if m.get("state") == "loaded":
+                        loaded_models.append(m.get("id"))
+            else:
+                resp2 = requests.get("http://localhost:1234/v1/models", timeout=1)
+                if resp2.status_code == 200:
+                    loaded_models.append("Active LLM")
+
+            if loaded_models:
+                print(f"\n[*] LM Studio has model(s) loaded in memory: {', '.join(loaded_models)}")
+                if shutil.which("lms"):
+                    res = subprocess.run(["lms", "unload", "--all"], capture_output=True, text=True, check=False)
+                    if res.returncode == 0:
+                        print("[+] Automatically unloaded LM Studio model(s) to maximize GPU VRAM & system RAM for ComfyUI.\n")
+                    else:
+                        print("[WARNING] To prevent GPU OOM or paging during diffusion, please UNLOAD your LLM or CLOSE LM Studio.\n")
+                else:
+                    print("[WARNING] To prevent GPU OOM or paging during diffusion, please UNLOAD your LLM or CLOSE LM Studio.\n")
         except Exception:
             pass
 
