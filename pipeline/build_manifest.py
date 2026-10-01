@@ -369,7 +369,8 @@ def run_stage_bible(
     project_dir: str,
     llm_client: LMStudioClient,
     llm_config: Dict[str, Any],
-    callback: Optional[Callable[[str], None]] = None
+    callback: Optional[Callable[[str], None]] = None,
+    force: bool = False
 ) -> Dict[str, Any]:
     """
     Step 2: Visual Bible Extraction.
@@ -378,6 +379,7 @@ def run_stage_bible(
     2. Character visual profiles (physical traits, distinguishing marks, clothing)
     3. Setting profiles (architecture, atmosphere, lighting)
     Dynamically partitions large stories across batches to stay safely within the loaded model's context window.
+    Supports atomic per-batch checkpointing and automatic resumption.
     """
     chunks_file = os.path.join(project_dir, "artifacts", "01_chunks.json")
     beats_file = os.path.join(project_dir, "artifacts", "02_selected_beats.json")
@@ -468,7 +470,32 @@ def run_stage_bible(
         "settings": {}
     }
 
+    start_batch_idx = 1
+    if os.path.isfile(output_file) and not force:
+        try:
+            with open(output_file, "r", encoding="utf-8") as f:
+                existing_bible = json.load(f)
+            # If completely finished previously:
+            if existing_bible.get("characters") and not existing_bible.get("_checkpoint_batch"):
+                skip_msg = f"Visual Bible already completed ({len(existing_bible.get('characters', {}))} characters, {len(existing_bible.get('settings', {}))} settings). Skipping Stage 2."
+                print(f"[+] {skip_msg}", flush=True)
+                if callback: callback(skip_msg)
+                return existing_bible
+            # If intermediate checkpoint exists:
+            if existing_bible.get("_checkpoint_batch"):
+                ckpt_b = int(existing_bible["_checkpoint_batch"])
+                if 1 <= ckpt_b < total_batches:
+                    accumulated_bible = existing_bible
+                    start_batch_idx = ckpt_b + 1
+                    resume_msg = f"Resuming Visual Bible extraction from batch {start_batch_idx}/{total_batches} (loaded checkpoint from batch {ckpt_b})..."
+                    print(f"[*] {resume_msg}", flush=True)
+                    if callback: callback(resume_msg)
+        except Exception as e:
+            print(f"[!] Warning reading existing Visual Bible checkpoint: {e}", flush=True)
+
     for b_idx, b_chunks in enumerate(chunk_batches, 1):
+        if b_idx < start_batch_idx:
+            continue
         b_sample = "\n\n".join([f"[{c['chunk_id']}]: {c['text']}" for c in b_chunks])
         first_cid = b_chunks[0]["chunk_id"]
         last_cid = b_chunks[-1]["chunk_id"]
@@ -554,6 +581,20 @@ SETTING: <Name>: <visual environment description, materials, textures, lighting>
             else:
                 accumulated_bible["settings"][sname] = sdesc
 
+        # Checkpoint Visual Bible after every batch atomically
+        accumulated_bible["_checkpoint_batch"] = b_idx
+        tmp_output = f"{output_file}.tmp"
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        with open(tmp_output, "w", encoding="utf-8") as f:
+            json.dump(accumulated_bible, f, indent=2, ensure_ascii=False)
+        os.replace(tmp_output, output_file)
+        ckpt_notice = f"  [Checkpoint] Saved Visual Bible batch {b_idx}/{total_batches} -> 03_visual_bible.json"
+        print(ckpt_notice, flush=True)
+        if callback: callback(ckpt_notice)
+
+    # Remove intermediate checkpoint marker once all batches are completed
+    accumulated_bible.pop("_checkpoint_batch", None)
+
     # Infer story-tailored style presets (6 Art Mediums + 3 Photography Eras)
     infer_notice = "Inferring story-tailored style presets (6 Art Mediums, 3 Photography Eras)..."
     print(f"[*] {infer_notice}", flush=True)
@@ -582,8 +623,10 @@ SETTING: <Name>: <visual environment description, materials, textures, lighting>
         print(f"[!] Note: Could not merge into global styles: {ge}")
 
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    with open(output_file, "w", encoding="utf-8") as f:
+    tmp_output = f"{output_file}.tmp"
+    with open(tmp_output, "w", encoding="utf-8") as f:
         json.dump(accumulated_bible, f, indent=2, ensure_ascii=False)
+    os.replace(tmp_output, output_file)
 
     done_msg = f"Visual Bible completed across {total_batches} batch(es): {len(accumulated_bible.get('characters', {}))} characters, {len(accumulated_bible.get('settings', {}))} settings, {len(art_styles)} art presets, {len(photo_styles)} photo presets -> 03_visual_bible.json"
     print(f"[+] {done_msg}", flush=True)
@@ -595,12 +638,14 @@ def run_stage_beats(
     project_dir: str,
     llm_client: LMStudioClient,
     llm_config: Dict[str, Any],
-    callback: Optional[Callable[[str], None]] = None
+    callback: Optional[Callable[[str], None]] = None,
+    force: bool = False
 ) -> Dict[str, Any]:
     """
     Step 3: Sliding Window Beat Selection.
     Target: 5 chunks (dynamically scaled for context size), Context: 2 chunks.
     Selects 0 to N visual moments based on established Visual Bible context.
+    Supports atomic periodic checkpointing and automatic resumption.
     """
     chunks_file = os.path.join(project_dir, "artifacts", "01_chunks.json")
     bible_file = os.path.join(project_dir, "artifacts", "03_visual_bible.json")
@@ -647,15 +692,37 @@ def run_stage_beats(
     target_size = 5
     context_size = 2
 
+    start_idx = 0
+    window_idx = 0
     all_beats: List[Dict[str, Any]] = []
     seen_chunk_ids = set()
+
+    # Resume from existing checkpoint if available and not forced
+    if os.path.isfile(output_file) and not force:
+        try:
+            with open(output_file, "r", encoding="utf-8") as f:
+                existing_beats_data = json.load(f)
+            # If completely finished previously:
+            if existing_beats_data.get("selected_beats") and not existing_beats_data.get("_checkpoint_chunk_idx"):
+                skip_msg = f"Beat selection already completed ({len(existing_beats_data['selected_beats'])} beats selected). Skipping Stage 3."
+                print(f"[+] {skip_msg}", flush=True)
+                if callback: callback(skip_msg)
+                return existing_beats_data
+            # If intermediate sliding window checkpoint exists:
+            if existing_beats_data.get("_checkpoint_chunk_idx") is not None:
+                start_idx = int(existing_beats_data["_checkpoint_chunk_idx"])
+                for b in existing_beats_data.get("selected_beats", []):
+                    all_beats.append(b)
+                    seen_chunk_ids.add(b.get("chunk_id"))
+                resume_msg = f"Resuming Beat Selection from chunk index {start_idx}/{len(chunks)} ({len(all_beats)} beats loaded)..."
+                print(f"[*] {resume_msg}", flush=True)
+                if callback: callback(resume_msg)
+        except Exception as e:
+            print(f"[!] Warning reading existing beats checkpoint: {e}", flush=True)
 
     msg = f"Step 3: Beat Selection across {len(chunks)} chunks using model '{resolved_model}' (context window: {n_ctx} tokens)..."
     print(f"[*] {msg}", flush=True)
     if callback: callback(msg)
-
-    start_idx = 0
-    window_idx = 0
 
     while start_idx < len(chunks):
         window_idx += 1
@@ -728,12 +795,27 @@ NONE
 
         start_idx += curr_target_size
 
+        # Checkpoint every 5 sliding windows
+        if window_idx % 5 == 0:
+            chk_result = {
+                "selected_beats": sorted(all_beats, key=lambda x: x.get("chunk_id", "")),
+                "_checkpoint_chunk_idx": start_idx
+            }
+            tmp_out = f"{output_file}.tmp"
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            with open(tmp_out, "w", encoding="utf-8") as f:
+                json.dump(chk_result, f, indent=2, ensure_ascii=False)
+            os.replace(tmp_out, output_file)
+            print(f"  [Checkpoint] Saved beats checkpoint at chunk index {start_idx}/{len(chunks)} ({len(all_beats)} beats so far)", flush=True)
+
     all_beats.sort(key=lambda x: x.get("chunk_id", ""))
     result = {"selected_beats": all_beats}
 
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    with open(output_file, "w", encoding="utf-8") as f:
+    tmp_out = f"{output_file}.tmp"
+    with open(tmp_out, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
+    os.replace(tmp_out, output_file)
 
     done_msg = f"Beat selection completed: {len(all_beats)} beats selected -> 02_selected_beats.json"
     print(f"[+] {done_msg}", flush=True)
