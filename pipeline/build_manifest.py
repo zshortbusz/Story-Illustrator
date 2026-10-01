@@ -925,7 +925,10 @@ def run_stage_manifest(
     llm_client: LMStudioClient,
     llm_config: Dict[str, Any],
     callback: Optional[Callable[[str], None]] = None,
-    resolution_tier: Optional[str] = None
+    resolution_tier: Optional[str] = None,
+    force: bool = False,
+    chunks_to_run: Optional[List[str]] = None,
+    max_beats: Optional[int] = None
 ) -> Dict[str, Any]:
     """
     Step 4: Prompt Synthesis.
@@ -963,6 +966,12 @@ def run_stage_manifest(
 
     chunks = chunks_data.get("chunks", [])
     beats = beats_data.get("selected_beats", [])
+    if chunks_to_run:
+        target_set = set(chunks_to_run)
+        beats = [b for b in beats if b.get("chunk_id") in target_set]
+    if max_beats and max_beats > 0:
+        beats = beats[:max_beats]
+
     active_profile_name = profiles_config.get("active_profile", "sdxl_base")
     profile = profiles_config.get("profiles", {}).get(active_profile_name, {})
 
@@ -1054,14 +1063,20 @@ def run_stage_manifest(
         cid = beat["chunk_id"]
 
         # Check if already synthesized in existing manifest
-        old_b = existing_blocks_by_cid.get(cid, {})
-        old_illustrations = old_b.get("illustrations", {}) if isinstance(old_b.get("illustrations"), dict) else {}
-        existing_illus = old_illustrations.get(s_name) or old_illustrations.get(s_id) or (old_b.get("illustration") if old_b.get("illustration", {}).get("style", {}).get("id") == s_id else None)
+        if not force:
+            old_b = existing_blocks_by_cid.get(cid, {})
+            old_illustrations = old_b.get("illustrations", {}) if isinstance(old_b.get("illustrations"), dict) else {}
+            old_illus_dict = old_b.get("illustration") if isinstance(old_b.get("illustration"), dict) else {}
+            existing_illus = (
+                old_illustrations.get(s_name)
+                or old_illustrations.get(s_id)
+                or (old_b.get("illustration") if old_illus_dict.get("style", {}).get("id") == s_id else None)
+            )
 
-        if existing_illus and existing_illus.get("prompt"):
-            illustrations_by_chunk[cid] = existing_illus
-            print(f"  -> [{idx}/{len(beats)}] Resuming {cid}: prompt already exists.", flush=True)
-            continue
+            if existing_illus and existing_illus.get("prompt"):
+                illustrations_by_chunk[cid] = existing_illus
+                print(f"  -> [{idx}/{len(beats)}] Resuming {cid}: prompt already exists.", flush=True)
+                continue
 
         # Compose context with full Visual Bible and timeline resolution
         ctx = compose_prompt_context_for_beat(
@@ -1136,7 +1151,10 @@ def run_phase_1(
     backend: Optional[str] = None,
     llm_api_base: Optional[str] = None,
     llm_api_key: Optional[str] = None,
-    context_window: Optional[int] = None
+    context_window: Optional[int] = None,
+    force: bool = False,
+    chunks_to_run: Optional[List[str]] = None,
+    max_beats: Optional[int] = None
 ) -> Dict[str, Any]:
     """Runs Phase 1 stages in logical sequence: chunk -> bible -> beats -> manifest."""
     print_banner(stage)
@@ -1169,7 +1187,10 @@ def run_phase_1(
     if stage in ["beats", "all"]:
         result["beats"] = run_stage_beats(project_dir, client, llm_config, callback)
     if stage in ["manifest", "all"]:
-        result["manifest"] = run_stage_manifest(project_dir, client, llm_config, callback)
+        result["manifest"] = run_stage_manifest(
+            project_dir, client, llm_config, callback,
+            force=force, chunks_to_run=chunks_to_run, max_beats=max_beats
+        )
 
     return result
 
@@ -1183,6 +1204,9 @@ def main():
     parser.add_argument("--llm-api-base", help="Custom OpenAI-compatible LLM endpoint URL")
     parser.add_argument("--llm-api-key", help="API key for custom LLM endpoint")
     parser.add_argument("--context-window", type=int, help="Override context window size in tokens")
+    parser.add_argument("--force", "-f", action="store_true", help="Force re-synthesis of prompts even if already present in manifest")
+    parser.add_argument("--chunks", nargs="+", help="Specific chunk IDs to synthesize (e.g. chunk_004 chunk_006)")
+    parser.add_argument("--max-beats", type=int, help="Maximum number of beats to synthesize")
     args = parser.parse_args()
 
     run_phase_1(
@@ -1191,7 +1215,10 @@ def main():
         backend=args.backend,
         llm_api_base=args.llm_api_base,
         llm_api_key=args.llm_api_key,
-        context_window=args.context_window
+        context_window=args.context_window,
+        force=args.force,
+        chunks_to_run=args.chunks,
+        max_beats=args.max_beats
     )
 
 

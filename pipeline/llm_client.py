@@ -719,6 +719,23 @@ def _clean_prompt_entry(text: str) -> str:
     return s.strip()
 
 
+def _extract_refined_prose_prompt(text: str) -> Optional[str]:
+    """Extracts the polished prose prompt paragraph from reasoning scratchpad text."""
+    matches = re.findall(
+        r'(?:Final Polish|Revised Text|Refined Prompt Construction|Drafting the final string|Refined Prompt|Final Prompt)[:\*\s]+\n+([^\n*][\s\S]*?)(?=(?:\n\s*\n\s*[\*\-]|(?:\n\s*[\*\-]\s+[A-Z])|\Z))',
+        text,
+        re.IGNORECASE
+    )
+    if matches:
+        last = matches[-1]
+        paragraphs = [p.strip() for p in last.split('\n\n') if p.strip() and not p.strip().startswith('*')]
+        if paragraphs:
+            cleaned = _clean_prompt_entry(paragraphs[0])
+            if len(cleaned.split()) >= 15:
+                return cleaned
+    return None
+
+
 def parse_prompt_response(raw_text: str, default_negative: str = "") -> Tuple[str, str]:
     """
     Parses diffusion prompts from JSON, tagged text (PROMPT: ... NEGATIVE: ...),
@@ -759,6 +776,11 @@ def parse_prompt_response(raw_text: str, default_negative: str = "") -> Tuple[st
         pos = _clean_prompt_entry(pos_m.group(1))
         neg = _clean_prompt_entry(neg_m.group(1)) if (neg_m and neg_m.group(1).strip()) else default_negative
         if pos:
+            # If pos looks like raw scratchpad bullets, check if a clean refined prompt was drafted
+            if pos.startswith("*") or "\n *" in pos or "\n -" in pos:
+                cand = _extract_refined_prose_prompt(raw_text)
+                if cand:
+                    return cand, default_negative
             return pos, neg or default_negative
 
     # 3. Fallback: unanchored tagged search
@@ -776,9 +798,18 @@ def parse_prompt_response(raw_text: str, default_negative: str = "") -> Tuple[st
         pos = _clean_prompt_entry(pos_m2.group(1))
         neg = _clean_prompt_entry(neg_m2.group(1)) if (neg_m2 and neg_m2.group(1).strip()) else default_negative
         if pos:
+            if pos.startswith("*") or "\n *" in pos or "\n -" in pos:
+                cand = _extract_refined_prose_prompt(raw_text)
+                if cand:
+                    return cand, default_negative
             return pos, neg or default_negative
 
-    # 4. Pure text prompt: clean introductory conversational boilerplate
+    # 4. Scratchpad Fallback for reasoning models (e.g. Gemma 26B, DeepSeek)
+    cand = _extract_refined_prose_prompt(raw_text)
+    if cand:
+        return cand, default_negative
+
+    # 5. Pure text prompt: clean introductory conversational boilerplate
     cleaned = _clean_prompt_entry(raw_text)
     cleaned = re.sub(r"^(?:Here is the (?:diffusion )?prompt:?|Prompt:?)\s*", "", cleaned, flags=re.IGNORECASE)
     cleaned = _clean_prompt_entry(cleaned)
