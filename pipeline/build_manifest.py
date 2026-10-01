@@ -879,7 +879,7 @@ def compose_prompt_context_for_beat(
     prefix_instruction = f"- Positive Prompt Prefix (Must be included at the beginning): {positive_prefix}\n" if positive_prefix else ""
     user_prompt = f"""SCENE COMPOSITION REQUIREMENTS:
 - Action Beat: {beat.get('action_beat', '')}
-- Camera Framing & Lighting: {beat.get('camera_framing', '')}
+- Visual Composition & Lighting: {beat.get('camera_framing', '')}
 - Characters Present (Explicit physical appearance from Visual Bible):
   {char_info}
 - Setting / Environment (Architectural details & textures from Visual Bible):
@@ -890,13 +890,13 @@ def compose_prompt_context_for_beat(
 
 SYNTHESIZE THE DIFFUSION PROMPT:
 Construct a high-quality positive diffusion prompt that seamlessly combines:
-1. The character's specific physical traits (face, hair, build, distinctive prosthetic limbs/features, clothing).
+1. The character's specific physical traits (face, hair, build, distinctive features, clothing).
 2. The exact scene action beat.
 3. The setting architecture, textures, and atmosphere.
-4. The camera framing, angle, and lighting.
+4. The visual composition, perspective, and lighting.
 5. The global art style.
 
-CRITICAL INSTRUCTION: Do NOT output thinking steps, scratchpad, or markdown explanations. Start immediately with:
+Output format:
 PROMPT: <positive prompt string>
 NEGATIVE: <negative prompt string>
 """

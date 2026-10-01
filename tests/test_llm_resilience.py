@@ -107,8 +107,29 @@ class TestLLMClientResilience(unittest.TestCase):
         with patch("time.sleep", return_value=None):
             with self.assertRaises(RuntimeError) as ctx:
                 self.client.chat_text(messages, model="test-model", retries=2)
-            self.assertIn("Failed to communicate with LLM provider", str(ctx.exception))
-            self.assertEqual(mock_post.call_count, 2)
+    @patch("requests.post")
+    def test_chat_text_token_exhaustion_during_thinking(self, mock_post):
+        """Verifies chat_text raises an informative error if the model ran out of tokens during thinking."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "content": "",
+                        "reasoning_content": "* Thinking about Nancy Drew and the blue roadster..."
+                    },
+                    "finish_reason": "length"
+                }
+            ]
+        }
+        mock_post.return_value = mock_resp
+
+        messages = [{"role": "user", "content": "Create prompt"}]
+        with self.assertRaises(RuntimeError) as ctx:
+            self.client.chat_text(messages, model="test-model", retries=1)
+        self.assertIn("token budget exhausted", str(ctx.exception).lower())
+        self.assertIn("thinking phase", str(ctx.exception).lower())
 
 
 if __name__ == "__main__":

@@ -193,7 +193,7 @@ class LMStudioClient:
         messages: List[Dict[str, str]],
         model: str,
         temperature: float = 0.3,
-        max_tokens: int = 1024,
+        max_tokens: int = -1,
         retries: int = 3,
         backoff: float = 2.0
     ) -> str:
@@ -222,11 +222,25 @@ class LMStudioClient:
                     self._handle_http_error(resp)
 
                 data = resp.json()
-                msg = data["choices"][0]["message"]
+                choices = data.get("choices", [])
+                if not choices:
+                    raise RuntimeError(f"LLM returned empty choices array ({self.backend})")
+                msg = choices[0].get("message", {})
                 content = msg.get("content") or ""
-                # If content is empty because reasoning model generated in reasoning_content or got cut off
-                if not content.strip() and msg.get("reasoning_content"):
-                    content = msg.get("reasoning_content", "")
+                finish_reason = choices[0].get("finish_reason")
+
+                if not content.strip():
+                    if finish_reason == "length":
+                        reasoning_len = len(msg.get("reasoning_content") or "")
+                        max_tok = payload.get("max_tokens")
+                        raise RuntimeError(
+                            f"LLM token budget exhausted ({max_tok} tokens) during thinking phase. "
+                            f"The model completed {reasoning_len} reasoning characters in the think channel "
+                            f"without reaching the response output phase. "
+                            f"Please increase 'max_tokens' for this role in config/llm_models.json."
+                        )
+                    raise RuntimeError(f"LLM returned empty content (finish_reason: {finish_reason}).")
+
                 return content.strip()
 
             except ContextWindowExceededError:
@@ -243,7 +257,7 @@ class LMStudioClient:
         messages: List[Dict[str, str]],
         model: str,
         temperature: float = 0.3,
-        max_tokens: int = 1024,
+        max_tokens: int = -1,
         retries: int = 3,
         backoff: float = 2.0
     ) -> Dict[str, Any]:
@@ -719,27 +733,10 @@ def _clean_prompt_entry(text: str) -> str:
     return s.strip()
 
 
-def _extract_refined_prose_prompt(text: str) -> Optional[str]:
-    """Extracts the polished prose prompt paragraph from reasoning scratchpad text."""
-    matches = re.findall(
-        r'(?:Final Polish|Revised Text|Refined Prompt Construction|Drafting the final string|Refined Prompt|Final Prompt)[:\*\s]+\n+([^\n*][\s\S]*?)(?=(?:\n\s*\n\s*[\*\-]|(?:\n\s*[\*\-]\s+[A-Z])|\Z))',
-        text,
-        re.IGNORECASE
-    )
-    if matches:
-        last = matches[-1]
-        paragraphs = [p.strip() for p in last.split('\n\n') if p.strip() and not p.strip().startswith('*')]
-        if paragraphs:
-            cleaned = _clean_prompt_entry(paragraphs[0])
-            if len(cleaned.split()) >= 15:
-                return cleaned
-    return None
-
-
 def parse_prompt_response(raw_text: str, default_negative: str = "") -> Tuple[str, str]:
     """
     Parses diffusion prompts from JSON, tagged text (PROMPT: ... NEGATIVE: ...),
-    or direct natural text output. Handles reasoning model thinking preambles and bold markdown tags.
+    or direct natural text output. Handles optional negative prompts cleanly.
     """
     if not raw_text or not raw_text.strip():
         return "", default_negative
@@ -776,11 +773,6 @@ def parse_prompt_response(raw_text: str, default_negative: str = "") -> Tuple[st
         pos = _clean_prompt_entry(pos_m.group(1))
         neg = _clean_prompt_entry(neg_m.group(1)) if (neg_m and neg_m.group(1).strip()) else default_negative
         if pos:
-            # If pos looks like raw scratchpad bullets, check if a clean refined prompt was drafted
-            if pos.startswith("*") or "\n *" in pos or "\n -" in pos:
-                cand = _extract_refined_prose_prompt(raw_text)
-                if cand:
-                    return cand, default_negative
             return pos, neg or default_negative
 
     # 3. Fallback: unanchored tagged search
@@ -798,18 +790,9 @@ def parse_prompt_response(raw_text: str, default_negative: str = "") -> Tuple[st
         pos = _clean_prompt_entry(pos_m2.group(1))
         neg = _clean_prompt_entry(neg_m2.group(1)) if (neg_m2 and neg_m2.group(1).strip()) else default_negative
         if pos:
-            if pos.startswith("*") or "\n *" in pos or "\n -" in pos:
-                cand = _extract_refined_prose_prompt(raw_text)
-                if cand:
-                    return cand, default_negative
             return pos, neg or default_negative
 
-    # 4. Scratchpad Fallback for reasoning models (e.g. Gemma 26B, DeepSeek)
-    cand = _extract_refined_prose_prompt(raw_text)
-    if cand:
-        return cand, default_negative
-
-    # 5. Pure text prompt: clean introductory conversational boilerplate
+    # 4. Pure text prompt: clean introductory conversational boilerplate
     cleaned = _clean_prompt_entry(raw_text)
     cleaned = re.sub(r"^(?:Here is the (?:diffusion )?prompt:?|Prompt:?)\s*", "", cleaned, flags=re.IGNORECASE)
     cleaned = _clean_prompt_entry(cleaned)
