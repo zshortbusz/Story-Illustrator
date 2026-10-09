@@ -10,7 +10,7 @@
     {
       "id": "impasto_oil",
       "name": "Impasto Oil & Palette Knife",
-      "description": "heavy textured oil painting, visible palette knife strokes, thick raised impasto ridges, rich layered oil pigments, tactile linen canvas weave, dramatic lighting on paint ridges",
+      "description": "Heavy-body oil pigments applied with palette knife on coarse linen canvas. Thick impasto ridges juxtapose smooth, blended transitions, capturing the contrast between luxury and grime.",
       "category": "art",
       "source_project": "global"
     },
@@ -146,6 +146,76 @@
       "description": "Delicate mineral watercolor washes and fine dip-pen sepia ink linework on aged cream deckle-edge paper. Soft wet-on-wet atmospheric pigment blooming, granulating watercolor washes, muted vintage palette of antique Prussian blue, dusty ochre, olive green, and soft umber shadows.",
       "category": "art",
       "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "glazed_oil_impasto_neon",
+      "name": "Glazed Oil & Impasto Neon",
+      "description": "Heavy Cadmium pigments layered over transparent Quinacridone Magenta and Phthalo Blue glazes on fine-weave linen. Palette knife applications for skin highlights; soft brushwork captures fluid motion and light refraction through haze.",
+      "category": "art",
+      "source_project": "lilys_party"
+    },
+    {
+      "id": "neon_bleed_watercolor_ink",
+      "name": "Neon Bleed Watercolor & Ink",
+      "description": "Wet-on-wet watercolor techniques using high-pigment Phthalo pigments on heavy-tooth cold-press paper. Ink washes create deep shadows; salt-texture effects simulate sweat and liquid dynamics under neon light.",
+      "category": "art",
+      "source_project": "lilys_party"
+    },
+    {
+      "id": "carbon_compressed_charcoal_noir",
+      "name": "Carbon & Compressed Charcoal Noir",
+      "description": "Compressed charcoal and willow charcoal on rough Stonehenge paper. High-contrast chiaroscuro; blending with a tortillon for skin pores and goosebumps, juxtaposed against stark white highlights and neon pigment dust overlays.",
+      "category": "art",
+      "source_project": "lilys_party"
+    },
+    {
+      "id": "oil_pastel_soft_pastel_glow",
+      "name": "Oil Pastel & Soft Pastel Glow",
+      "description": "Layered oil pastels on toned Canson paper. Smudging with fingers for flushed skin textures; hard-edge pastel strokes for neon light refraction through smoke. High pigment density for saturated neon-to-skin transitions.",
+      "category": "art",
+      "source_project": "lilys_party"
+    },
+    {
+      "id": "encaustic_wax_neon_resin",
+      "name": "Encaustic Wax & Neon Resin",
+      "description": "Molten beeswax mixed with neon-tinted pigments on wooden panel. Heat-tooling for fluid, sweat-slicked textures; scraping and layering for depth and light refraction through translucent wax layers.",
+      "category": "art",
+      "source_project": "lilys_party"
+    },
+    {
+      "id": "intaglio_etching_neon_pigment",
+      "name": "Intaglio Etching & Neon Pigment",
+      "description": "Deep intaglio etching on copper plates with rich black ink. Fine needle-work captures skin pores and goosebumps; neon pigment-infused resin washes simulate light refraction through haze and smoke.",
+      "category": "art",
+      "source_project": "lilys_party"
+    },
+    {
+      "id": "intaglio_copper_etching",
+      "name": "Intaglio Copper Etching",
+      "description": "Fine-line copper plate etching with acid-bitten grooves. Deep-black oil-based ink on heavy Arches paper, emphasizing sharp, precise linework against vast, stark negative spaces.",
+      "category": "art",
+      "source_project": "victoria_s_game"
+    },
+    {
+      "id": "gouache_india_ink",
+      "name": "Gouache & India Ink",
+      "description": "Opaque gouache in sickly ochre and cold cerulean pigments, layered over diluted India ink washes on cold-press watercolor paper, creating bleeding, organic decay.",
+      "category": "art",
+      "source_project": "victoria_s_game"
+    },
+    {
+      "id": "dry_pastel_graphite",
+      "name": "Dry Pastel & Graphite",
+      "description": "Soft pastels and hard graphite on textured Bristol board. Blended, muddy earth tones and sharp, precise graphite lines capture the friction between elegance and filth.",
+      "category": "art",
+      "source_project": "victoria_s_game"
+    },
+    {
+      "id": "woodblock_linoleum_relief",
+      "name": "Woodblock & Linoleum Relief",
+      "description": "Hand-carved woodblock and linoleum relief printing. High-contrast ink application on unbleached, heavy-weight paper, emphasizing bold, jagged marks and stark, graphic decay.",
+      "category": "art",
+      "source_project": "victoria_s_game"
     }
   ],
   "photography": [
@@ -197,6 +267,41 @@
       "description": "1950s medium format Agfacolor with Zeiss Planar optics. Painterly, soft-focus diffusion. Earthy greens and warm ambers against deep, ink-black shadows. Rich, velvety grain and soft volumetric lighting.",
       "category": "photography",
       "source_project": "the_secret_of_the_old_clock"
+    },
+    {
+      "id": "1980s_anamorphic_eastmancolor",
+      "name": "1980s Anamorphic Eastmancolor",
+      "description": "Anamorphic spherical lenses produce horizontal flares and oval bokeh. Eastmancolor 5247 saturates neon pinks and blues against deep shadows. High-grain, warm skin-tone reproduction, heavy atmospheric haze refraction.",
+      "category": "photography",
+      "source_project": "lilys_party"
+    },
+    {
+      "id": "1990s_35mm_fuji_superia",
+      "name": "1990s 35mm Fuji Superia",
+      "description": "35mm SLR optics with wide apertures create shallow depth-of-field. Fuji Superia renders cool neon tones against flushed, sweat-slicked skin. Fine grain, high contrast, emphasizing light refraction through smoke.",
+      "category": "photography",
+      "source_project": "lilys_party"
+    },
+    {
+      "id": "1960s_ektachrome_color_noir",
+      "name": "1960s Ektachrome Color Noir",
+      "description": "Vintage prime lenses with hard-light physics. Ektachrome reversal film captures saturated neon hues, porcelain whites, and deep shadows. Fine-grained, high-contrast, emphasizing skin texture and fluid-slicked surfaces.",
+      "category": "photography",
+      "source_project": "lilys_party"
+    },
+    {
+      "id": "1950s_tri_x_noir",
+      "name": "1950s Tri-X Noir",
+      "description": "35mm silver gelatin, coarse Tri-X grain, Chiaroscuro lighting, deep blacks, stark whites, sharp optics, visceral textures, and high-contrast realism emphasizing sweat, filth, and architectural decay.",
+      "category": "photography",
+      "source_project": "victoria_s_game"
+    },
+    {
+      "id": "1980s_polaroid_transfer",
+      "name": "1980s Polaroid Transfer",
+      "description": "Polaroid 600 chemical transfer, distorted color shifts, sickly yellows, cold blues, heavy organic grain, soft-focus optics, visceral textures, and tactile decay contrasted against luxury.",
+      "category": "photography",
+      "source_project": "victoria_s_game"
     }
   ]
 }

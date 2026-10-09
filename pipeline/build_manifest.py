@@ -29,6 +29,38 @@ from pipeline.llm_client import (
 from pipeline.project_manager import merge_into_global_styles, get_dimensions_for_tier
 
 
+def atomic_write_json(file_path: str, data: Any, indent: int = 2) -> None:
+    """Safely writes JSON data using a temp file and atomic replace with exponential backoff on Windows."""
+    import time
+    abs_path = os.path.abspath(file_path)
+    os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+    tmp_path = f"{abs_path}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=indent, ensure_ascii=False)
+
+    max_retries = 10
+    for attempt in range(max_retries):
+        try:
+            os.replace(tmp_path, abs_path)
+            return
+        except PermissionError:
+            if attempt == max_retries - 1:
+                try:
+                    with open(abs_path, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=indent, ensure_ascii=False)
+                    if os.path.exists(tmp_path):
+                        try:
+                            os.remove(tmp_path)
+                        except Exception:
+                            pass
+                    return
+                except Exception:
+                    raise
+            time.sleep(0.1 * (2 ** attempt))
+        except Exception:
+            raise
+
+
 def print_banner(stage_name: str = "ALL"):
     print("""
 ================================================================================
@@ -583,11 +615,7 @@ SETTING: <Name>: <visual environment description, materials, textures, lighting>
 
         # Checkpoint Visual Bible after every batch atomically
         accumulated_bible["_checkpoint_batch"] = b_idx
-        tmp_output = f"{output_file}.tmp"
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        with open(tmp_output, "w", encoding="utf-8") as f:
-            json.dump(accumulated_bible, f, indent=2, ensure_ascii=False)
-        os.replace(tmp_output, output_file)
+        atomic_write_json(output_file, accumulated_bible)
         ckpt_notice = f"  [Checkpoint] Saved Visual Bible batch {b_idx}/{total_batches} -> 03_visual_bible.json"
         print(ckpt_notice, flush=True)
         if callback: callback(ckpt_notice)
@@ -622,11 +650,7 @@ SETTING: <Name>: <visual environment description, materials, textures, lighting>
     except Exception as ge:
         print(f"[!] Note: Could not merge into global styles: {ge}")
 
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    tmp_output = f"{output_file}.tmp"
-    with open(tmp_output, "w", encoding="utf-8") as f:
-        json.dump(accumulated_bible, f, indent=2, ensure_ascii=False)
-    os.replace(tmp_output, output_file)
+    atomic_write_json(output_file, accumulated_bible)
 
     done_msg = f"Visual Bible completed across {total_batches} batch(es): {len(accumulated_bible.get('characters', {}))} characters, {len(accumulated_bible.get('settings', {}))} settings, {len(art_styles)} art presets, {len(photo_styles)} photo presets -> 03_visual_bible.json"
     print(f"[+] {done_msg}", flush=True)
@@ -801,21 +825,13 @@ NONE
                 "selected_beats": sorted(all_beats, key=lambda x: x.get("chunk_id", "")),
                 "_checkpoint_chunk_idx": start_idx
             }
-            tmp_out = f"{output_file}.tmp"
-            os.makedirs(os.path.dirname(output_file), exist_ok=True)
-            with open(tmp_out, "w", encoding="utf-8") as f:
-                json.dump(chk_result, f, indent=2, ensure_ascii=False)
-            os.replace(tmp_out, output_file)
+            atomic_write_json(output_file, chk_result)
             print(f"  [Checkpoint] Saved beats checkpoint at chunk index {start_idx}/{len(chunks)} ({len(all_beats)} beats so far)", flush=True)
 
     all_beats.sort(key=lambda x: x.get("chunk_id", ""))
     result = {"selected_beats": all_beats}
 
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    tmp_out = f"{output_file}.tmp"
-    with open(tmp_out, "w", encoding="utf-8") as f:
-        json.dump(result, f, indent=2, ensure_ascii=False)
-    os.replace(tmp_out, output_file)
+    atomic_write_json(output_file, result)
 
     done_msg = f"Beat selection completed: {len(all_beats)} beats selected -> 02_selected_beats.json"
     print(f"[+] {done_msg}", flush=True)
@@ -1132,12 +1148,7 @@ def run_stage_manifest(
                 chk_manifest["cover"] = old_m["cover"]
             if "active_workflow" in old_m:
                 chk_manifest["active_workflow"] = old_m["active_workflow"]
-
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        tmp_output = f"{output_file}.tmp"
-        with open(tmp_output, "w", encoding="utf-8") as f:
-            json.dump(chk_manifest, f, indent=2, ensure_ascii=False)
-        os.replace(tmp_output, output_file)
+        atomic_write_json(output_file, chk_manifest)
         return chk_manifest
 
     synthesized_count = 0

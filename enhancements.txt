@@ -1,5 +1,26 @@
-rework how we use the workflows,  a user should be able to bring there own workflow and just replace their own positive prompt with %PositivePrompt% and negative prompt with %NegativePrompt% in their workflow Similiar for the resolution, use similar tags that way we can just look for those tags to replace when it comes to sending the job to comfyui. Once this change is made update the exisiting workflows in the workflow directory to be utilize the new tags
+as the checkpointing completes, the UI should update to show completed visual bible chunks, completed story beats, completed prompts
 
-the user should be able to drop any comfyui compatible workflow with the tags inserted into the workflow folder and it should work 
+The last models and profiles a user selected should become the defaults until they are changed.
 
-update the reader preview section: remove portable html download. instead we will offer 3 download options. High resolution PDF or FXL EPUB3 as well as Reflowable EPUB. The files should include all the meta data needed to immediatly upload to Ebook Retailers example, Amazon
+before loading the required model, check to see if it is already loaded.
+
+There should be an option for unattended running where each pipeline executes in sequence without the user having to review or choose anything (art or photography style should be defaulted for the user to whatever was infered to most match the global art style.)
+
+
+
+these GET calls to check status seem to be firing VERY often, this may impact performance?
+- - [03/Oct/2026 10:38:50] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:50] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:51] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:52] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:53] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:54] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:54] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:55] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:56] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:57] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:58] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:58] "GET /api/project/victoria_s_game/stage_progress HTTP/1.1" 200 -
+127.0.0.1 - - [03/Oct/2026 10:38:59] "GET /api/project/victoria_s_game/s
+
+is it worth it to reduce how often this gets checked to reduce the load on lm studio/ the users PC? if has negligible impact on vram and ram consumption its probably fine.

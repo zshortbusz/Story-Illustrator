@@ -82,12 +82,35 @@ def check_runtime_readiness(image_client: BaseImageClient):
 
 
 def save_manifest_atomic(manifest_path: str, manifest_data: Dict[str, Any]):
-    """Atomically writes manifest to avoid corrupting state on interruption."""
-    temp_path = f"{manifest_path}.tmp"
+    """Atomically writes manifest with retry backoff to avoid corrupting state on interruption or Windows lock contention."""
+    import time
+    abs_path = os.path.abspath(manifest_path)
+    os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+    temp_path = f"{abs_path}.tmp"
     with open(temp_path, "w", encoding="utf-8") as f:
         json.dump(manifest_data, f, indent=2, ensure_ascii=False)
-    # Atomic replace
-    os.replace(temp_path, manifest_path)
+
+    max_retries = 10
+    for attempt in range(max_retries):
+        try:
+            os.replace(temp_path, abs_path)
+            return
+        except PermissionError:
+            if attempt == max_retries - 1:
+                try:
+                    with open(abs_path, "w", encoding="utf-8") as f:
+                        json.dump(manifest_data, f, indent=2, ensure_ascii=False)
+                    if os.path.exists(temp_path):
+                        try:
+                            os.remove(temp_path)
+                        except Exception:
+                            pass
+                    return
+                except Exception:
+                    raise
+            time.sleep(0.1 * (2 ** attempt))
+        except Exception:
+            raise
 
 
 def resolve_workflow(project_dir: str, explicit_workflow: Optional[str] = None) -> Dict[str, Any]:
