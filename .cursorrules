@@ -1,0 +1,9 @@
+# Cursor Rules for Automated Story Illustrator (ASI)
+
+- **Architecture**: ASI enforces a strict 3-phase decoupled architecture: Phase 1 (LLM Story Analysis & Prompt Synthesis) -> Phase 2 (Headless ComfyUI Diffusion Rendering) -> Phase 3 (Retailer-ready PDF, FXL EPUB, and Reflowable EPUB Exports).
+- **Environment Diagnostic**: Use `python -m pipeline.health_check --json` to inspect readiness of dependencies and backends.
+- **Verification Command**: Run `python -m unittest discover -s tests -v` to verify code changes.
+- **File Integrity**: When editing or generating manifests and JSON artifacts, use atomic file writes (`atomic_write_json`) to avoid Windows file-lock collisions.
+- **ComfyUI Workflows**: All workflows must include the 4 required wildcard tags: `%PositivePrompt%`, `%NegativePrompt%`, `"%Width%"`, `"%Height%"`.
+- **MCP Server**: The repository includes a Model Context Protocol server at `pipeline/mcp_server.py`.
+- **Reference**: Detailed agent guidelines and schemas are documented in `AGENTS.md`.

@@ -2,6 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![MCP Server](https://img.shields.io/badge/MCP-Enabled-orange.svg)](pipeline/mcp_server.py)
+[![Agent Ready](https://img.shields.io/badge/Agent-Ready-blueviolet.svg)](AGENTS.md)
 [![ComfyUI Compatible](https://img.shields.io/badge/ComfyUI-Compatible-brightgreen.svg)](https://github.com/comfyanonymous/ComfyUI)
 [![LM Studio Compatible](https://img.shields.io/badge/LM%20Studio-Compatible-purple.svg)](https://lmstudio.ai/)
 
@@ -350,6 +352,59 @@ python -m pipeline.compile_html --project ./projects/the_clockwork_duel
 
 ---
 
+## Health Diagnostic & Environment Verification
+
+Verify environment dependencies, Python version, workspace directories, and model backend connectivity:
+
+```bash
+# Human-readable check:
+python -m pipeline.health_check
+
+# Machine-readable JSON output (ideal for AI agents and automated CI):
+python -m pipeline.health_check --json
+```
+
+---
+
+## Model Context Protocol (MCP) Server
+
+Automated Story Illustrator includes a built-in Model Context Protocol (MCP) server at `pipeline/mcp_server.py`. This allows any MCP-compatible AI assistant (Claude Desktop, Cursor, Antigravity, VS Code, Goose) to orchestrate the entire story illustration and book publishing pipeline directly via native tool calls.
+
+### Launching the MCP Server
+```bash
+python -m pipeline.mcp_server
+```
+
+### Configuration for Claude Desktop / Cursor / Antigravity (`claude_desktop_config.json` / `mcpServers`):
+```json
+{
+  "mcpServers": {
+    "story-illustrator": {
+      "command": "python",
+      "args": ["-m", "pipeline.mcp_server"],
+      "cwd": "/path/to/Story-Illustrator"
+    }
+  }
+}
+```
+
+### Available MCP Tools:
+- **`tool_list_projects`**: Enumerate existing stories and publication progress.
+- **`tool_get_project_status`**: Retrieve pipeline progress, character counts, and export files.
+- **`tool_create_project`**: Scaffold a new story workspace with source text.
+- **`tool_chunk_story`**: Deterministically slice manuscripts into scene paragraphs.
+- **`tool_extract_bible`**: Extract character Base DNA, timeline modifications, and setting environments.
+- **`tool_select_beats`**: Identify dramatic illustration moments and scene attire.
+- **`tool_synthesize_prompts`**: Generate 5-element diffusion prompts.
+- **`tool_render_illustrations`**: Batch render illustrations headless via ComfyUI.
+- **`tool_export_book`**: Export High-Resolution Print PDF, FXL EPUB 3.0, and Reflowable EPUB.
+- **`tool_audit_context`**: Audit character continuity and timeline isolation for any scene.
+- **`run_all_checks`**: Execute full environment and backend health diagnostics.
+
+For complete AI agent specifications, schemas, and automation guidelines, see [AGENTS.md](AGENTS.md).
+
+---
+
 ## Running Tests
 
 Run the full automated test suite:
@@ -361,6 +416,7 @@ python -m unittest discover -s tests -v
 ### Test Coverage Highlights:
 - **Prompt Context Audit (`tests/test_prompt_context_audit.py`)**: Tests chronological partitioning of active vs. skipped timeline traits and REST preview endpoints.
 - **Timeline Continuity (`tests/test_timeline_continuity.py`)**: Tests CharacterProfile Base DNA preservation, wardrobe tracking, and deduping across story batches.
+- **MCP & Health Diagnostics (`tests/test_mcp_and_health.py`)**: Tests MCP tool registrations and environment health checks.
 - **Visible Chrome DevTools E2E Tests (`tests/test_ui_elements.py`)**: Live browser automation testing modal forms, tab navigation, ComfyUI batch rendering, and image pixel quality.
 
 ---

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "automated-story-illustrator"
+version = "1.0.0"
+description = "Automated Story Illustrator (ASI) - Local Generative AI Pipeline for Illustrated Digital Editions & Commercial Ebooks"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Automated Story Illustrator Contributors" }
+]
+dependencies = [
+    "requests>=2.31.0",
+    "websockets>=12.0",
+    "flask>=3.0.0",
+    "Pillow>=10.0.0",
+    "reportlab>=4.0.0",
+    "mcp>=1.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov"
+]
+
+[project.scripts]
+asi = "pipeline.web_server:main"
+asi-mcp = "pipeline.mcp_server:run_stdio_mcp"
+asi-health = "pipeline.health_check:main"
+
+[tool.setuptools.packages.find]
+include = ["pipeline*"]
